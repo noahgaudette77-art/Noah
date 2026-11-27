@@ -1,0 +1,45 @@
+{
+ "name": "boss-11",
+ "about": "Boss Rush: Patrimony Phantom (half bone, half steel, with a cleaver). Tripo H3.1 from concept boss11-phantom-sd-1; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss11-animA.glb",
+ "more": [
+  "post/boss11-animB.glb"
+ ],
+ "seg": "post/boss11-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 100000,
+ "tex": 2048,
+ "texBase": 4096,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    250,
+    300
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.4,
+   0.7
+  ]
+ },
+ "cape": [
+  0
+ ]
+}

@@ -55,7 +55,7 @@ const RACER_P = 32; // street-lamp spacing on one side; the other side is offset
 const RACER_LEN = 256; // the roadside props loop over this stretch of road...
 const RACER_ZMAX = 12; // ...which ends just behind the camera
 const RACER_WRAP = 8192; // scroll uniforms wrap here (every pattern period divides it)
-const RACER_LAMP = [0x35efff, 0xff3ad4]; // left side, right side
+const RACER_LAMP = [0xff8a2a, 0xff3ad4]; // left side, right side (Phase 2, 2026-11-24: the world's pair, orange and magenta; the first was cyan, and cyan led every frame of a run)
 const RACER_HEAD = 6.3; // lamp head height
 const RACER_GATE_LANES = { 2: [-2.5, 2.5], 4: [-3.75, -1.25, 1.25, 3.75] };
 const RACER_CAR_Z = -0.45; // the car model sits this far ahead of the car's origin
@@ -221,12 +221,14 @@ function racerGroundMaterial(mirror, shared) {
       uScroll: shared.uScroll, uLampI: shared.uLampI, uTime: { value: 0 },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 },
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
-      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
+      uEdge: { value: neon(0xffa040, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) }, // (the road's edges amber: they were cyan)
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
+      uCarW: { value: 1.02 }, uCarZ: { value: 0 }, uCarRot: { value: new THREE.Vector2(1, 0) }, uTailC: { value: new THREE.Color(2.2, 0.06, 0.16) }, // (the war rig is wider, slides and turns, and its rear frames are magenta: see RacerRig)
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
       uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
+      uCityK: { value: 0 }, uCityL: { value: 1 }, tStreet: { value: null }, uMirrorOn: { value: 0 }, // (downtown's shoulders: see below)
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -236,9 +238,11 @@ function racerGroundMaterial(mirror, shared) {
       uniform vec3 uAsphalt; uniform vec3 uBase; uniform vec3 uGrid; uniform vec3 uEdge; uniform vec3 uDash;
       uniform vec3 uLampL; uniform vec3 uLampR; uniform float uLampI;
       uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
+      uniform float uCarW; uniform float uCarZ; uniform vec2 uCarRot; uniform vec3 uTailC;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
+      uniform float uCityK; uniform float uCityL; uniform sampler2D tStreet; uniform float uMirrorOn;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       float rh(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }
       // value noise that tiles along the road, so the scroll can wrap without a seam
@@ -302,7 +306,34 @@ function racerGroundMaterial(mirror, shared) {
         float gh = exp(-min(gd.x, gd.y) * 0.45);
         float gf = 1.0 - smoothstep(0.18, 0.55, max(gw.x, gw.y));
         vec3 floorc = uBase + uGrid * (gl + gh * 0.08) * gf;
+        // downtown (Phase 2: the shoulders were a black void): from the kerb, 9 m out, to the walls a pavement of wet
+        // slabs, each a shade of its own; the lamps' light spread from their posts to the walls; each shop's light
+        // pooled at its feet; and the shops and their neon lying in the wet ground, read from the street's own record
+        // (tStreet, as the walls draw them), so they show on every tier, the mirror or none
+        float cityK = 0.0, wpud = 0.0; vec4 shopHere = vec4(0.0); vec3 shopRefl = vec3(0.0);
+        if (uCityK > 0.0) { // (a branch on the uniform alone: what in it reads the record or takes a derivative does so for every pixel of the ground alike)
+          cityK = uCityK * step(3.6, ax) * (1.0 - smoothstep(40.0, 95.0, vDepth)); // (far off the record would be read too coarsely: it fades)
+          float walk = smoothstep(9.0 - fx, 9.0 + fx, ax) * uCityK;
+          vec2 sl = vec2((ax - 9.0) / 1.1, s / 0.9);
+          vec2 sw = max(fwidth(sl), vec2(1e-4));
+          float joint = (1.0 - min(min((0.5 - abs(fract(sl.x) - 0.5)) / sw.x, (0.5 - abs(fract(sl.y) - 0.5)) / sw.y), 1.0)) * (1.0 - smoothstep(0.15, 0.5, max(sw.x, sw.y)));
+          wpud = smoothstep(0.55, 0.8, wet) * walk;
+          vec3 pave = uAsphalt * (1.2 + 0.6 * rh(floor(sl) + 3.0)) * (0.8 + 0.45 * wet) * (1.0 - 0.55 * joint) * (1.0 - 0.4 * wpud);
+          pave += vec3(0.035, 0.035, 0.045) * (1.0 - smoothstep(0.04, 0.04 + fx * 1.5, abs(ax - 9.03))); // (the kerb's edge)
+          floorc = mix(floorc, pave, walk);
+          float sv = x < 0.0 ? 0.25 : 0.75;
+          shopHere = texture2D(tStreet, vec2(s / ${RACER_LEN}.0, sv));
+          // where the eye's ray, turned up off the water, meets the shopfronts (the walls stand 9.2 to 10.8 m out:
+          // 9.8 is taken), and what it finds there: a shop's window, the neon fascia over it, or the wall
+          float dxc = x - cameraPosition.x;
+          float tw = clamp(((x < 0.0 ? -9.8 : 9.8) - x) / (abs(dxc) < 1e-3 ? 1e-3 : dxc), -60.0, 60.0);
+          float hw = tw * cameraPosition.y, zw = z + tw * (z - cameraPosition.z);
+          vec4 rs = texture2D(tStreet, vec2((zw - uScroll) / ${RACER_LEN}.0, sv));
+          float fd = (hw - 4.35) / 0.22, band = smoothstep(0.6, 1.4, hw) * (1.0 - smoothstep(3.3, 4.0, hw)), fasc = exp(-fd * fd);
+          shopRefl = rs.rgb * (rs.a * band * (0.3 + 0.6 * uCityL) + fasc * (0.35 + 0.75 * uCityL)) * step(0.0, tw) * step(ax, 9.8) * smoothstep(3.6, 4.8, ax);
+        }
         vec3 col = mix(floorc, asphalt, road) + refl;
+        col += shopRefl * mix(0.22, 0.6, max(puddle, wpud)) * cityK * (1.0 - 0.55 * uMirrorOn);
         if (uRain > 0.0 && road > 0.5) {
           // rain on the road: rings spread from where each drop lands
           vec2 rc = vec2(x, s) * 1.3; vec2 rf = fract(rc) - 0.5; float rr = rh(floor(rc) + 17.0);
@@ -311,7 +342,10 @@ function racerGroundMaterial(mirror, shared) {
           col += (refl * 1.4 + vec3(0.1, 0.14, 0.18)) * ring * min(uRain, 1.0) * (1.0 - smoothstep(0.12, 0.45, max(fwidth(rc.x), fwidth(rc.y))));
         }
         // the car's shadow: tight and dark under the body, softer as the springs lift it
-        vec2 sq = vec2(x - uCarX, z - ${racerF(RACER_CAR_Z)}) / vec2(1.02 + uCarY * 1.5, 2.28);
+        float zc = z - uCarZ;
+        vec2 sd = vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z)});
+        sd = vec2(uCarRot.x * sd.x - uCarRot.y * sd.y, uCarRot.y * sd.x + uCarRot.x * sd.y);
+        vec2 sq = sd / vec2(uCarW + uCarY * 1.5, 2.28);
         float shade = 1.0 - smoothstep(0.55, 1.12, dot(sq * sq, sq * sq));
         col *= 1.0 - uShade * 0.78 * shade;
         // light falling on it
@@ -324,21 +358,28 @@ function racerGroundMaterial(mirror, shared) {
           float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
           lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
         }
-        float ah = ${racerF(RACER_CAR_Z - 2.2)} - z; // distance ahead of the front bumper
+        if (cityK > 0.001) {
+          // downtown: each lamp's light reaches from its post to the walls, each lit shop's lies at its feet, and the
+          // street's own glow keeps the darkest stretch a deep violet (never black)
+          lt += (uLampL * pool(vec2(x + 6.6, dzl), vec2(3.2, 5.2)) + uLampR * pool(vec2(x - 6.6, dzr), vec2(3.2, 5.2))) * uLampI * 0.5 * cityK;
+          lt += vec3(0.045, 0.03, 0.1) * smoothstep(5.0, 6.5, ax) * cityK;
+          lt += shopHere.rgb * shopHere.a * exp(-max(9.8 - ax, 0.0) * 0.55) * (0.5 + 0.7 * uCityL) * cityK;
+        }
+        float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
-        float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
+        float beams = exp(-pow(abs((x - uCarX + 0.62) / hw), 2.0)) + exp(-pow(abs((x - uCarX - 0.62) / hw), 2.0));
         lt += vec3(1.0, 0.9, 0.78) * uHead * smoothstep(0.0, 1.5, ah) * exp(-ah * 0.07) * min(beams, 1.3);
-        lt += uUnder * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
-        lt += vec3(2.2, 0.06, 0.16) * uTail * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
+        lt += uUnder * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
+        lt += uTailC * uTail * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
         float gz = z - uGateZ;
         float gk = exp(-gz * gz * 0.16) * uGateI;
         if (gk > 0.003) {
-          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow((x + 3.75) * 1.1, 2.0)) + uSlot1 * exp(-pow((x + 1.25) * 1.1, 2.0))
-            + uSlot2 * exp(-pow((x - 1.25) * 1.1, 2.0)) + uSlot3 * exp(-pow((x - 3.75) * 1.1, 2.0)));
-          else lt += gk * (uSlot0 * exp(-pow((x + 2.5) * 0.55, 2.0)) + uSlot1 * exp(-pow((x - 2.5) * 0.55, 2.0)));
+          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow(abs((x + 3.75) * 1.1), 2.0)) + uSlot1 * exp(-pow(abs((x + 1.25) * 1.1), 2.0))
+            + uSlot2 * exp(-pow(abs((x - 1.25) * 1.1), 2.0)) + uSlot3 * exp(-pow(abs((x - 3.75) * 1.1), 2.0)));
+          else lt += gk * (uSlot0 * exp(-pow(abs((x + 2.5) * 0.55), 2.0)) + uSlot1 * exp(-pow(abs((x - 2.5) * 0.55), 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
-        float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
+        float sk = uSunK * (1.0 - smoothstep(-100.0, -34.0, z)) * road;
         if (sk > 0.002) {
           // the egg sun lies down the far road: rippled bars of its own light (in the distance only: the lanes by the
           // car stay clean for the answers' colours)
@@ -361,10 +402,17 @@ function racerGroundMaterial(mirror, shared) {
 // The city: walls with rows of windows and a lit shopfront, brass pipes and gears
 // (kind 3; gears turn about their own axle in the vertex shader), all looping down
 // the avenue like the lamps do. P: the lamp material's uniforms, shared, so the
-// career sky lights both.
-function racerCityMaterial(shared, P) {
+// career sky lights both. maps: the facade's concrete (facade) and the street's shops (street: racerStreetTexture).
+//
+// (Phase 2: the walls read as untextured boxes, dark navy with flat panes. Now they are stained concrete, each block
+// its own part of a CC0 picture with the rain's streaks in it, in panels; every window has a frame, a sill that
+// catches the light and shades the wall under it, and dark glass that gives back the far side of the street and the
+// sky; the street's lamps light the walls near them, each side in its own colour; the shops are lit from the street's
+// record of them (the road reads it too) and those shut have their roller shutters down.)
+function racerCityMaterial(shared, P, maps) {
   return new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 } }),
+    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 }, tWin: { value: windowGridTexture() },
+      tFacade: { value: maps.facade }, tStreet: { value: maps.street }, uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) } }),
     extensions: { derivatives: true },
     vertexShader: `${RACER_WRAP_GLSL}
       attribute vec3 aCol; attribute float aZ; attribute float aKind; attribute float aCy; attribute float aCz; attribute float aSp; attribute float aSeed;
@@ -397,65 +445,156 @@ function racerCityMaterial(shared, P) {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity;
+      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity; uniform sampler2D tWin;
+      uniform sampler2D tFacade; uniform sampler2D tStreet; uniform float uScroll; uniform float uLampI; uniform vec3 uLampL; uniform vec3 uLampR;
       varying vec3 vCol; varying vec3 vN; varying vec3 vL; varying vec3 vW; varying float vKind; varying float vDepth; varying float vFar; varying float vSeed;
       float h21(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.y); }
+      // a rectangle from lo to hi with edges a pixel soft (w: a pixel, in its units)
+      float rbox(vec2 p, vec2 lo, vec2 hi, vec2 w){ vec2 a = smoothstep(lo - w, lo + w, p) * (1.0 - smoothstep(hi - w, hi + w, p)); return a.x * a.y; }
+      // the street's lamps on a surface at p facing n: the nearest lamp on each side, its light falling off with distance
+      // (softly: the lamp's glow carries in the rain)
+      vec3 lampsOn(vec3 p, vec3 n){
+        float dzl = mod(p.z - uScroll + ${RACER_P / 2}.0, ${RACER_P}.0) - ${RACER_P / 2}.0, dzr = mod(p.z - uScroll, ${RACER_P}.0) - ${RACER_P / 2}.0;
+        vec3 a = vec3(-4.75 - p.x, ${RACER_HEAD} - p.y, -dzl), b = vec3(4.75 - p.x, ${RACER_HEAD} - p.y, -dzr);
+        float da = dot(a, a), db = dot(b, b);
+        return (uLampL * (max(dot(n, a), 0.0) * inversesqrt(da) / (1.0 + da / 70.0)) + uLampR * (max(dot(n, b), 0.0) * inversesqrt(db) / (1.0 + db / 70.0))) * uLampI * 0.55;
+      }
       void main(){
         vec3 n = normalize(vN);
         float lit = max(dot(n, uKeyDir), 0.0);
         vec3 col;
         if (vKind < 0.5) {
-          col = vCol * (uAmb + uKey * lit);
+          vec3 base = vCol, light = uAmb + uKey * lit, emit = vec3(0.0), glass = vec3(0.0);
+          float glassK = 0.0;
           if (abs(n.y) < 0.5) {
-            vec2 q = abs(n.x) > 0.5 ? vec2(vL.z, vL.y) : vec2(vL.x, vL.y);
+            float front = step(0.5, abs(n.x)); // (the face toward the road; the others are a block's ends, on the alleys)
+            vec2 q = front > 0.5 ? vec2(vL.z, vL.y) : vec2(vL.x, vL.y);
             vec2 g = vec2(q.x / 1.9, q.y / 2.4);
             vec2 cell = floor(g); vec2 f = fract(g);
-            float r = h21(cell + vSeed * 17.0);
+            vec2 aw = max(fwidth(q), vec2(1e-4)); // a pixel, in metres on the wall
             // how fine the wall's detail may be drawn here: none of it is left to shimmer in the distance
             float fine = 1.0 - smoothstep(0.035, 0.11, fwidth(g.x) + fwidth(g.y));
-            float storey = step(4.8, q.y);
+            float storey = step(4.8, q.y), sideV = vL.x < 0.0 ? 0.25 : 0.75;
+            // the concrete: stains and the rain's streaks (CC0: assets/ui/mat-facade.webp), each block its own part of it;
+            // darker and wetter down by the street
+            base *= mix(1.0, texture2D(tFacade, q / 4.4 + vec2(vSeed * 5.3, vSeed * 2.9)).r * 2.0, 0.85);
+            base *= 0.72 + 0.28 * smoothstep(0.0, 2.5, q.y);
+            // lit by the street, not by the sky alone: the key wrapped round (a wall turned from it is not black), the
+            // lit street's violet bounce strongest low down, and the street's lamps (the near side's strongest: cyan on
+            // the left, magenta on the right)
+            light = uAmb * 1.15 + uKey * (0.22 + 0.6 * lit) + vec3(0.07, 0.045, 0.13) * (1.0 - smoothstep(2.0, 18.0, q.y)) + lampsOn(vW, n);
             // every floor stands on a ledge (a lit lip, its shadow under it), and every third bay is a pier
-            col *= 1.0 + storey * fine * (0.55 * step(f.y, 0.085) - 0.4 * step(0.085, f.y) * step(f.y, 0.17));
+            base *= 1.0 + storey * fine * (0.55 * step(f.y, 0.085) - 0.4 * step(0.085, f.y) * step(f.y, 0.17));
             float pier = storey * step(fract(g.x / 3.0 + vSeed), 0.1);
-            col *= 1.0 + 0.2 * pier * fine;
-            float win = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.8) * storey * (1.0 - pier);
-            // lit in clusters (blocks four bays wide, three floors high): four in ten are dark, the rest busier, and each
-            // has its own light: amber, cyan or magenta
-            vec2 blk = floor(cell / vec2(4.0, 3.0));
-            float b1 = h21(blk + vSeed * 23.0 + 7.7), b2 = h21(blk * 1.3 + vSeed * 31.0 + 2.9);
-            float on = step(r, (0.2 + 0.32 * uCity) * (b1 < 0.4 ? 0.0 : 1.7)); // more windows light as night falls
-            float r2 = h21(cell * 1.7 + vSeed * 5.0 + 3.1);
-            float hot = 0.28 + 0.7 * r2 * r2 + 1.0 * step(0.9, r2); // most are low, a few blaze
-            vec3 amber = vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2));
-            vec3 wc = r2 > 0.84 ? amber : (b2 < 0.5 ? amber : (b2 < 0.77 ? vec3(0.3, 0.95, 1.0) : vec3(1.0, 0.3, 0.8)));
-            float bars = max(step(abs(f.x - 0.5), 0.028), step(abs(f.y - 0.535), 0.022)) * fine; // glazing bars
-            float blind = step(0.5, r2) * step(0.5 + 0.22 * r, f.y) * fine;                            // a blind part-way down
-            col = mix(col, col * 0.45, win * (1.0 - on));
-            col += vec3(0.1, 0.14, 0.24) * win * (1.0 - on) * smoothstep(0.8, 0.3, f.y) * 0.5 * fine;     // a dark pane still holds a little sky
-            col += wc * win * on * hot * (1.0 - 0.8 * bars) * (1.0 - 0.5 * blind) * (0.45 + 1.25 * uCity);
-            // a shopfront glows at street level, in the block's own colour
+            base *= 1.0 + 0.2 * pier * fine;
+            // cast in panels: a joint at every bay above the shops
+            base *= 1.0 - 0.4 * storey * fine * (1.0 - smoothstep(0.0, aw.x * 1.5 + 0.015, min(f.x, 1.0 - f.x) * 1.9));
+            float win = storey * (1.0 - pier); // (Phase 5 fix: the windows are a picture now, with smaller copies of itself: far off they are their own average light, never a crawl of noise)
+            vec4 tw = texture2D(tWin, (g + vec2(floor(vSeed * 8.0) * 3.0, floor(fract(vSeed * 13.0) * 8.0) * 2.0)) / 8.0);
+            // each window (its pane where the picture has it): a frame, a sill that catches the light with the wall
+            // shaded under it, and the rain run down from the ends of the sill above
+            vec2 lp = f * vec2(1.9, 2.4);
+            float pane = rbox(lp, vec2(0.38, 0.6), vec2(1.52, 1.92), aw);
+            float frame = (rbox(lp, vec2(0.31, 0.53), vec2(1.59, 1.99), aw) - pane) * win * fine;
+            float sill = rbox(lp, vec2(0.25, 0.46), vec2(1.65, 0.53), aw) * win * fine;
+            float under = rbox(lp, vec2(0.25, 0.41), vec2(1.65, 0.46), aw) * win * fine;
+            vec2 rd = (lp.xx - vec2(0.29, 1.61)) / 0.08;
+            float run = (exp(-rd.x * rd.x) + exp(-rd.y * rd.y)) * smoothstep(1.99, 2.4, lp.y) * win * fine;
+            base = mix(base, vec3(0.045, 0.047, 0.056), frame);
+            base *= (1.0 + 0.9 * sill) * (1.0 - 0.45 * under) * (1.0 - 0.3 * run);
+            // the pane: dark glass that gives back the far side of the street low down and the sky higher up (more of
+            // it the more the wall is seen edge on), or a room lit in clusters, amber, cyan or magenta (in the picture),
+            // brighter under its ceiling and shaded under the lintel
+            vec3 V = normalize(cameraPosition - vW);
+            float fr = 0.04 + 0.96 * pow(max(1.0 - abs(dot(n, V)), 0.0), 5.0);
+            vec3 env = mix((vL.x < 0.0 ? uLampR : uLampL) * (0.12 * uLampI) + uFogColor * 0.2, uFogColor * 0.6 + vec3(0.01, 0.012, 0.03), smoothstep(5.0, 22.0, q.y));
+            vec3 room = tw.rgb * (0.45 + 1.25 * uCity) * (0.8 + 0.35 * smoothstep(0.7, 1.8, lp.y)) * (1.0 - 0.45 * smoothstep(1.7, 1.92, lp.y) * fine);
+            glass = vec3(0.004, 0.006, 0.012) + env * fr + room;
+            glassK = win * mix(tw.a, pane, fine);
+            // a shopfront in each bay at street level, in the block's colour, lit as the street's record has it (the
+            // road reads the same: tStreet); where it is shut its roller shutter is down
             float sk = fract(vSeed * 7.31);
-            vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
-            float open = step(0.45, h21(vec2(cell.x, vSeed * 3.0))); // some are shuttered
-            float shop = step(0.7, q.y) * step(q.y, 3.9) * step(0.14, f.x) * step(f.x, 0.86) * open;
-            // a shop window: two mullions, a transom, a dark stall-riser, brighter under its ceiling; each shop lit to its own level
-            float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
-            float sl = (0.45 + 0.9 * h21(vec2(cell.x * 3.7, vSeed * 11.0))) * mix(0.35, 1.0, smoothstep(0.7, 1.35, q.y)) * (0.55 + 0.45 * smoothstep(0.7, 3.9, q.y));
-            col += sc * shop * (0.1 + 0.22 * uCity) * sl * (1.0 - 0.8 * sm);
-            col += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
+            vec3 sc = sk < 0.34 ? vec3(1.0, 0.78, 0.3) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75)); // (a third of the shops were lit teal: now gold)
+            if (q.y < 4.8) {
+              float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
+              float openK = mix(0.7, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
+              float bay = rbox(vec2(f.x, q.y), vec2(0.14, 0.7), vec2(0.86, 3.9), vec2(aw.x / 1.9, aw.y)) * front;
+              // the window: two mullions and a transom; inside, a room in the block's light warmed toward white, a strip
+              // light along its ceiling, and the counter, the goods and a rack or two dark against the light
+              float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
+              float iy = (q.y - 0.7) / 3.2, r1 = h21(vec2(cell.x * 2.3, vSeed * 13.0)), r2 = h21(vec2(cell.x * 4.1, vSeed * 9.0));
+              float goods = 1.0 - smoothstep(0.0, 0.05, iy - 0.2 - 0.16 * h21(vec2(cell.x * 1.7, vSeed * 7.0)));
+              float rack = (1.0 - smoothstep(0.0, 0.012 + aw.x / 1.9, abs(f.x - 0.24 - 0.52 * r1) - 0.05)) * (1.0 - smoothstep(0.0, 0.03, iy - 0.5 - 0.22 * r2));
+              float strip = 1.0 - smoothstep(0.0, 0.01 + aw.y / 3.2, abs(iy - 0.93) - 0.012);
+              vec3 roomL = mix(sc, vec3(1.0, 0.9, 0.78), 0.2) * levK * (0.24 + 0.5 * uCity);
+              emit += roomL * ((0.45 + 0.75 * smoothstep(0.1, 0.95, iy)) * (1.0 - 0.8 * sm) * (1.0 - 0.62 * max(goods, rack) * fine) + 1.2 * strip * fine) * bay * openK;
+              emit += env * fr * 0.6 * bay * openK;
+              base = mix(base, vec3(0.15, 0.155, 0.17) * mix(0.9, 0.78 + 0.22 * smoothstep(0.25, 0.75, abs(fract(q.y / 0.09) - 0.5) * 2.0), fine), bay * (1.0 - openK)); // (the shutter, ribbed)
+              base *= 1.0 - 0.4 * front * (1.0 - step(0.7, q.y)) * step(0.14, f.x) * step(f.x, 0.86); // (the stall riser under it)
+              light += sc * levK * openK * 0.3 * (1.0 - bay) * front; // (its light on the piers either side and on the sign over it)
+            }
+            emit += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
           }
-        } else if (vKind < 1.5) col = vCol * uNeonI;
-        else {
+          col = mix(base * light, glass, glassK) + emit;
+        } else if (vKind < 1.5) col = vCol * uNeonI * (1.0 - smoothstep(48.0, 105.0, vDepth)); // (a gear's lit rings go out with distance: near wheels keep their light, the far ones are dark cogs, not a cluster of rings round the gantry at the end of the street)
+        else if (vKind > 4.5) {
+          // a fixture on a wall (an air conditioner): painted sheet metal lit as the wall round it is, a grille of slats
+          // on the face to the street, its underside in the street's bounce
+          float sl = vL.y / 0.06, sw = fwidth(sl);
+          float grille = mix(0.86, 0.72 + 0.28 * smoothstep(0.2, 0.6, abs(fract(sl) - 0.5) * 2.0), (1.0 - smoothstep(0.3, 0.8, sw)) * step(0.5, abs(n.x)));
+          col = vCol * grille * (uAmb * 1.15 + uKey * (0.22 + 0.6 * lit) + vec3(0.07, 0.045, 0.13) * (1.0 - smoothstep(2.0, 18.0, vL.y)) + lampsOn(vW, n));
+        } else {
           // brass: warm metal with a highlight and a soft rim
           vec3 v = normalize(cameraPosition - vW);
           float spec = pow(max(dot(reflect(-uKeyDir, n), v), 0.0), 14.0);
-          float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          float rim = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
           col = vCol * (uAmb * 1.5 + uKey * (0.25 + 0.8 * lit)) + vec3(1.0, 0.8, 0.5) * spec * 0.8 + vCol * rim * 0.4;
         }
         float fg = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar);
         gl_FragColor = vec4(mix(col, uFogColor, fg), 1.0);
       }`,
   });
+}
+// The street's shops, as the walls and the wet road both read them (Phase 2): a row for each side of the street, four
+// texels a metre along the 256 m the city loops over. In colour, the block's neon where a wall stands (black in an
+// alley); in alpha, the light of the shop in that bay (0: its shutter is down). The walls draw their shopfronts from
+// it and the road the light those shops throw on the pavement and lay in its water, so the two always agree.
+// blocks: [{ side, z (its near end), L, sd (its seed) }], in the coordinates the city is built in.
+const racerHash = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
+const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [1, 0.78, 0.3] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
+function racerStreetTexture(blocks) {
+  const W = RACER_LEN * 4, d = new Uint8Array(W * 2 * 4);
+  for (const b of blocks) {
+    const row = b.side > 0 ? 1 : 0, c = racerShopColor(b.sd), z0 = b.z - b.L;
+    for (let i = Math.ceil(z0 * 4 - 0.5); (i + 0.5) / 4 < b.z; i++) {
+      const zc = (i + 0.5) / 4, bay = Math.floor(zc / 1.9), bc = (bay + 0.5) * 1.9;
+      // (a bay is the block's if its middle is: the wall draws a bay's shop from there)
+      const lev = bc >= z0 && bc < b.z && racerHash(bay, b.sd * 3) > 0.3 ? (0.45 + 0.9 * racerHash(bay * 3.7, b.sd * 11)) / 1.35 : 0; // (three in ten shut)
+      const o = (row * W + (((i % W) + W) % W)) * 4;
+      d[o] = Math.round(c[0] * 255); d[o + 1] = Math.round(c[1] * 255); d[o + 2] = Math.round(c[2] * 255); d[o + 3] = Math.round(lev * 255);
+    }
+  }
+  const t = new THREE.DataTexture(d, W, 2, THREE.RGBAFormat);
+  t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping;
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
+  t.needsUpdate = true;
+  return t;
+}
+// The facade's concrete (assets/ui/mat-facade.webp, from Poly Haven's concrete_wall_006, CC0: its stains and rain
+// streaks as one grey, 0.5 on average), or, opened from disk or before it came, an even grey (the walls then plain).
+function racerFacadeTexture() {
+  const img = Assets.ui("mat-facade");
+  let t;
+  if (img) {
+    t = new THREE.Texture(img);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (the walls are seen nearly edge on)
+  } else {
+    t = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, THREE.RGBAFormat);
+    t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+  }
+  t.needsUpdate = true;
+  return t;
 }
 // Neon blade signs hang off the buildings facing the driver. Their words are the
 // course's own: one canvas holds them all, upright, in three neon colours.
@@ -511,12 +650,12 @@ function racerSignMaterial(shared, P, tex) {
 }
 // A brass gear: a toothed rim on spokes around a hub. It faces down the street, so
 // the driver sees it turn (its axle runs along z). spin: radians per second.
-function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
+function racerGear(b, x, y, z, R, teeth, spin, aZ, seed, neo = 0) {
   const v = { aZ, aKind: 4, aCy: y, aCz: x, aSp: spin, aSeed: seed };
   // (it used to be a thin ring with boxes for teeth: flat, and the colour of the windows behind it. Now it is a
   // wheel a quarter of its radius thick: a dark bronze face, five windows cut between its spokes, bright flanks
   // on every tooth and window wall, and a lit ring standing proud of the face.)
-  const FACE = 0x4a3116, FLANK = 0xdfa64c, thick = R * 0.25, spokes = 5;
+  const FACE = neo ? 0x14121c : 0x4a3116, FLANK = neo ? 0x2b2737 : 0xdfa64c, thick = R * 0.25, spokes = 5; // (neo: with the panorama up the works are dark bodies with rims of light in one of the road's colours)
   const shape = new THREE.Shape(), n = teeth * 4;
   for (let i = 0; i < n; i++) {
     const a = ((i - 0.5) / n) * Math.PI * 2, rr = i % 4 < 2 ? R * 1.05 : R * 0.84, px = Math.cos(a) * rr, py = Math.sin(a) * rr;
@@ -546,9 +685,12 @@ function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
   b.add(hub, racerM(x, y, z, 1, 1, 1, Math.PI / 2), FLANK, 1.05, v);
   hub.dispose();
   // the lit ring: a neon tube let into the face (it is round, so it need not turn with the wheel)
-  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * 0.028), 4, 32);
-  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), 0xffb24a, 1.0, { aZ, aKind: 1, aSeed: seed });
+  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * (neo ? 0.04 : 0.028)), 4, 32);
+  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), neo || 0xffb24a, 1.0, { aZ, aKind: 1, aSeed: seed });
   ring.dispose();
+  // (neo: the ring's light is 1.0, under the lens's glow (it was 1.5), and there is no second ring of light round the
+  // rim (Phase 2: two rings to a wheel, four to a pair, read as rings floating round the signs): a dark wheel with one
+  // ring set in its face, its teeth against the lit wall behind it)
 }
 function racerLamp(b, box, side, z, color) {
   const x = side * 6.4, hx = side * 4.75;
@@ -686,6 +828,11 @@ class RacerEnv {
     this.rt = null;
   }
   build(sky) {
+    const rt = GFX.keepEnv(() => this.draw(sky)); // (kept: drawn again after a lost graphics context, into the same target)
+    (this.rts || (this.rts = [])).push(rt);
+    return rt.texture;
+  }
+  draw(sky) {
     const u = this.sky.material.uniforms;
     u.uTop.value.copy(sky.top);
     u.uMid.value.copy(sky.mid);
@@ -703,9 +850,7 @@ class RacerEnv {
     this.strips[3].material.color.copy(sky.grid).multiplyScalar(2);
     this.strips[4].material.color.copy(sky.horizon).multiplyScalar(1.6);
     this.strips[5].material.color.copy(sky.mid).lerp(sky.horizon, 0.35).multiplyScalar(1.3);
-    const rt = this.pm.fromScene(this.scene, 0.02, 0.1, 100);
-    (this.rts || (this.rts = [])).push(rt);
-    return rt.texture;
+    return this.pm.fromScene(this.scene, 0.02, 0.1, 100);
   }
   dispose() {
     if (this.rts) this.rts.forEach((rt) => rt.dispose());
@@ -740,7 +885,7 @@ function racerSignTexture(label, color, wide) {
   x.fillStyle = "rgba(255,255,255,0.35)";
   x.fillText(label, W / 2, H / 2 + 5);
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (16 on a desktop, 4 on a phone: see GFX.init)
   return t;
 }
 
@@ -786,7 +931,7 @@ function racerTagTexture(label, color, wide) {
   x.fillStyle = "#0b0426";
   x.fillText(label, W / 2 + (wide ? 3 : 4), H / 2 + 6);
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (16 on a desktop, 4 on a phone: see GFX.init)
   return t;
 }
 
@@ -806,6 +951,14 @@ class RacerGame extends QuizGame {
     this.gate = null;
     this.gp = 0;
     this.nextMilestone = 0;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the five skies and the war rig. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, rig: null, traffic: {} };
+    if (this.has3D && GFX.ok) {
+      for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.rig = Assets.model("warrig");
+      for (const k in RACER_GEN_FLEET) { const m = Assets.model(RACER_GEN_FLEET[k][0]); if (m) this.gen.traffic[k] = m; } // (the traffic: see RacerWorld.genKind)
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-racer">
       <div class="hud">
@@ -838,6 +991,7 @@ class RacerGame extends QuizGame {
     // light: key from behind the camera, a gantry light and one that rides the nearest lamp
     this.amb = new THREE.AmbientLight(0x6a5aa8, 0.55);
     this.keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.keyLight.userData.keep = true; // (under the light budget the key is always drawn)
     this.keyLight.position.set(-3, 6, 6);
     this.gateLight = new THREE.PointLight(0xc9b8ff, 0, 16, 2);
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
@@ -845,7 +999,11 @@ class RacerGame extends QuizGame {
     this.sunLight = new THREE.DirectionalLight(0xffffff, 0);
     this.sunLight.position.set(0, 2.6, -10);
     s.add(this.amb, this.keyLight, this.gateLight, this.lampLight, this.sunLight);
-    if (GFX.ok) {
+    // the panoramas, when they arrived: the sky, the light on what is lit, and what lacquer mirrors (21d-racersky.js)
+    this.pano = null;
+    if (GFX.ok && this.gen.skies["racer-dawn"]) { try { this.pano = new RacerSky(this, this.gen.skies); } catch (e) { this.pano = null; } }
+    if (this.pano) this.env = this.pano.env;
+    else if (GFX.ok) {
       // The car's reflections follow the career sky. Rendering an environment map
       // costs a dropped frame or two, so the whole career's maps are baked now,
       // while the scene loads behind the screen transition, and play just
@@ -858,6 +1016,7 @@ class RacerGame extends QuizGame {
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
     s.add(this.sky);
+    if (this.pano) { this.sky.visible = false; this.sky.userData.sky = false; } // (the panorama is the sky; this one still holds the colours the world mixes)
     // the sun of this road is a golden egg on the horizon, and it grows as the nest egg does (look only)
     this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo, egg: true, stripes: false });
     this.sunK = 0.8;
@@ -868,7 +1027,7 @@ class RacerGame extends QuizGame {
     this.ridgeNear = makeRidge({ z: -350, width: 1000, height: 34, n: 48, top: 0xc8c8d8, bottom: 0x24243a, line: 0xff3ad4, lineK: 2.2 });
     for (const r of [this.ridgeFar, this.ridgeNear]) r.children.forEach((c) => { c.material.fog = false; });
     s.add(this.ridgeFar, this.ridgeNear);
-    this.city = makeSkyline({ z: -315, width: 330, count: 80, minH: 6, maxH: 44, lit: 0.35 });
+    this.city = makeSkyline({ z: -315, width: 330, count: 80, minH: 6, maxH: 44, lit: 0.35, grid: true });
     s.add(this.city);
     // the wet ground: road and grid floor share one mirror
     this.mirror = new Mirror(0);
@@ -880,6 +1039,7 @@ class RacerGame extends QuizGame {
     s.add(this.ground);
     s.userData.mirrors = [this.mirror];
     this.buildProps();
+    this.groundMat.uniforms.tStreet.value = this.streetTex; // (the street's shops: the wet road reads them as the walls do)
     this.buildSpeedLines();
     this.car = this.makeCar();
     { // skid marks (see skid())
@@ -895,16 +1055,43 @@ class RacerGame extends QuizGame {
     s.add(this.car);
     this.world = new RacerWorld(this); // traffic, biomes and ambient events (look only)
     this.buildGateKit();
+    if (this.pano) (this.rigKit ? [[this.gateFrameMat, 1.2]] : [[this.paint, 1.55], [this.trim, 1.55], [this.glass, 1.9], [this.gateFrameMat, 1.2]]).forEach(([m, k]) => { if (m) this.pano.mirror(m, k); }); // lacquer, glass and the gantries' metal mirror the sky (the war rig has seen to its own)
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
     const k4 = this.gateKit[4], wg = new THREE.Group();
-    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
+    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.posts, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
+    // (and everything else a gate builds: the letters on the road, each answer's badge with its glow and stem, the
+    // dark ring behind it, the bar they hang from. They were compiled and sent the first time a gate came.)
+    for (const label in this.badgeMats) {
+      const tf = label.length > 1;
+      wg.add(new THREE.Mesh(k4.sign, this.tagMats[label]), new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]), new THREE.Mesh(this.badgeGeo[0], this.badgeGlowMats[label]), new THREE.Mesh(this.badgeStemGeo, this.badgeGlowMats[label]));
+    }
+    wg.add(new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat), new THREE.Mesh(this.barKit[4].frame, this.gateFrameMat), new THREE.Mesh(this.barKit[4].glow, this.gateGlowMat));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
+    s.userData.lightBudget = { dir: 3, point: 2 }; // (the lights this race draws: the key, and the strongest two of the sun, the rims and the light on the lens; the strongest two of the gate's, the lamps', the flame's, the egg's and a blast. See LightPool in 04-gfx.js)
+    if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint
+      this.post.ssaa = 2;
+      const gu = this.groundMat.uniforms;
+      gu.uCarW.value = 1.26; gu.uTailC.value.setRGB(0.5, 0.03, 0.32);
+    }
+    // The run as it is staged round the war rig (21f-racerstage.js): its own effects kit (this.kit) and a set of
+    // show-only timers (this.show). With the built-in car there is none, and everything is shown as it always was.
+    this.stage = null;
+    if (this.rigKit) { try { this.stage = new RacerStage(this); } catch (e) { this.stage = null; console.warn("the run could not be staged: " + e.message); } }
+    if (this.stage && this.stage.edge && this.warmExtra) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last life: BandEdge.warmPiece)
+    if (this.stage) { // the lane badges (and, while a blow is on the screen, the gantry's letters) are drawn last, over the finished picture, from the unshaken lens: no flash, colour split, tear, tint or shake touches them
+      this.over = { cam: this.camera.clone() };
+      this.over.cam.layers.set(2);
+      Object.values(this.badgeMats).concat([this.badgeBackMat]).forEach((m) => { m.depthTest = false; });
+      this.signOverMats = {};
+      for (const label in this.signMats) { const m = (this.signOverMats[label] = new THREE.MeshBasicMaterial({ map: this.signMats[label].map, color: new THREE.Color(1.3, 1.3, 1.3), transparent: true, opacity: 0, depthTest: false, depthWrite: false, fog: false })); this.owned.push(m); }
+      s.userData.overlay = (r) => this.drawOver(r);
+    }
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
     this.lookAt.set(0, 0.7, -18);
     this.applySky(sky0);
@@ -961,18 +1148,26 @@ class RacerGame extends QuizGame {
     const box = new THREE.BoxGeometry(1, 1, 1);
     const pipe = new THREE.CylinderGeometry(1, 1, 1, 8);
     const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
-    const BRASS = 0xb8823c, COPPER = 0x8a5a34;
+    // (with the panorama up the works are of the neon city: dark bodies with rims of light, set back against the walls,
+    // so the middle of the street is open to the egg at its end and to the sky above it)
+    const NEO = !!this.pano, NEON = [0xff8a2a, 0xff3ad4, 0xffc93d]; // (orange where cyan was: the world's pair)
+    const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
+    const blocks = []; // (each block, for the street's record of its shops: racerStreetTexture)
     let seed = 0.11;
     for (const side of [-1, 1]) {
-      let z = side > 0 ? -6 : 4, n = 0; // the two sides are staggered
+      const z1 = side > 0 ? -6 : 4;
+      let z = z1, n = 0; // the two sides are staggered
       while (z > -RACER_LEN + 8) {
-        const L = rand(13, 21), H = rand(18, 30) + (n % 3 === 0 ? rand(18, 34) : 0), D = 13;
+        // (the last block ends a metre short of where the first one starts on its next time round: the two never stand
+        // in the same place at once)
+        const L = Math.min(rand(13, 21), z - (z1 - RACER_LEN) - 1), H = rand(18, 30) + (n % 3 === 0 ? rand(18, 34) : 0), D = 13;
         const front = 9.2 + rand(0, 1.6), zc = z - L / 2;
         const aZ = z - L; // a block loops as one, once its far end is behind the camera
         const sd = (seed = (seed + 0.137) % 1);
         const wv = { aZ, aKind: 0, aSeed: sd }, bv = { aZ, aKind: 3, aSeed: sd };
+        blocks.push({ side, z, L, sd });
         walls.add(box, racerM(side * (front + D / 2), H / 2, zc, D, H, L), WALLS[n % WALLS.length], 1, wv);
         if (H > 40) walls.add(box, racerM(side * (front + D / 2 + 1.5), H + 4, zc, D - 3, 8, L - 4), WALLS[(n + 2) % WALLS.length], 1, wv);
         // a pipe along the wall with a flange at each end, and a drop to the street
@@ -982,10 +1177,10 @@ class RacerGame extends QuizGame {
         [z - 0.8, z - L + 0.8].forEach((fz) => detail.add(pipe, racerM(px, py, fz, 0.5, 0.3, 0.5, Math.PI / 2), COPPER, 1, bv));
         // every other block: a pair of meshing gears on the wall
         if (n % 2 === 0) {
-          const R = rand(2.0, 2.9), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
+          const R = rand(2.0, 2.9) * (NEO ? 0.72 : 1), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
           const sp = rand(0.3, 0.55) * (Math.random() < 0.5 ? -1 : 1);
-          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd);
-          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd);
+          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd, NEO ? NEON[n % 3] : 0);
+          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd, NEO ? NEON[(n + 1) % 3] : 0);
           detail.add(box, racerM(side * (front - 0.3 - R / 2), gy, gz + 0.5, R + 0.8, 0.3, 0.3), COPPER, 1, bv); // its bracket
         }
         // a neon blade sign on a bracket, facing the driver
@@ -999,6 +1194,19 @@ class RacerGame extends QuizGame {
           detail.add(box, racerM((xl + xr) / 2, y0 + h + 0.2, sz, w + 0.4, 0.16, 0.16), COPPER, 1, bv);
         }
         if (n % 3 === 1) vents.push([side * rand(6.7, 8.2), z - rand(2, L - 2)]);
+        // (Phase 2) air conditioners in the lower part of about one window in six, on the first five floors above the
+        // shops: painted boxes standing out from the wall, a grille on the face to the street (kind 5). Where is the
+        // block's own (a hash, not the run's randomness: the rest of the city is laid out as it was).
+        const AC = [0xa7a59c, 0x8e9297, 0xb4ada0, 0x7c838a];
+        for (let b = Math.ceil((z - L) / 1.9); (b + 1) * 1.9 <= z; b++) {
+          const pierAt = (gx) => ((((gx / 3 + sd) % 1) + 1) % 1) < 0.1; // (as the wall's shader lays its piers)
+          if (pierAt(b + 0.3) || pierAt(b + 0.5) || pierAt(b + 0.7)) continue;
+          for (let st = 2; st < Math.min(7, Math.floor(H / 2.4)); st++) {
+            const h = racerHash(b * 7.1 + st * 13.7, sd * 5.3);
+            if (h > 0.17) continue;
+            detail.add(box, racerM(side * (front - 0.22), st * 2.4 + 0.88, (b + 0.5) * 1.9, 0.44, 0.52, 0.78), AC[Math.floor(h * 24) % 4], 1, { aZ, aKind: 5, aSeed: sd });
+          }
+        }
         z -= L + rand(1.5, 4);
         n++;
       }
@@ -1006,23 +1214,29 @@ class RacerGame extends QuizGame {
     // pipes cross over the street on three runs
     [-52, -134, -214].forEach((gz, i) => {
       const bv = { aZ: gz, aKind: 3, aSeed: i * 0.31 };
-      detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
-      detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
-      [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      if (!NEO) {
+        detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
+        detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
+        [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      }
       // a great wheel and its pinion hang from the run, turning over one kerb or the other: the middle of the
       // street stays open, so the egg at the end of it is never behind the works
       const gs = i % 2 ? 1 : -1;
       // (lower and larger than they were: the great wheel now hangs inside the picture, a third of the street wide
       // as it comes up, on a hanger from the run; its pinion meshes above it, toward the middle)
-      const GR = 4.5, gr = 2.0, gy = 12.4 + i * 0.7, gx = gs * 6.0, off = (GR + gr) * 0.97;
-      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31);
-      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31);
-      detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
+      // (neo: no run crosses the street; the wheel is smaller and turns on the wall, its pinion beside it)
+      const GR = NEO ? 3.1 : 4.5, gr = NEO ? 1.4 : 2.0, gy = 12.4 + i * 0.7, gx = gs * (NEO ? 8.4 : 6.0), off = (GR + gr) * 0.97;
+      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31, NEO ? NEON[i % 3] : 0);
+      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31, NEO ? NEON[(i + 1) % 3] : 0);
+      if (!NEO) detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
       detail.add(pipe, racerM(gx, gy, gz + 0.4, 0.5, 1.3, 0.5, Math.PI / 2), COPPER, 1, bv);
     });
     box.dispose();
     pipe.dispose();
-    this.cityMat = racerCityMaterial(this.shared, P);
+    this.streetTex = racerStreetTexture(blocks);
+    this.facadeTex = racerFacadeTexture();
+    this.owned.push(this.streetTex, this.facadeTex);
+    this.cityMat = racerCityMaterial(this.shared, P, { facade: this.facadeTex, street: this.streetTex });
     this.walls = new THREE.Mesh(walls.build(), this.cityMat);
     this.cityDetail = new THREE.Mesh(detail.build(), this.cityMat);
     const sg = new THREE.BufferGeometry();
@@ -1096,16 +1310,21 @@ class RacerGame extends QuizGame {
       { geo: new THREE.BoxGeometry(w * 0.08, w * 0.3, 0.2), matrix: T(x - w * 0.08, h + w * 0.56, z + w * 0.66, 0, 0.9), color: C(0.02, 0.02, 0.03) },
     ];
     this.towers = new THREE.Mesh(blasterMerge([...tower(-86, -318, 64, 9), ...tower(60, -326, 80, 10)]), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
-    // ...and an armillary sphere of light turning over the vanishing point
+    // ...and an armillary sphere turning high over the skyline. (Phase 2: it hung dead over the vanishing point, a
+    // big ring with a slanted ellipse and a gold dot right behind the gantry's answers, its meaning unclear. With the
+    // panorama up there is none: the egg at the end of the street has that sky to itself. Without it, it is a third
+    // of the size, below the glow of the lens, and high over the left of the skyline, clear of the gantry.)
     this.orrery = new THREE.Group();
-    const ringMat = new THREE.MeshBasicMaterial({ color: neon(0x6fe8ff, 1.45), fog: false });
-    [17, 14.5, 12].forEach((r, i) => {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.2, 4, 48), ringMat);
-      ring.rotation.set(i * 1.1, i * 0.7, 0);
-      this.orrery.add(ring);
-    });
-    this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.2, 1), new THREE.MeshBasicMaterial({ color: C(0.5, 0.34, 0.14), fog: false })));
-    this.orrery.position.set(0, 76, -332);
+    if (!NEO) {
+      const ringMat = new THREE.MeshBasicMaterial({ color: neon(0x6fe8ff, 0.55), fog: false });
+      [17, 14.5, 12].forEach((r, i) => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 0.36, 0.12, 4, 40), ringMat);
+        ring.rotation.set(i * 1.1, i * 0.7, 0);
+        this.orrery.add(ring);
+      });
+      this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 1), new THREE.MeshBasicMaterial({ color: C(0.32, 0.22, 0.09), fog: false })));
+      this.orrery.position.set(-15, 104, -332);
+    }
     this.scene.add(this.towers, this.orrery);
   }
   // Streaks of light that rush past when you floor it.
@@ -1162,7 +1381,10 @@ class RacerGame extends QuizGame {
   // a full-width tail-light bar, neon light bars and ribbon trails.
   // The car is its own module (RacerCar): model, lamps, springs, spray.
   makeCar() {
-    const kit = (this.carKit = new RacerCar(this));
+    // (the war rig when its model arrived: see 21e-racerrig.js. It answers to everything the car's kit answers to.)
+    this.rigKit = null;
+    if (this.gen.rig) { try { this.rigKit = new RacerRig(this, this.gen.rig); } catch (e) { this.rigKit = null; console.warn("the war rig could not be built: " + e.message); } }
+    const kit = (this.carKit = this.rigKit || new RacerCar(this));
     this.carRig = kit.rig;
     this.paint = kit.paint;
     this.glass = kit.glass;
@@ -1205,9 +1427,10 @@ class RacerGame extends QuizGame {
         cones.add(c, racerM(x, 1.71, 0.25), col, 0.5);
         c.dispose();
       });
-      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => glow.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
-      const k = { frame: frame.build("color"), glow: glow.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
-      this.owned.push(k.frame, k.glow, k.cones, k.sign);
+      const posts = new RacerBatch(); // (the red bollards between the lanes: a mesh of their own, so a gantry that lifts as it leaves can leave them on the road)
+      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => posts.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
+      const k = { frame: frame.build("color"), glow: glow.build("color"), posts: posts.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
+      this.owned.push(k.frame, k.glow, k.posts, k.cones, k.sign);
       return k;
     };
     this.gateKit = { 2: kit(2), 4: kit(4) };
@@ -1276,6 +1499,8 @@ class RacerGame extends QuizGame {
     const n = r.n === 2 ? 2 : 4;
     const k = this.gateKit[n];
     g.add(new THREE.Mesh(k.frame, this.gateFrameMat), new THREE.Mesh(k.glow, this.gateGlowMat));
+    g.userData.posts = new THREE.Mesh(k.posts, this.gateGlowMat);
+    g.add(g.userData.posts);
     const cones = new THREE.Mesh(k.cones, this.gateConeMat);
     cones.layers.set(1);
     g.add(cones);
@@ -1285,6 +1510,12 @@ class RacerGame extends QuizGame {
       sign.position.set(laneX(i, r.n), 4.2, 0.02);
       sign.userData.slot = i;
       g.add(sign);
+      if (this.stage) { // (staged) the same letter once more, drawn over the finished picture while a blow is on the screen
+        const so = new THREE.Mesh(k.sign, this.signOverMats[label]);
+        so.position.set(sign.position.x, sign.position.y, sign.position.z + 0.01);
+        so.layers.set(2); so.renderOrder = 2;
+        g.add(so);
+      }
     }
     // lane letters on the road: they fade in with the question and go when the gate is passed
     this.dropTags();
@@ -1321,11 +1552,11 @@ class RacerGame extends QuizGame {
         const back = new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat);
         back.scale.setScalar(2.42);
         back.position.set(0, 1.62, -0.03);
-        back.layers.set(1);
+        back.layers.set(this.stage ? 2 : 1);
         back.renderOrder = 3;
         post.add(back);
       }
-      badge.layers.set(1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's)
+      badge.layers.set(this.stage ? 2 : 1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's) (staged: drawn over the finished picture. See drawOver.)
       badge.renderOrder = 4;
       post.add(glow, stem, badge);
       lane.add(tag, post);
@@ -1361,12 +1592,20 @@ class RacerGame extends QuizGame {
   }
 
   start() {
-    Sound.play("game");
-    Sound.engine(true);
+    Sound.play("racer");
+    if (this.stage) this.stage.start(); // (staged: the engine's own recording, and the war rig drives in from behind the lens)
+    else { Sound.engine(true); if (this.rigKit) this.rigKit.launch(); }
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());
   }
   rate() { return 0.03 + 0.005 * Math.min(this.run.streak, 10); }
+  // where a bolt spins up when the streak reaches a new tier (QuizGame.propTier): over the rig, above its egg (staged only)
+  tierAt() {
+    if (!this.stage) return null;
+    const p = this.stage.rig.centre(new THREE.Vector3());
+    p.y += 3.2;
+    return { p, size: 1.3 };
+  }
   hud() {
     if (!this.el) return;
     UI.text($("[data-egg]", this.el), money(this.egg));
@@ -1408,6 +1647,7 @@ class RacerGame extends QuizGame {
     if (this.boostRate || this.state !== "ask" || this.lane === null) return;
     this.timeFrac = 1 - this.gp;
     this.boostRate = Math.max(1 / this.T, (1 - this.gp) / 0.7);
+    if (this.stage) return this.stage.boost(); // (staged: the roar, and a flash at each stack as they light)
     Sound.sfx("swoosh");
     GFX.pulse(0.9, 0); // (flooring it streaks the street; the colours part on a crash only)
   }
@@ -1426,8 +1666,12 @@ class RacerGame extends QuizGame {
     const ok = this.run.record(r, picked, this.boostRate ? this.timeFrac : undefined);
     this.quiz.reveal(picked);
     this.state = "explain";
-    let title;
+    // (staged, round the war rig: what is seen and heard of the answer is the stage's, told once the rules below have
+    // run. The rules are the same either way, line for line.)
+    const st = this.stage;
+    let title, how = "crash", gain = 0, policy = false;
     if (ok) {
+      how = "right";
       const tf = this.boostRate ? this.timeFrac : 0;
       const contrib = 2500 + 250 * Math.min(this.run.streak, 10) + Math.round(1500 * tf);
       const rate = this.rate();
@@ -1436,72 +1680,91 @@ class RacerGame extends QuizGame {
       this.peak = Math.max(this.peak, this.egg);
       if (this.run.streak > 0 && this.run.streak % 5 === 0 && this.insurance < 2) {
         this.insurance++;
+        policy = true;
         UI.toast("STREAK " + this.run.streak + "! INSURANCE POLICY ISSUED");
       }
       title = `+${money(this.egg - before)} · ${Math.round(rate * 100)}% RETURN`;
-      Sound.sfx("correct");
-      Sound.sfx("deposit");
-      UI.flash("good");
-      GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      gain = this.egg - before;
+      if (!st) {
+        Sound.sfx("correct");
+        Sound.sfx("deposit");
+        UI.flash("good");
+        GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      }
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       this.speedKick();
       if (this.has3D) {
-        const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
-        this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        if (!st) {
+          const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
+          this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        }
         this.signFlash(r.correct);
       }
-      const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
-      UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      if (!st) {
+        const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
+        UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      }
       while (this.nextMilestone < EGG_MILESTONES.length && this.egg >= EGG_MILESTONES[this.nextMilestone]) {
         const m = EGG_MILESTONES[this.nextMilestone++];
+        if (this.stage) this.stage.milestone(); // (look only: gold stars off the egg, on the show clock)
         this.tw.wait(0.4, () => {
           Sound.sfx("levelup");
           UI.banner(m === EGG_GOAL ? "MILLIONAIRE!" : money(m) + "!", COLORS.lime, m === EGG_GOAL ? "Retire rich if you keep it" : "Milestone at age " + (START_AGE + this.year));
         });
       }
     } else if (this.insurance > 0) {
+      how = "insured";
       this.insurance--;
       title = picked < 0 ? "NO LANE! INSURANCE PAID THE CLAIM" : "WRONG LANE! INSURANCE PAID THE CLAIM";
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.25);
-      GFX.pulse(6, 0);
+      if (!st) {
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.25);
+        GFX.pulse(6, 0);
+      }
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      }
     } else {
       this.crashes++;
       const loss = this.egg * 0.15;
       this.egg -= loss;
       title = (picked < 0 ? "NO LANE CHOSEN! " : "WRONG LANE! ") + "MARKET CRASH −" + money(loss);
-      Sound.sfx("hit");
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.5);
-      GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
-      GFX.glitch(0.6, 0.34);
+      if (!st) {
+        Sound.sfx("hit");
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.5);
+        GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
+        GFX.glitch(0.6, 0.34);
+      }
       GFX.hitStop(120);
       Haptics.buzz([70, 40, 110]);
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) {
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
-        this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) {
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
+          this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+        }
       }
     }
     this.hud();
+    if (st) { try { st.arrive(how, { right: r.correct, picked, gain, policy }); } catch (e) { console.error(e); } } // (after the HUD has drawn what the rules decided: the life that went is seen to break)
     const gate = this.gate;
     this.gate = null;
     if (gate) {
       this.leaving = gate;
-      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); }, () => this.dropGate(gate));
+      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); if (st) { gate.position.y = 2.7 * Math.min(1, k * 2.1); gate.userData.posts.position.y = -gate.position.y; } }, () => this.dropGate(gate)); // (staged: it lifts as it goes by, over the lens, not through it: what happens at the gate is seen)
     }
     this.tw.wait(0.45, () => {
       if (this.unmounted) return;
@@ -1550,16 +1813,17 @@ class RacerGame extends QuizGame {
   gameOver(fullCareer) {
     this.state = "over";
     Sound.stopMusic();
-    Sound.engine(false);
+    if (!this.stage) Sound.engine(false); // (staged: the engine is heard to die, or to pull away: see the stage's over)
     const rich = this.egg >= EGG_GOAL;
     const age = START_AGE + this.year;
     if (fullCareer) {
       Sound.sfx(rich ? "win" : "levelup");
       UI.banner(rich ? "RETIRED A MILLIONAIRE" : "HAPPY RETIREMENT", rich ? COLORS.lime : COLORS.yellow, "Age 65 · " + money(this.egg));
     } else {
-      Sound.sfx("gameover");
+      if (!this.stage) Sound.sfx("gameover"); // (staged: the blast first, then the jingle)
       UI.banner("FORCED RETIREMENT", COLORS.red, "Three market crashes at age " + age);
     }
+    if (this.stage) { try { this.stage.over(fullCareer, rich); } catch (e) { console.error(e); } } // (each ending is staged, inside the 1.9 s the rule gives it)
     this.tw.wait(1.9, () => {
       if (this.unmounted) return;
       showResults({
@@ -1571,7 +1835,7 @@ class RacerGame extends QuizGame {
     });
   }
   // Paint the whole world in the colours of this point in the career.
-  applySky(sky) {
+  applySky(sky, dt = 1 / 60) {
     const u = this.sky.material.uniforms;
     u.uTop.value.copy(sky.top);
     u.uMid.value.copy(sky.mid);
@@ -1603,6 +1867,7 @@ class RacerGame extends QuizGame {
     g.uGrid.value.copy(sky.grid).multiplyScalar(1.5);
     g.uBase.value.copy(sky.bg).multiplyScalar(0.18);
     g.uAsphalt.value.copy(sky.bg).multiplyScalar(0.28);
+    g.uCityL.value = sky.city; // (the shops in the wet ground, as bright as on the walls)
     g.uSunA.value.copy(sky.sunTop); g.uSunB.value.copy(sky.sunBot); g.uSunK.value = 0.6 * sky.sunI * (0.35 + 0.65 * Math.min(1, sky.wet || 0));
     this.shared.uLampI.value = sky.lamps;
     const pu = this.props.material.uniforms;
@@ -1611,11 +1876,11 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
-    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * 0.03;
+    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (the egg's size, by the time passed, as it was at 60 Hz: Phase 4)
     // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
     // end of the road (out in the open it is the size of the sky)
     const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
-    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * 0.03);
+    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * (1 - Math.pow(0.97, dt * 60))); // (by the time passed: Phase 4's review)
     this.sun.scale.setScalar(this.sunK * this.sunSlot);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
     this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
@@ -1626,6 +1891,7 @@ class RacerGame extends QuizGame {
   }
   update(dt) {
     super.update(dt);
+    if (this.stage) this.shakeAmt = Math.min(this.shakeAmt, 0.2); // (staged: a shake never carries the rig or the lane badges out of the band)
     if (this.paused) return;
     if (this.state === "ask") {
       if (this.lane !== null && !this.boostRate && this.lockT > 0) {
@@ -1637,7 +1903,7 @@ class RacerGame extends QuizGame {
       if (this.gp >= 1) { this.gp = 1; this.arrive(); }
     }
     if (!this.has3D) return;
-    const sp = this.speed + (this.boostRate ? 45 : 0);
+    const sp = (this.speed + (this.boostRate ? 45 : 0)) * (this.stage ? this.stage.speedK : 1); // (staged: a blow costs the rig its speed for a moment. Look only: the road's scroll)
     GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.15) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view (lightly: the lines beside the road carry the speed)
     this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
@@ -1647,7 +1913,7 @@ class RacerGame extends QuizGame {
     const target = this.year / CAREER_YEARS;
     this.skyP += (target - this.skyP) * Math.min(1, dt * 0.8);
     const sky = skyAt(this.skyP);
-    this.applySky(sky);
+    this.applySky(sky, dt);
     if (this.envSet) {
       const near = this.envSet.reduce((a, b) => (Math.abs(b.p - this.skyP) < Math.abs(a.p - this.skyP) ? b : a));
       if (near.tex !== this.env) {
@@ -1660,8 +1926,11 @@ class RacerGame extends QuizGame {
     const scroll = this.dist % RACER_WRAP;
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
+    if (this.laneTags && this.stage && this.state === "over") this.dropTags(); // (staged: an ending plays on a clear road, its lane letters gone at once)
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
-      const on = this.state === "ask" ? 1 : 0;
+      // (staged: once the gate is reached the answer is shown on the road for a moment: the right lane's badge stands lit, the others step back)
+      const vd = this.stage && this.state !== "ask" && this.stage.verdict && this.stage.verdict.t < 1.3 ? this.stage.verdict : null;
+      const on = this.state === "ask" || vd ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
       this.badgeBackMat.opacity = 0.82 * Math.min(1, k * 1.25);
@@ -1683,23 +1952,38 @@ class RacerGame extends QuizGame {
         u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
         u.post.position.y = 0.05 * Math.sin(this.t * 1.7) + 0.04 * u.k; // (it rides with the bar)
         u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
+        if (vd) { // the right lane's badge beats; a wrong lane that was taken goes red; the rest are dimmed
+          const right = u.slot === vd.right, wrong = !vd.ok && u.slot === vd.picked, beat = 0.5 + 0.5 * Math.sin(vd.t * 9);
+          u.badge.material.opacity = Math.min(1, k * 1.25) * (right ? 1 : wrong ? 0.85 : 0.28);
+          u.badge.material.color.setRGB(1.1, 1.1, 1.1).multiplyScalar(right ? 1.05 + 0.12 * beat : 0.8);
+          if (wrong) u.badge.material.color.setRGB(1.05, 0.34, 0.42);
+          u.post.scale.setScalar(pop * (right ? 1.14 + 0.05 * beat : 0.9));
+          u.tag.material.opacity *= right ? 1 : 0.2;
+          u.glow.material.opacity = k * (right ? 0.34 + 0.2 * beat : 0.04);
+        } else u.badge.material.color.setRGB(1.1, 1.1, 1.1);
       });
       if (!on && this.tagK < 0.02) this.dropTags();
     }
     const n = this.round ? this.round.n : 4;
     const tx = this.lane === null ? 0 : laneX(this.lane, n);
-    const prev = this.carX;
     this.carX += (tx - this.carX) * Math.min(1, dt * 7);
-    this.car.position.x = this.carX;
-    this.car.position.y = Math.sin(this.t * 18) * 0.02;
-    this.car.rotation.z = clamp((prev - this.carX) * 2.5, -0.25, 0.25);
+    this.car.position.x = this.carX; // (its bob and its lean are its kit's: its suspension, a spring on how fast it moves across, a second. Phase 4's review: the bob and bank set here were zeroed by the kit every frame)
     this.updateLook(dt, sp, step, scroll, sky);
+    if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
+      this.show.update(VFX.dt);
+      try { this.stage.update(dt, sp, step, sky); } catch (e) { console.error(e); }
+      this.kit.update(VFX.dt);
+    }
+    if (this.pano) this.pano.update(VFX.dt); // (the panorama has the last word on the light, the far haze and the lens)
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
     this.camBase.x = this.carX * follow + Pointer.x * 0.35;
     this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
+    if (this.stage) this.stage.camera(); // (the lens answers a blow, a boost, a near miss)
     this.placeCamera();
+    if (this.stage) this.stage.lens();
     followSky(this.sky, this.camera);
+    if (this.pano) this.pano.follow(this.camera);
     FX.sync(this.scene, this.t);
     this.city.material.uniforms.uFogFar.value = this.world.cityFog; // the city stays crisp through the haze, but not through a fog bank
   }
@@ -1708,7 +1992,9 @@ class RacerGame extends QuizGame {
     this.carKit.update(dt, sp, step, sky);
     this.flame = this.carKit.flame;
     // the car is the subject of the shot: a boost streaks the street past it, a blow parts the colours round it
-    GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
+    const rk = this.rigKit; // (the war rig stands taller, and the show may have moved it off its mark)
+    if (rk) GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX + rk.off.x, 1.05, RACER_CAR_Z + rk.off.z), 1.9 + 1.0 * rk.flame, 1.6, 0.92); // (wider while its stacks burn: the flames are not streaked away)
+    else GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
     if (this.skids) {
       this.skidK = Math.max(0, this.skidK - dt * 0.85);
       this.skids.visible = this.skidK > 0.01;
@@ -1736,8 +2022,14 @@ class RacerGame extends QuizGame {
     g.uReflect.value = sky.wet; // the road dries out around midday
     g.uHead.value = 0.45 + 0.75 * sky.lamps;
     g.uUnder.value.set(0x5dffb0).multiplyScalar(0.5 + 0.2 * Math.sin(this.t * 2.6) + 0.7 * this.flame); // mint under-glow
+    if (rk) { // the rig's own: where it stands and how it is turned (its shadow goes with it), a cyan under-glow that warms as its stacks burn
+      g.uCarX.value = this.carX + rk.off.x; g.uCarZ.value = rk.off.z; g.uCarRot.value.set(Math.cos(rk.yaw), Math.sin(rk.yaw));
+      g.uUnder.value.set(0x35d8ff).multiplyScalar(0.42 + 0.14 * Math.sin(VFX.t * 2.6)).lerp(this._uc || (this._uc = new THREE.Color(1.5, 0.6, 0.15)), 0.75 * this.flame);
+      g.uHead.value *= 1 - smoothstep(2.5, 7, rk.off.z); // (as it drives in from behind the lens its headlights are not thrown down the road ahead of it: the road is not a pale smear before the rig is in the picture)
+    }
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
+    g.uMirrorOn.value = this.mirror.blanked === false ? 1 : 0; // (where the mirror is drawn it gives back the shops itself: the road's own picture of them is turned down)
     g.uCarY.value = this.carKit.heave.x;
     g.uPad.value.z = this.laneTags && this.round && this.round.n === 2 ? this.tagK : 0;
     this.world.update(dt, sp, step, sky);
@@ -1762,19 +2054,39 @@ class RacerGame extends QuizGame {
     this.lampLight.color.set(RACER_LAMP[left ? 0 : 1]);
     this.lampLight.intensity = 2.4 * sky.lamps * Math.exp(-(lz * lz) / 40);
   }
+  // (staged) The lane badges, drawn over the finished picture from where the camera stands unshaken and unrolled:
+  // whatever a blow does to the picture (flash, colour split, tear, tint, shake), they are not touched by it. They
+  // and the gantry's letters live on a layer of their own that the picture's camera does not see.
+  drawOver(r) {
+    const o = this.over, s = this.scene;
+    if (!GFX.ok || !o || !(this.laneTags || this.gate || this.leaving)) return;
+    const c = o.cam, cam = this.camera;
+    for (const label in this.signOverMats) this.signOverMats[label].opacity = Math.min(1, this.stage.overK * 2.5);
+    c.projectionMatrix.copy(cam.projectionMatrix); c.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
+    c.position.copy(this.camBase); c.lookAt(this.lookAt);
+    c.updateMatrixWorld(true);
+    const ac = r.autoClear, bg = s.background;
+    r.autoClear = false; s.background = null; // (nothing is cleared: this goes over what is there)
+    try { r.setRenderTarget(null); r.render(s, c); } catch (e) { /* the picture stands without them */ }
+    s.background = bg; r.autoClear = ac;
+  }
   pause() {
     super.pause();
-    if (this.paused) Sound.engine(false);
+    if (this.paused) { if (this.stage) this.stage.pause(); else Sound.engine(false); } // (nothing keeps sounding behind the menu)
   }
   resume() {
     super.resume();
-    if (this.state !== "over") Sound.engine(true);
+    if (this.state !== "over") { if (this.stage) this.stage.resume(); else Sound.engine(true); }
   }
   dispose() {
     Sound.engine(false);
+    if (this.stage) this.stage.dispose();
     if (this.has3D) {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
+      if (this.rigKit) this.rigKit.dispose();
+      if (this.world && this.world.genMats.length) blasterDropMaps(this.world.genMats); // (the traffic models' maps; their colour maps go in the scene's sweep)
+      if (this.pano) this.pano.dispose();
       this.env = null;
     }
     super.dispose();

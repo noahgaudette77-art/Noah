@@ -92,7 +92,8 @@ class MemoryWorks {
     this.lamps.layers.set(1);
     s.add(this.lamps);
 
-    // lamp panels on the wall either side of the door (they show on wide screens)
+    // lamp panels on the wall either side of the door (they show on wide screens): gold and orange, the vault's pair
+    // (the master overhaul, Phase 2, 2026-11-23: half of them were green), on dark violet
     this.panelMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 }, uOpen: { value: 0 }, uMiss: { value: 0 } },
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
@@ -100,9 +101,9 @@ class MemoryWorks {
         void main(){
           vec2 q = vUv * vec2(4.0, 14.0), c = floor(q), f = fract(q) - 0.5;
           float r = fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453);
-          float lamp = smoothstep(0.34, 0.24, max(abs(f.x), abs(f.y) * 1.25));
+          float lamp = (1.0 - smoothstep(0.24, 0.34, max(abs(f.x), abs(f.y) * 1.25)));
           float on = step(r, 0.25 + 0.6 * uOpen) * (0.6 + 0.4 * sin(uTime * (0.4 + r * 1.2) + r * 40.0));
-          vec3 col = vec3(0.02, 0.03, 0.03) + lamp * (vec3(0.06, 0.1, 0.08) + mix(vec3(1.5, 1.1, 0.4), vec3(0.4, 1.6, 0.7), step(0.5, r)) * on);
+          vec3 col = vec3(0.025, 0.015, 0.05) + lamp * (vec3(0.09, 0.06, 0.1) + mix(vec3(1.5, 1.1, 0.4), vec3(1.9, 0.75, 0.2), step(0.5, r)) * on);
           col += lamp * vec3(2.2, 0.16, 0.12) * uMiss * step(0.6, r);
           float edge = max(abs(vUv.x - 0.5) * 2.0, abs(vUv.y - 0.5) * 2.0);
           col = mix(col, vec3(0.5, 0.36, 0.16), smoothstep(0.93, 0.97, edge));
@@ -117,24 +118,30 @@ class MemoryWorks {
       return p;
     });
 
-    // coin piles in front of each heap of bars (half as large again as a coin in flight ends, so a pile reads as coins)
-    const piles = [[-1.5, 2.3, 4], [-0.2, 3.2, 3], [1.3, 2.6, 8], [2.8, 2.1, 6], [3.9, 2.9, 5]], K = 1.5; // (x counted outward from the door)
+    // coin stacks on a tray before each heap of bars (a coin here is about the size of one at the end of its flight).
+    // (Phase 5, 2026-11-24: they were five piles spilt on the floor, half as large again, beside bars they dwarfed; now
+    // they stand neatly on the velvet of the tray, MEMORY_TRAY, whose children they are: they stand where it stands,
+    // turned as it is turned.)
+    const T = MEMORY_TRAY, piles = T.piles, K = T.K; // (x counted outward from the door)
     const count = piles.reduce((n, p) => n + p[2], 0);
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
+    if (!g.coinGeo.boundingBox) g.coinGeo.computeBoundingBox();
+    const half = Math.max(0.03, g.coinGeo.boundingBox.max.z) * K; // (a coin lies on its face: its half-thickness, the built-in coin's or the model's)
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
-      const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
-      // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
-      // piles start two coins high and gain a coin for each card banked.
+      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count), sd = grp.userData.side;
+      // Laid level by level across the stacks, so drawing the first n coins raises every stack together: the
+      // stacks start two coins high and gain a coin for each card banked. (Three draws from Math.random a coin, as
+      // ever: what is drawn after the vault is built is drawn as it was)
       let n = 0;
       for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
         if (i >= h) return;
         tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-        m.setMatrixAt(n++, this._m.compose(this._p.set(x * grp.userData.side + rand(-0.04, 0.04), (0.06 + i * 0.122) * K, z + rand(-0.04, 0.04)), tw, big));
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x * sd + rand(-0.04, 0.04) * 0.5, T.bed + half + i * 0.122 * K, z + rand(-0.04, 0.04) * 0.5), tw, big));
       });
       m.count = Math.min(count, 10);
       m.frustumCulled = false;
-      grp.add(m);
+      (grp.userData.tray || grp).add(m);
       return m;
     });
     this.missT = 0;
@@ -174,7 +181,7 @@ class MemoryWorks {
     pu.uMiss.value = red;
   }
   dispose() {
-    // (the coin stacks share the game's coin geometry and material: the game frees those)
+    // (the coin stacks share the game's coin geometry, and their material is in the scene: the game frees those)
     [this.planets, this.pins, ...this.coins].forEach((m) => m.dispose());
   }
 }

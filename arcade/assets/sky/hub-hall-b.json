@@ -1,0 +1,15 @@
+{
+ "name": "hub-hall-b",
+ "source": "hub-hall-b",
+ "blockade": {
+  "id": 15930880,
+  "style": "M3 Advanced (artistic)",
+  "seed": 1758751825,
+  "prompt": "Inside a vast retro 1980s video arcade hall at night, seen from the middle of the floor: dark patterned carpet, long rows of glowing arcade cabinets far away along every wall, neon tube signs in magenta and cyan with abstract shapes, mirrored ceiling panels with strip lights, light haze, tall windows at the far end showing a neon city skyline. No people. Rich reflections, moody, detailed."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 696470,
+ "lightAt": 35,
+ "mean": 0.257
+}

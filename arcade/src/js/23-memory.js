@@ -15,8 +15,11 @@ const MEMORY_SLOT_R = 7.2; // the coin slot, at twelve o'clock
 
 // makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
 // nothing in r128, so dispose() releases the whole target.
-function memoryEnvMap({ top, horizon, bottom, glow, panels }) {
+function memoryEnvMap(o) {
   if (!GFX.ok) return null;
+  return GFX.keepEnv(() => memoryEnvMapScene(o)); // (kept: drawn again after a lost graphics context, into the same target)
+}
+function memoryEnvMapScene({ top, horizon, bottom, glow, panels }) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
@@ -93,51 +96,96 @@ function memoryCoinTexture() {
   return new THREE.CanvasTexture(c);
 }
 
-// The wall around the vault: rows of safe-deposit boxes in dark steel, each with a
+// The wall around the vault: rows of safe-deposit boxes, each door brushed steel with a
 // brass plate and keyhole. Plates light up gold as the deck is banked (uLit), and the
 // glow from the vault's seam spills across the nearest doors.
-function memoryWallMaterial() {
+// (the master overhaul, Phase 2, 2026-11-23: the doors were a flat dark navy. Now each is a sheet of brushed steel
+// (ambientCG Metal009, CC0: assets/ui/mat-steel.webp, its normal's x and y in red and green, its roughness in blue;
+// a level sheet until it arrives) whose face turns to its edges in a bevel, lit as metal is: the vault's glow from
+// the door's rim (gold), the cove strip along the top of the wall (warm white, from above: every door's upper rim
+// catches it) and the floor's gold thrown back up (orange: the lower rims), each as a broad sheen and a sharp
+// highlight; what the steel mirrors is the room in front of it, dark violet, lighter toward the cove and the floor.
+// A kick plate with a strip of orange light runs along the foot of the wall. One draw, one look-up a pixel.)
+function memoryWallMaterial(brush) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), {
       uTime: { value: 0 }, uLit: { value: 0 }, uGlow: { value: 0.3 },
       uDoor: { value: new THREE.Vector3(0, MEMORY_DOOR_Y, 12.1) },
-      uGold: { value: neon(0xffb444, 1.35) }, uLed: { value: neon(0x3dff8e, 1.8) },
+      uGold: { value: neon(0xffb444, 1.35) }, uLed: { value: neon(0xff8a2a, 2.2) },
+      uCove: { value: neon(0xffc93d, 2.5) }, uKick: { value: neon(0xff8a2a, 1.4) },
+      tBrush: { value: brush },
     }),
     extensions: { derivatives: true },
     vertexShader: `varying vec3 vWorld; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
       uniform float uTime; uniform float uLit; uniform float uGlow; uniform vec3 uDoor; uniform vec3 uGold; uniform vec3 uLed;
+      uniform vec3 uCove; uniform vec3 uKick; uniform sampler2D tBrush;
       varying vec3 vWorld; varying float vDepth;
+      // a light's two lobes on brushed steel: a broad sheen and a sharp highlight
+      float sheen(vec3 N, vec3 L, vec3 V, float rough){
+        float nh = max(dot(N, normalize(L + V)), 0.0), sh = 2.0 / max(rough * rough * rough * rough, 1e-3);
+        return 0.3 * pow(max(nh, 0.0), 7.0) + pow(max(nh, 0.0), sh) * (sh + 2.0) * 0.012;
+      }
       void main(){
+        const float KICK = 0.62, COVE = 24.02; // (the kick plate's top, and the cove between two rows of doors: 18 rows up)
         vec2 cs = vec2(2.1, 1.3);
-        vec2 q = vWorld.xy / cs;
+        vec2 q = (vWorld.xy - vec2(0.0, KICK)) / cs;
         vec2 id = floor(q); vec2 f = fract(q);
-        vec2 aa = fwidth(q) * cs;
-        float px = max(max(aa.x, aa.y), 1e-4);
+        float px = max(max(fwidth(vWorld.x), fwidth(vWorld.y)), 1e-4); // (world units a pixel)
         vec2 d = min(f, 1.0 - f) * cs;
-        float seam = smoothstep(0.03, 0.03 + px * 1.5, min(d.x, d.y));
-        float h = hash13(vec3(id, 3.0));
-        vec3 col = vec3(0.066, 0.074, 0.09) * (0.75 + 0.5 * h);
-        float top = 1.0 - smoothstep(0.0, 0.1 + px, (1.0 - f.y) * cs.y - 0.03);
-        float bot = 1.0 - smoothstep(0.0, 0.1 + px, f.y * cs.y - 0.03);
-        col += vec3(0.16, 0.14, 0.34) * top; // a violet light along the top edge of every box
-        col *= 1.0 - 0.55 * bot;
-        vec2 c = (f - vec2(0.5, 0.58)) * cs;
-        float plate = 1.0 - smoothstep(-px, px, max(abs(c.x) - 0.27, abs(c.y) - 0.1));
-        float key = 1.0 - smoothstep(-px, px, length((f - vec2(0.5, 0.3)) * cs) - 0.055);
-        col = mix(col, vec3(0.15, 0.105, 0.04), plate);
-        col *= 1.0 - 0.85 * key;
-        col *= seam * 0.85 + 0.15;
-        float r = length(vWorld.xy - uDoor.xy);
-        float spill = exp(-max(r - uDoor.z, 0.0) * 0.2);
-        col *= 0.62 + 2.2 * spill * uGlow + 0.3 * smoothstep(36.0, 12.0, vWorld.y);
-        col += vec3(0.1, 0.16, 0.42) * exp(-max(r - uDoor.z, 0.0) * 0.3) * 0.3; // a cool halo on the wall round the frame
+        float seam = smoothstep(0.03 - px * 0.5, 0.03 + px * 0.5, min(d.x, d.y)); // (the gap between two doors)
+        float h = hash13(vec3(id, 3.0)), hb = hash13(vec3(floor(id / vec2(6.0, 5.0)), 5.0));
+        float kick = 1.0 - smoothstep(KICK - px, KICK + px, vWorld.y);
+        // the sheet: streaks along x, each door cut from its own part of it (the sheet's relief and the spread of its
+        // roughness are a few hundredths: stretched here so the brushing shows); relief finer than a pixel is not drawn
+        vec3 bm = texture2D(tBrush, vWorld.xy * vec2(0.05, 0.22) + vec2(h * 3.7, h * 5.3)).rgb;
+        float fine = 1.0 - smoothstep(0.03, 0.1, px), streak = clamp(0.5 + (bm.b - 0.47) * 8.0, 0.0, 1.0);
+        // the bevel: the face turns toward each edge over its last few centimetres
+        vec2 rim = sign(f - 0.5) * (1.0 - smoothstep(0.03, 0.12 + px, d)) * (1.0 - kick);
+        vec3 N = normalize(vec3(rim * 0.95 + (bm.rg - 0.5) * 16.0 * fine, 1.0));
+        vec3 V = normalize(cameraPosition - vWorld);
+        float rough = clamp(mix(0.22, 0.48, streak) + 0.2 * (1.0 - fine), 0.12, 0.75);
+        vec3 F0 = vec3(0.6, 0.6, 0.62) * (0.8 + 0.3 * h) * (0.86 + 0.28 * hb) * mix(0.9, 1.07, streak * fine + 0.5 * (1.0 - fine));
+        // the number plate (brass) and the keyhole
+        vec2 c = (f - vec2(0.5, 0.6)) * cs;
+        float plate = (1.0 - smoothstep(-px, px, max(abs(c.x) - 0.27, abs(c.y) - 0.09))) * (1.0 - kick);
+        float key = (1.0 - smoothstep(-px, px, length((f - vec2(0.5, 0.3)) * cs) - 0.05)) * (1.0 - kick);
+        F0 = mix(F0, vec3(0.86, 0.6, 0.26), plate);
+        F0 = mix(F0, vec3(0.2, 0.19, 0.22), kick); // (the kick plate: darker, rubbed by boots)
+        rough = mix(rough, 0.34, plate);
+        float nv = max(dot(N, V), 0.0);
+        vec3 F = F0 + (1.0 - F0) * pow(max(1.0 - nv, 0.0), 5.0) * 0.6;
+        // the vault's glow: from the door's rim, nearest this door
+        vec2 dv = vWorld.xy - uDoor.xy; float r = length(dv);
+        vec3 G = vec3(uDoor.xy + dv / max(r, 1e-3) * (uDoor.z - 1.0), 2.6) - vWorld;
+        float eg = uGlow * 3.4 * exp(-max(r - uDoor.z, 0.0) * 0.11);
+        vec3 Lg = normalize(G);
+        // the cove: a strip of warm light along the top of the wall, grazing down it (the doors' upper rims mirror it)
+        float ec = mix(0.1, 0.3 + 1.2 * exp(-max(COVE - vWorld.y, 0.0) * 0.2), step(vWorld.y, COVE)) * mix(0.75, 1.15, f.y); // (each door lighter toward its top)
+        vec3 Lc = normalize(vec3(0.0, 0.96, 0.28));
+        // the floor's gold thrown back up onto the lowest rows (their lower rims)
+        float eb = (0.08 + 0.8 * uGlow) * exp(-vWorld.y * 0.18) * (0.3 + 0.7 * exp(-max(r - uDoor.z, 0.0) * 0.05));
+        vec3 Lb = normalize(vec3(0.0, -0.94, 0.34));
+        vec3 col = F * (vec3(1.0, 0.64, 0.27) * eg * (sheen(N, Lg, V, rough) + 0.16 * max(dot(N, Lg), 0.0))
+                      + vec3(1.0, 0.88, 0.7) * ec * (sheen(N, Lc, V, rough) + 0.06 * max(dot(N, Lc), 0.0))
+                      + vec3(1.0, 0.48, 0.14) * eb * (sheen(N, Lb, V, rough) + 0.06 * max(dot(N, Lb), 0.0)));
+        // what the steel mirrors: the room in front of it (dark violet; a cooler grey up toward the ceiling, the floor's
+        // warmth down toward it), the brushing's streaks in it
+        vec3 R = reflect(-V, N);
+        float w = 0.25 + rough;
+        col += F * mix(0.86, 1.1, streak * fine + 0.5 * (1.0 - fine)) * (vec3(0.045, 0.038, 0.07) + vec3(0.19, 0.185, 0.21) * smoothstep(0.2 - w * 0.3, 0.8 + w * 0.2, R.y)
+          + vec3(0.3, 0.15, 0.06) * smoothstep(0.15 - w * 0.3, 0.7 + w * 0.2, -R.y) * (0.4 + uGlow));
+        col *= 1.0 - 0.88 * key;
+        col *= mix(0.12, 1.0, max(seam, kick));
         float lit = step(h, uLit);
         col += uGold * plate * seam * lit * (0.8 + 0.2 * sin(uTime * 1.7 + h * 40.0));
-        float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0));
+        float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0)) * (1.0 - kick);
         float led = 1.0 - smoothstep(0.0, px * 1.5, length((f - vec2(0.88, 0.8)) * cs) - 0.035);
         col += uLed * led * ledOn;
+        // the strips themselves: the cove (gold) and the kick plate's top (orange)
+        col += uCove * (1.0 - smoothstep(0.06, 0.06 + px * 1.5, abs(vWorld.y - COVE)));
+        col += uKick * (1.0 - smoothstep(0.035, 0.035 + px * 1.5, abs(vWorld.y - KICK)));
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -156,7 +204,7 @@ function memoryShaftMaterial() {
         vP = position.xy;
         vec2 d = normalize(position.xy);
         float n = vnoise(vec3(d * 6.0, uTime * 0.1)) * 0.6 + vnoise(vec3(d * 17.0, uTime * 0.17 + 4.0)) * 0.4;
-        vRay = pow(n, 2.6) * 2.4;
+        vRay = pow(max(n, 0.0), 2.6) * 2.4;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uR; varying vec2 vP; varying float vRay;
@@ -184,24 +232,187 @@ function memoryWheelGeometry() {
   return memoryMerge(parts);
 }
 
-// A gold ingot: a box with its top drawn in, flat-shaded. endOn: for bars laid with an end toward the lens.
-function memoryIngotGeometry(endOn) {
-  const g = new THREE.BoxGeometry(1.95, 0.56, 0.96).toNonIndexed();
-  const p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    if (p.getY(i) > 0) { p.setX(i, p.getX(i) * 0.84); p.setZ(i, p.getZ(i) * 0.7); }
+// A gold ingot as cast and stamped (the master overhaul, Phase 5, 2026-11-24; the audit's #13: the bars still read as
+// blocky lumps). A trapezoid, its top drawn in on every side as an open mould casts it, and every edge rounded: the
+// top's edges on a wide radius, the foot's on a small one, the upright corners between, so a highlight runs along each
+// edge whatever the light (the normals turn through it); each broad face very slightly full (its normals lean out toward
+// its edges), so a face carries a sweep of the room's reflection and not one flat colour; and in the top a panel sunk
+// with a bevelled edge, the assay's marks struck into it (memoryStampTexture: the top's uv is the panel seen from above).
+// Phase 2's bar was flat facets with a sliver of bevel (44 triangles): at the door it read as blocks of one orange.
+// 400 triangles, indexed; its size is the old bar's, so every stack's spacing holds. The bars' own tones (instance
+// colours) need a colour per vertex, all white.
+function memoryIngotGeometry() {
+  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56; // half-length and half-depth at the foot and the top, height
+  const RT = 0.075, RB = 0.026, RV = 0.075, NC = 4; // radii: the top's edges, the foot's, the upright corners (in plan); steps a corner
+  const PANEL = 0.07, SINK = 0.024, PR = 0.035; // the stamped panel: its margin inside the top, how deep it is sunk, its corners
+  const FULL = { end: 0.07, long: 0.11, rise: 0.06, dome: 0.05 }; // how full the faces are: the lean of their normals at their edges (radians)
+  const sx = (W0 - W1) / H, sz = (D0 - D1) / H, ax = Math.atan(sx), az = Math.atan(sz), lean = (ax + az) / 2;
+  // a ring of the outer skin where the foot's (top = false) or the top's rounding turns its normal to angle f off the level
+  const arc = (top, f) => {
+    const R = top ? RT : RB, yc = top ? H - R : R;
+    return { hx: W0 - sx * yc - R / Math.cos(ax) + R * Math.cos(f), hz: D0 - sz * yc - R / Math.cos(az) + R * Math.cos(f), y: yc + R * Math.sin(f) };
+  };
+  const rings = [], add = (r, el, o = {}) => rings.push(Object.assign({ hx: r.hx, hz: r.hz, y: r.y, el, rc: Math.max(0.008, RV - (D0 - sz * r.y - r.hz)), full: 1 }, o));
+  add(arc(false, -Math.PI / 2), -Math.PI / 2); // the foot's edge
+  add(arc(false, -0.45), -0.45);
+  add(arc(false, lean), lean - FULL.rise); // the wall, from its foot...
+  for (let k = 0; k <= 4; k++) { const f = lean + ((Math.PI / 2 - lean) * k) / 4; add(arc(true, f), k ? (k === 4 ? Math.PI / 2 - FULL.dome : f) : lean + FULL.rise, { full: 1 - k / 4 }); } // ...to its top, and round onto the top
+  const t = rings[rings.length - 1], P = { hx: t.hx - PANEL, hz: t.hz - PANEL, y: H };
+  add(P, Math.PI / 2, { rc: PR, full: 0 }); // the panel's edge, on the level top
+  add(P, Math.PI / 4, { rc: PR, full: 0, inward: true, crease: true }); // its sunk edge, bevelled (a crease: the same ring, turned)
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 4, { rc: PR - SINK * 0.6, full: 0, inward: true });
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 2, { rc: PR - SINK * 0.6, full: 0, crease: true }); // the struck field
+  const pos = [], nor = [], uv = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz) => { pos.push(x, y, z); nor.push(nx, ny, nz); uv.push(0.5 + x / (2 * P.hx), 0.5 - z / (2 * P.hz)); return pos.length / 3 - 1; };
+  rings.forEach((r) => {
+    r.at = pos.length / 3;
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (r.hx - r.rc), cz = (k < 2 ? 1 : -1) * (r.hz - r.rc);
+      const da = (k % 2 ? FULL.long : FULL.end) * r.full, db = (k % 2 ? FULL.end : FULL.long) * r.full; // (the face this corner leaves, the face it turns onto)
+      for (let j = 0; j <= NC; j++) {
+        const a = k * PI2 + (j / NC) * PI2, b = k * PI2 + da + (j / NC) * (PI2 - da - db), c = Math.cos(r.el) * (r.inward ? -1 : 1);
+        vert(cx + r.rc * Math.cos(a), r.y, cz + r.rc * Math.sin(a), Math.cos(b) * c, Math.sin(r.el), Math.sin(b) * c);
+      }
+    }
+  });
+  // wound to face the way its corners' normals do
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => {
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) {
+    if (rings[i + 1].crease) continue; // (a crease's two rings stand on the same line)
+    const p = rings[i].at, q = rings[i + 1].at;
+    for (let j = 0; j < M; j++) { const n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
   }
-  g.translate(0, 0.28, 0);
-  g.computeVertexNormals();
-  // each face its own tone, as cast gold takes the light: bright on top, deeper on the long sides, darkest on the ends
-  const n = g.attributes.normal, c = new Float32Array(p.count * 3);
-  for (let i = 0; i < p.count; i++) {
-    const up = p.getY(i) / 0.56; // 0 at the foot, 1 at the top edge
-    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.3 : ((Math.abs(n.getX(i)) > 0.5) === !!endOn ? 0.6 : 0.33) * (0.72 + 0.56 * up); // (the faces turned to the lens are the lighter ones, and every side is brightest at its top edge)
-    c[i * 3] = k; c[i * 3 + 1] = k * (0.92 + 0.08 * k); c[i * 3 + 2] = k * (0.78 + 0.22 * k);
-  }
-  g.setAttribute("color", new THREE.BufferAttribute(c, 3));
+  const fan = (r, y, ny) => { const c = vert(0, y, 0, 0, ny, 0); for (let j = 0; j < M; j++) tri(c, r.at + j, r.at + ((j + 1) % M)); };
+  fan(rings[0], 0, -1);
+  fan(rings[rings.length - 1], H - SINK, 1);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(pos.length).fill(1), 3));
+  g.setIndex(idx);
   return g;
+}
+
+// The assay's marks struck into a bar's sunk panel, as relief (a bump map: dark is struck deep): a fine border, the
+// fineness large, FINE GOLD over it and a bar number under it, the arcade's egg in an oval at each end. Drawn once per
+// screen; the panel maps the whole picture, so its edge (and everything outside the panel) is left level.
+function memoryStampTexture() {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 128;
+  const x = c.getContext("2d");
+  x.fillStyle = "#808080";
+  x.fillRect(0, 0, 512, 128);
+  x.strokeStyle = x.fillStyle = "#2a2a2a";
+  x.lineWidth = 4;
+  x.strokeRect(24, 18, 464, 92);
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.font = 'bold 50px Georgia, "Times New Roman", serif';
+  x.fillText("999.9", 256, 66);
+  x.font = 'bold 19px Georgia, "Times New Roman", serif';
+  x.fillText("FINE  GOLD", 256, 32);
+  x.fillText("Nº 0731", 256, 98);
+  for (const ex of [74, 438]) {
+    x.lineWidth = 3;
+    x.beginPath(); x.ellipse(ex, 64, 30, 34, 0, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.ellipse(ex, 68, 14, 19, 0, 0, Math.PI * 2); x.fill(); // the egg
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = GFX.ok ? Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()) : 1; // (the tops are seen at a slant)
+  return t;
+}
+
+// A number in [0, 1) from an integer: a scene's small differences (a bar's tone, its set) without drawing from
+// Math.random while it is built (a draw there moves everything drawn after it: the capture tool seeds it).
+function memoryHash(n) {
+  let h = Math.imul((n | 0) ^ 0x2c1b3c6d, 0x297a2d39);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+// Made on a stream of its own: a three.js object draws four numbers from Math.random for its uuid as it is made, so a
+// new piece in the vault would move every draw after it (the sparks, the coins' flights, a capture's stills). The
+// pieces Phase 5 added (the stamp, the trays) are made inside this: their uuids' numbers come from memoryHash, and the
+// vault draws from Math.random exactly as often as it did.
+let memoryQuietN = 0;
+function memoryQuiet(make) {
+  const was = Math.random;
+  Math.random = () => memoryHash(0x40000 + memoryQuietN++);
+  try { return make(); } finally { Math.random = was; }
+}
+
+// The gold at each lower corner (Phase 5): where the heap stands in its group and its turn (x is counted outward from
+// the door, mirrored on the right), and the coins' tray before it: where it stands, its turn, its inside (half-sizes,
+// corner radius), its rim's height and its velvet's; the coin's scale and the stacks on it ([x outward, z toward the
+// lens, coins at most], 26 coins in all: drawn level by level, so every stack rises together, a coin for each card
+// banked: MemoryWorks). (The heap stands a little out from its group's place: the deck at the plinth's end hid its foot.)
+const MEMORY_TRAY = {
+  heapX: 0.6, heapZ: -0.3, heapYaw: 0.35, x: 0, z: 4.3, yaw: 0.2, hx: 1.8, hz: 1.25, rc: 0.28, height: 0.3, bed: 0.09, K: 0.95,
+  piles: [[-1.12, -0.56, 5], [0, -0.56, 8], [1.12, -0.56, 6], [-0.56, 0.58, 3], [0.56, 0.58, 4]],
+};
+
+// The coins' tray: a brass rim rolled over at its lip round a bed of violet velvet (gold's complement: the coins stand
+// out on it, where on the floor they read as a brown spill), its corners rounded, the velvet shaded along the rim. One
+// mesh for both (aMat carries each vertex's metalness, roughness and sheen: memoryPropMaterial): one draw a tray. 240
+// triangles.
+function memoryTrayGeometry() {
+  const T = MEMORY_TRAY, NC = 3, RL = 0.06, H = T.height, FL = 0.05, tf = Math.atan(FL / (H - RL));
+  const brass = [new THREE.Color(0xd9a646), 1, 0.3, 0], velvet = [new THREE.Color(0x1c0828), 0, 0.92, 0.55], shaded = [new THREE.Color(0x0a0310), 0, 0.95, 0.3];
+  // each ring: [out from the inside's edge, height, its normal's angle off the level, faces in?, material, a crease?]
+  const rings = [
+    [2 * RL - FL, 0, -tf, false, brass], [2 * RL, H - RL, -tf, false, brass], // the outer wall, wider at the lip
+    [RL + RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, false, brass], [RL, H, Math.PI / 2, false, brass], // the rolled lip
+    [RL - RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, true, brass], [0, H - RL, 0, true, brass], [0, T.bed, 0, true, brass], // the inner wall
+    [0, T.bed, Math.PI / 2, false, shaded, true], [-0.22, T.bed, Math.PI / 2, false, velvet], // the velvet (a crease: the same ring, turned up), in the rim's shade at its edge
+  ];
+  const pos = [], nor = [], col = [], mat = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz, m) => { pos.push(x, y, z); nor.push(nx, ny, nz); col.push(m[0].r, m[0].g, m[0].b); mat.push(m[1], m[2], m[3]); return pos.length / 3 - 1; };
+  const at = rings.map(([o, y, el, inward, m]) => {
+    const first = pos.length / 3, hx = T.hx + o, hz = T.hz + o, rc = T.rc + o, c = Math.cos(el) * (inward ? -1 : 1);
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (hx - rc), cz = (k < 2 ? 1 : -1) * (hz - rc);
+      for (let j = 0; j <= NC; j++) { const a = k * PI2 + (j / NC) * PI2; vert(cx + rc * Math.cos(a), y, cz + rc * Math.sin(a), Math.cos(a) * c, Math.sin(el), Math.sin(a) * c, m); }
+    }
+    return first;
+  });
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => { // (wound to face the way its corners' normals do)
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) if (!rings[i + 1][5]) for (let j = 0; j < M; j++) { const p = at[i], q = at[i + 1], n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
+  const mid = vert(0, T.bed, 0, 0, 1, 0, velvet), last = at[at.length - 1];
+  for (let j = 0; j < M; j++) tri(mid, last + j, last + ((j + 1) % M));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute("aMat", new THREE.Float32BufferAttribute(mat, 3));
+  g.setIndex(idx);
+  return g;
+}
+
+// A material for a small prop of several finishes in one draw (the coins' trays): its colour from the vertices, and
+// each vertex's metalness, roughness and sheen from aMat (sheen: cloth's light at a grazing angle, its own colour).
+// Mirrors the vault as the other metals do.
+function memoryPropMaterial(env) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 0.5, envMap: env, envMapIntensity: 1.3 });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aMat; varying vec3 vMat;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvMat = aMat;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vMat;")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = vMat.x; roughnessFactor = vMat.y;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vMat.z * pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.0);");
+  };
+  m.customProgramCacheKey = () => "memory-prop";
+  return m;
 }
 
 // Pooled sparkles: four-point stars that fly, fall and fade (coin trails, the burst at
@@ -283,9 +494,30 @@ class MemorySparks {
   }
 }
 
+// The vault door's spun gold (build3D). Made out here, not in build3D: a hook made there shared build3D's scope,
+// and with it the game and its vault; a closing scene's materials are kept for their shaders (GFX.park), and with
+// them all of that, until Memory Bank came round again (Phase 7's soak; the performance re-check).
+function memorySpunGold(env) {
+  const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
+  spun.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvSpunP = position; vSpunN = normal;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;")
+      .replace("#include <color_fragment>", `#include <color_fragment>
+        float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
+        float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
+        diffuseColor.rgb *= mix(0.62, 1.1, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
+          float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
+          totalEmissiveRadiance += vec3(1.0, 0.76, 0.34) * wedge * spunFace * 0.55 * smoothstep(2.4, 5.6, spunR); }`);
+  };
+  spun.customProgramCacheKey = () => "memory-spun-gold";
+  return spun;
+}
+
 class MemoryGame extends QuizGame {
   constructor(sel) {
-    super(sel, "memory", { fov: 60, fog: [0x020a07, 30, 95], bg: 0x020a07 });
+    super(sel, "memory", { fov: 60, fog: [0x0a0424, 30, 95], bg: 0x090320 }); // (the arcade's violet-black: it was the one green-black screen)
     const ids = selectionFids(sel);
     const now = nowMin();
     this.queue = ids
@@ -319,45 +551,38 @@ class MemoryGame extends QuizGame {
   build3D() {
     const s = this.scene;
     const Y = MEMORY_DOOR_Y;
+    // (the room's ground is the arcade's violet-black and its light the vault's pair, gold and orange: the master
+    // overhaul, Phase 2, 2026-11-23; it was green-black, with green strips either side)
     this.envRT = memoryEnvMap({
-      top: 0x030a07, horizon: 0x5a3a10, bottom: 0x010302, glow: 0.55,
+      top: 0x090320, horizon: 0x5a3a10, bottom: 0x05021a, glow: 0.55,
       panels: [
         { color: 0xfff0d0, k: 1.25, w: 44, h: 3.2, pos: [0, 6, 29] }, // a light strip behind the camera: a broad arc on the gold
         { color: 0xffc46a, k: 0.35, w: 30, h: 3, pos: [0, -6, 29] }, // warm bounce off the floor
-        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [-30, 6, 12] },
-        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [30, 6, 12] },
+        { color: 0xff8a2a, k: 0.5, w: 5, h: 30, pos: [-30, 6, 12] },
+        { color: 0xff8a2a, k: 0.5, w: 5, h: 30, pos: [30, 6, 12] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [-15, 24, 6] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [17, 21, 10] },
       ],
     });
-    const env = this.envRT ? this.envRT.texture : null;
+    this.gen = memoryGen(this); // (served: the vault's gold mirrors a gold vault, the coins and the deck are models: 23c-memorygen.js)
+    const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
-    // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xffcc48, vertexColors: true, metalness: 0.5, roughness: 0.44, envMap: env, envMapIntensity: 0.75, emissive: 0x3a2204 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    // the bars' gold: cast gold, polished, a mirror of the vault round it; each rounded edge and full face takes its own
+    // part of that and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast); the
+    // assay's marks struck into the top (Phase 5: memoryIngotGeometry, memoryStampTexture; not on a phone, where a bar
+    // is a few dozen pixels long and its marks would be one or two)
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, grain: 0.35, scratch: 0.9 }); // (a polished face: the grain's ripple a third of the scratches' depth)
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
-    const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
-    spun.onBeforeCompile = (sh) => {
-      sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvSpunP = position; vSpunN = normal;");
-      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;")
-        .replace("#include <color_fragment>", `#include <color_fragment>
-          float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
-          float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
-          diffuseColor.rgb *= mix(0.62, 1.1, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
-        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-          { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
-            float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
-            totalEmissiveRadiance += vec3(1.0, 0.76, 0.34) * wedge * spunFace * 0.55 * smoothstep(2.4, 5.6, spunR); }`);
-    };
-    spun.customProgramCacheKey = () => "memory-spun-gold";
+    const spun = memorySpunGold(env);
     const doorGold = surfaceDetail(spun, { scale: 1.5, height: 0.0014, scratch: 1.3 });
     const brass = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xd9a944, metalness: 1, roughness: 0.4, envMap: env, envMapIntensity: 0.95, emissive: 0x241603 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
     const nickel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x9fb2cf, metalness: 0.75, roughness: 0.42, envMap: env, envMapIntensity: 0.6, emissive: 0x0b1220 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
-    s.add(new THREE.AmbientLight(0x1d3a2c, 0.6));
+    s.add(new THREE.AmbientLight(0x2a1c4a, 0.6)); // (the room's shade a deep violet)
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
@@ -370,10 +595,11 @@ class MemoryGame extends QuizGame {
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
 
-    // the wall of deposit boxes and the vault's glow on it (layer 1: the floor only
-    // reflects the vault itself, which keeps the mirror pass cheap)
-    this.wall = new THREE.Mesh(new THREE.PlaneGeometry(110, 50), memoryWallMaterial());
-    this.wall.position.set(0, 25, -1.25);
+    // the wall of deposit boxes and the vault's glow on it (wide and tall enough to fill any window round the vault:
+    // on a Mac the room spans the window, and it ended in a black void either side)
+    this.brush = cellFlatTexture(); // (a level sheet until mat-steel arrives: see update)
+    this.wall = new THREE.Mesh(new THREE.PlaneGeometry(300, 64), memoryWallMaterial(this.brush));
+    this.wall.position.set(0, 32, -1.25);
     this.wall.layers.set(1);
     s.add(this.wall);
     this.halo = glowSprite(neon(0xffb84d, 1), 36, 0.2);
@@ -473,9 +699,22 @@ class MemoryGame extends QuizGame {
     this.shafts.layers.set(1);
     door.add(this.shafts);
 
-    // polished dark floor: a polar grid radiating from the vault, and its reflection
-    this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.6, base: 0x010504, reflect: 0.4, glow: 0.25, ripple: 0.001, streak: 0, fall: [1.5, 0.05] });
+    // polished dark floor: a steel deck that gives the vault back (the master overhaul, Phase 2, 2026-11-23: it was a
+    // green polar grid on black, a wireframe that shimmered, and on a phone it reflected nothing). The room is drawn
+    // once into a cube from in front of the door (roomProbe: a face a frame, a few frames in) and the deck gives it
+    // back where each reflected ray meets the room's box (the wall of boxes and the door lie on its back face, so the
+    // door's gold and its seam stand in the floor under it), blurred by the deck's roughness; its plates and wear from
+    // a CC0 deck plate (Poly Haven's metal_plate_02: assets/ui/mat-deck.webp, a level plate until it arrives). The
+    // same on every tier: one look-up a pixel, no second drawing of the scene (the Mac's floor mirror drew the vault
+    // again every frame).
+    this.probe = roomProbe(new THREE.Vector3(0, 4.2, 11), { size: Assets.phone ? 128 : 256 });
+    this.plates = cellFlatTexture();
+    this.floorProbeK = 1.35;
+    this.floor = makeNeonFloor({
+      size: 260, cell: 2.6, line: 0xffb444, lineK: 0.3, base: 0x060312, glow: 0, gridAlpha: 0, ripple: 0, streak: 0,
+      probe: { map: this.probe.map, min: new THREE.Vector3(-80, 0, -1.25), max: new THREE.Vector3(80, 46, 70), at: this.probe.at, k: this.floorProbeK, rough: 0.15 },
+      plates: { map: this.plates, size: 10, k: 0.25 },
+    });
     s.add(this.floor);
     // a threshold under the door, and the shade the door and its frame lay on the floor in front of it
     const sill = new THREE.Mesh(new THREE.BoxGeometry(18.8, 0.5, 2.0), steel);
@@ -492,47 +731,64 @@ class MemoryGame extends QuizGame {
     shade.renderOrder = 3;
     shade.layers.set(1);
     s.add(sill, sillLip, shade);
-    s.userData.mirrors = [this.mirror];
     const pool = makeLightPool({ color: 0xffb84d, radius: 11, intensity: 0.12 });
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
+    const lieOnFloor = [this.floor, shade, pool]; // (what lies on the floor is not in its reflection: see the probe)
 
-    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
-    // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
-    const ingot = memoryIngotGeometry(), ingotEnd = memoryIngotGeometry(true), S = 1.3, SB = 1.6, tone = new THREE.Color();
-    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.84, 1.08) * k)); // no two bars poured quite alike
+    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), a tray of coins before
+    // it, and in the middle, on a plinth at the door's foot, the bars this session has banked: one for every card,
+    // laid end-on in a pyramid.
+    // (Phase 5, 2026-11-24: a heap was six bars laid end to end in a wall of three, two and one, its long faces square
+    // to the lens: one block of orange. Now ten, laid side by side and nested a course on a course, four, three, two,
+    // one, as bullion is stacked, and turned so the lens sees the long faces and the ends both; the coins stand in neat
+    // stacks on a velvet tray, MEMORY_TRAY.)
+    const ingot = memoryIngotGeometry(), S = 1.3, SB = 1.6, tone = new THREE.Color();
+    const cast = (m, i, k = 1, r = rand(0.86, 1.06)) => m.setColorAt(i, tone.setScalar(r * k)); // no two bars poured quite alike
+    const trayGeo = memoryQuiet(memoryTrayGeometry), trayMat = memoryQuiet(() => memoryPropMaterial(env)); // (memoryQuiet: no new draw from Math.random)
     this.stacks = [-1, 1].map((sd) => {
-      const st = new THREE.InstancedMesh(ingot, barGold, 6);
-      let n = 0;
-      for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
-        st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
-        cast(st, n++, 0.5); // (the heaps in the corners are dressing: they sit darker than the bars you bank)
+      const st = new THREE.InstancedMesh(ingot, barGold, 10);
+      // (twelve draws from Math.random a heap, as the heap of six drew: whatever is drawn after the vault is built, its
+      // sparks and the stills', is drawn as it was. The first six bars take their tone and set from them, the four more
+      // from a hash of their place: no new draw)
+      const pour = Array.from({ length: 12 }, () => rand()), pitch = 2 * 0.48 * S + 0.06;
+      for (let L = 0, n = 0; L < 4; L++) for (let i = 0; i < 4 - L; i++, n++) {
+        const a = n < 6 ? pour[2 * n] : memoryHash(n * 2 + sd * 50), b = n < 6 ? pour[2 * n + 1] : memoryHash(n * 2 + 1 + sd * 50);
+        st.setMatrixAt(n, this._m.compose(this._p.set((a - 0.5) * 0.1, L * 0.56 * S, (i - (3 - L) / 2) * pitch), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, (b - 0.5) * 0.05), this._v.set(S, S, S)));
+        cast(st, n, 1, 0.88 + 0.16 * a);
       }
       st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
-      st.rotation.y = -sd * 0.3;
+      st.position.set(sd * MEMORY_TRAY.heapX, 0, MEMORY_TRAY.heapZ);
+      st.rotation.y = sd * MEMORY_TRAY.heapYaw;
+      const T = MEMORY_TRAY, tray = memoryQuiet(() => new THREE.Mesh(trayGeo, trayMat));
+      tray.position.set(sd * T.x, 0, T.z);
+      tray.rotation.y = sd * T.yaw;
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
       const glow = makeLightPool({ color: 0xffd27a, radius: 5.2, intensity: 0.035 });
       glow.layers.set(1);
+      lieOnFloor.push(glow);
       const g = new THREE.Group();
-      g.add(st, cone, glow);
+      g.add(st, tray, cone, glow);
       s.add(g);
       g.userData.side = sd;
       g.userData.bars = st;
+      g.userData.tray = tray; // (the coins stand on it: MemoryWorks)
       return g;
     });
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.34, 4.0), steel);
     plinth.position.set(0, 0.17, 6.3);
     const plinthLip = new THREE.Group();
     [[0, 8.26, 10.8, 0.14], [0, 4.34, 10.8, 0.14], [-5.33, 6.3, 0.14, 4.0], [5.33, 6.3, 0.14, 4.0]].forEach(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), gold); m.position.set(x, 0.35, z); plinthLip.add(m); });
-    // the plinth's front edge is a line of the bank's own light: where your gold goes is the lit place in the vault
-    const plinthGlow = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: neon(COLORS.lime, 1.5) }));
+    // the plinth's front edge is a line of the bank's own light: where your gold goes is the lit place in the vault (in
+    // the vault's second colour, orange: it was lime, a third neon in a gold room)
+    const plinthGlow = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: neon(0xff8a2a, 2.2) }));
     plinthGlow.position.set(0, 0.2, 8.34);
     s.add(plinth, plinthLip, plinthGlow);
-    this.bank = new THREE.InstancedMesh(ingotEnd, barGold, DECK_SIZE);
+    this.bank = new THREE.InstancedMesh(ingot, barGold, DECK_SIZE);
     this.bankRest = [];
     [6, 5, 4, 3, 2].forEach((w, L) => { for (let i = 0; i < w; i++) this.bankRest.push({ p: new THREE.Vector3((i - (w - 1) / 2) * 1.6, 0.34 + L * 0.9, 6.3), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, Math.PI / 2 + rand(-0.04, 0.04)) }); });
     this.bankScale = new THREE.Vector3(SB, SB, SB);
@@ -546,6 +802,7 @@ class MemoryGame extends QuizGame {
     bankGlow.position.set(0, 0.37, 6.6);
     bankGlow.layers.set(1);
     s.add(bankGlow);
+    lieOnFloor.push(bankGlow);
 
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
@@ -553,23 +810,56 @@ class MemoryGame extends QuizGame {
     this.sparks = new MemorySparks(260);
     s.add(this.sparks.points);
     this.glintT = 0.5;
+    // the floor's reflection leaves out the floor and what lies on it, and what moves through the air (it is drawn
+    // once: the dust and the sparks would hang in it)
+    this.probe.hide = lieOnFloor.concat([this.motes, this.sparks.points]);
+    this.probeIn = 3; // (drawn a few frames in, once the screen's lights are made: see update)
 
     this.coinTex = memoryCoinTexture();
     this.coinGeo = memoryCoinGeometry();
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
+    if (this.gen && this.gen.coin) { // the generated token in place of the turned one, flying and in the piles
+      this.coinTex.dispose(); this.coinGeo.dispose(); this.coinMat.dispose();
+      this.coinTex = null; this.coinGeo = this.gen.coin.geo; this.coinMat = this.gen.coin.mat;
+    }
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
+    // the coins lying in the piles by the bullion: the same gold, lifted (lying flat they mirror the middle of the
+    // vault's ceiling, its darkest part, and read as brown lumps: the master overhaul, Phase 2, 2026-11-23)
+    // (Phase 2, 2026-11-24: the right-hand tray's still read brown, (71, 31, 10), out of the deck lamp's reach: lifted
+    // further, and the model's token a shade paler, they read as gold on both trays)
+    const pile = this.coinMat.clone();
+    pile.envMapIntensity = this.coinMat.envMapIntensity * 2;
+    pile.emissive = new THREE.Color(0x7a5410);
+    if (this.gen && this.gen.coin) pile.color.setHex(0xfff0c0);
 
-    this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
+    this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel, pile }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.2, bloom: 0.58, threshold: 1.2, saturation: 1.14, contrast: 1.14, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.18, sharpen: 0.45, fringe: 0.2 };
+    s.userData.lightBudget = { dir: 2, point: 2 }; // (the lights this screen draws: the key and a rim; the warm fill and the vault's seam. See LightPool in 04-gfx.js)
+    s.userData.post = { exposure: 1.12, bloom: 0.6, threshold: 1.18, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.05, split: 0.2, // (Phase 5: the gold vault under the neon world's light: its shadows lean violet, its gold less hot)
+      ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.18, sharpen: 0.45, fringe: 0.2 };
     this.camBase.set(0, MEMORY_EYE_Y, this.dist);
     this.lookAt.set(0, MEMORY_EYE_Y, 0);
   }
+  // The vault is framed in its window: over the card on a phone; on a Mac (a wide window) the whole height beside the
+  // card's column, the room spanning the window (see style.css). The lens is centred on that window both ways: the
+  // band's middle across as well as down (the master overhaul, Phase 2, 2026-11-23: on a Mac the vault was a strip
+  // 305 px high across the top, the window under it empty). The window is measured again at every resize.
+  resize(w, h) {
+    const win = this.band && this.el && $(".vault-window", this.el);
+    if (win && win.isConnected) { const r = win.getBoundingClientRect(); if (r.height > 0) this.band = { top: r.top, bottom: r.bottom, h: r.height, left: r.left, right: r.right }; }
+    super.resize(w, h);
+    const b = this.band;
+    if (this.camera && b && b.left !== undefined && Math.abs((b.left + b.right) / 2 - w / 2) > 1) {
+      this.camera.setViewOffset(w, h, w / 2 - (b.left + b.right) / 2, h / 2 - (b.top + b.bottom) / 2, w, h);
+      this.camera.updateProjectionMatrix();
+    }
+  }
   // Dolly back until the whole door, the lamps over it and the gold at its foot stand in the window above the
-  // card (the door used to sit behind the card, where only slivers of it showed).
+  // card (the door used to sit behind the card, where only slivers of it showed). On a Mac it stands back a little
+  // further: the room round it is in the picture too (the wall of boxes either side, the floor giving the gold back).
   onResize(w, h) {
     if (!this.camera || !this.door) return;
     const card = this.el && $(".card3d", this.el), win = this.el && $(".vault-window", this.el);
@@ -577,13 +867,14 @@ class MemoryGame extends QuizGame {
     this.cardH = card ? card.offsetHeight : 360;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     const bh = Math.max(60, win ? win.offsetHeight : h * 0.34), bw = win ? win.offsetWidth : w - 32;
+    this.wide = !!win && w > h && bw < w * 0.8; // (the vault beside the card, not over it)
     // tall enough for the lamps' arc and the floor, wide enough for the door's frame
-    this.dist = clamp(Math.max((12.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
+    this.dist = this.wide ? clamp(Math.max((16.5 * h) / (tanH * bh), (15.5 * h) / (tanH * bw)), 26, 170) : clamp(Math.max((12.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
     this.scene.fog.near = this.dist + 8;
     this.scene.fog.far = this.dist + 73;
     // the gold stands either side of the door's foot, as far out as the window shows
     const half = (this.dist * tanH * bw) / h;
-    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - 5.0, 7.4, 13.4), 0, 3.0); });
+    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - (this.wide ? 6.5 : 5.0), 7.4, 13.4), 0, 3.0); }); // (on a Mac inside the vault's part of the window: its edge there is no window's edge)
   }
   placeBolts() {
     for (let k = 0; k < MEMORY_BOLTS; k++) {
@@ -595,7 +886,7 @@ class MemoryGame extends QuizGame {
     this.bolts.instanceMatrix.needsUpdate = true;
   }
   start() {
-    Sound.play("calm");
+    Sound.play("memory"); // (its own recording when served; else the calm tune, as before)
     if (!this.total) {
       UI.toast("NO CARDS HERE YET");
       return this.quit();
@@ -609,6 +900,7 @@ class MemoryGame extends QuizGame {
     const f = this.card;
     if (!f) return this.finish();
     this.flipped = false;
+    if (this.gen) { this.gen.dealK = 1; memoryGenFly(this, "deal"); } // (the deck gives up a card, seen flying into place: look only)
     const card = $("[data-card]", this.el);
     // Snap back to the front without animating, or the next card's answer flashes by. The fly-away of the card
     // before it is cut off first: it has a frame or two left to run, turned to its answer side.
@@ -717,6 +1009,7 @@ class MemoryGame extends QuizGame {
     // say what just happened, where the card was (the coin and the vault's answer follow in the scene)
     const cr = card.getBoundingClientRect();
     UI.floater(kind === "again" ? "BACK IN THE DECK" : "BANKED", cr.left + cr.width / 2 - (kind === "again" ? 96 : 36), cr.top + cr.height * (kind === "again" ? 0.72 : 0.16), kind === "again" ? COLORS.red : COLORS.yellow);
+    memoryGenFly(this, kind === "again" ? "again" : "bank"); // (served: the card seen going into the vault, or back onto the deck: look only)
     if (card.animate && !REDUCED_MOTION) {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.
@@ -777,6 +1070,19 @@ class MemoryGame extends QuizGame {
     const at = (dx, dy, d) => { const k = (2 * d * tanH) / H; return new THREE.Vector3(dx * k, MEMORY_EYE_Y - dy * k, D - d); };
     const bh = this.band ? this.band.h : 300, out = Math.min(GFX.w * 0.3, 130);
     const slot = this.slotWorld;
+    // (on a Mac the card stands beside the vault: the coin leaves the card's side nearest it and swings out that way)
+    const b = this.band, card = this.wide && b && b.left !== undefined && this.el && $("[data-card]", this.el), cr = card && card.getBoundingClientRect();
+    if (cr && cr.width > 0) {
+      const xc = (b.left + b.right) / 2, yc = (b.top + b.bottom) / 2, sd = cr.right < xc ? -1 : 1;
+      const x0 = (sd < 0 ? cr.right - 24 : cr.left + 24) - xc;
+      return new THREE.CatmullRomCurve3([
+        at(x0, cr.top + cr.height * 0.4 - yc, D * 0.16),
+        at(x0 * 0.55, -bh * 0.1, D * 0.42),
+        at(sd * out * 0.7, -bh * 0.36, D * 0.76),
+        new THREE.Vector3(sd * 0.8, slot.y + 1.0, slot.z + 1.8),
+        slot.clone(),
+      ], false, "centripetal");
+    }
     return new THREE.CatmullRomCurve3([
       at(side * 14, bh / 2 + 34, D * 0.16), // from under the window's sill, close to the lens
       at(side * out, bh * 0.2, D * 0.42),
@@ -861,9 +1167,9 @@ class MemoryGame extends QuizGame {
     if (e.key === "Escape" || e.key === "p" || e.key === "P") { e.preventDefault(); return this.pause(); }
     if (this.state === "front" && (e.key === " " || e.key === "Enter" || e.key === "f" || e.key === "F")) { e.preventDefault(); return this.flip(); }
     if (this.state === "back") {
-      if (e.key === "1" || e.key === "ArrowLeft") return this.grade("again");
+      if (e.key === "1" || e.key === "ArrowLeft") { e.preventDefault(); return this.grade("again"); }
       if (e.key === "2" || e.key === " " || e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); return this.grade("good"); }
-      if (e.key === "3" || e.key === "ArrowRight") return this.grade("easy");
+      if (e.key === "3" || e.key === "ArrowRight") { e.preventDefault(); return this.grade("easy"); }
     }
   }
   pause() {
@@ -909,6 +1215,8 @@ class MemoryGame extends QuizGame {
     this.shafts.material.uniforms.uI.value = 0.05 + 0.1 * this.open + 0.22 * this.flash;
     this.wall.material.uniforms.uGlow.value = 0.22 + 0.12 * this.open + 0.2 * this.flash;
     this.wall.material.uniforms.uLit.value = this.open * 0.55;
+    // the floor's reflection is drawn once, so the vault's glow in it follows the vault's own (banked, a deposit's flash)
+    this.floor.material.uniforms.uProbe.value.x = this.floorProbeK * (0.9 + 0.22 * this.open + 0.5 * this.flash);
     const sf = this.slotFlash;
     this.slitMat.color.copy(this.slitBase).multiplyScalar(1.6 + 0.3 * Math.sin(t * 3) + 7 * Math.max(0, sf));
     if (sf < 0) this.slitMat.color.lerp(this.slitMiss, -sf);
@@ -924,7 +1232,10 @@ class MemoryGame extends QuizGame {
       } else {
         const st = pick(this.stacks);
         if (this.bank.count && Math.random() < 0.5) this.sparks.emit(rand(-4.2, 4.2) * Math.min(1, this.bank.count / 6), rand(0.7, 1.4), 8.1, 0, 0, 0, 0.45, rand(0.5, 0.9), hot);
-        else this.sparks.emit(st.position.x + rand(-3, 3), rand(0.5, 2.0), st.position.z + rand(0.2, 0.9), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        else { // on the heap's face to the lens, which steps back a course as it rises (Phase 5: the heap a nested pyramid)
+          const T = MEMORY_TRAY, sd = st.userData.side, a = sd * T.heapYaw, u = rand(-3, 3) * 0.4, y = rand(0.5, 2.0) * 1.3, out = 2.65 - 0.89 * y + rand(0.2, 0.9) * 0.3;
+          this.sparks.emit(st.position.x + sd * T.heapX + Math.cos(a) * u + Math.sin(a) * out, y, st.position.z + T.heapZ - Math.sin(a) * u + Math.cos(a) * out, 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        }
       }
     }
     { const k = this.dist / 22;
@@ -934,12 +1245,36 @@ class MemoryGame extends QuizGame {
     this.motes.userData.drift(t);
     this.works.update(dt, t);
     this.sparks.update(dt, this.camera);
+    memoryGenUpdate(this, dt);
     FX.sync(this.scene, t);
+    this.takeSurfaces();
+  }
+  // The floor's reflection (a face of the room's cube a frame, a few frames in: the screen's lights are made at its
+  // first drawing) and the two CC0 pictures as they arrive (the deck's plates, the boxes' brushed steel). Once the
+  // steel has come, the room is drawn into the cube once more, so the floor gives back brushed doors.
+  takeSurfaces() {
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
+    if (this.brush && !this.brushIn) { const img = Assets.ui("mat-steel"); if (img) { this.brush.image = img; this.brush.needsUpdate = true; this.brushIn = true; if (this.probe && this.probe.made) this.probe.capture(); } }
+    if (!this.probe) return;
+    if (this.probeIn > 0 && --this.probeIn === 0) this.probe.capture();
+    this.probe.step(this.scene, this.camera.layers.mask);
+  }
+  // the floor's reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps,
+  // so a face a frame would never be drawn there; the game itself draws every frame. See HallScene.probeNow)
+  probeNow() {
+    if (!this.probe) return;
+    this.takeSurfaces();
+    this.probeIn = 0;
+    this.probe.capture();
+    while (this.probe.left) this.probe.step(this.scene, this.camera.layers.mask);
   }
   // Free what the scene graph walk misses: the env target, the textures that are not
   // a material's `map`, instance buffers, and the coin parts (shared, maybe not in the scene).
   dispose() {
     if (this.envRT) this.envRT.dispose();
+    if (this.probe) this.probe.dispose();
+    if (this.plates) this.plates.dispose(); // (not a material's map: the walk below misses them)
+    if (this.brush) this.brush.dispose();
     if (this.dialTex) this.dialTex.dispose();
     if (this.coinTex) this.coinTex.dispose();
     if (this.coinGeo) this.coinGeo.dispose();

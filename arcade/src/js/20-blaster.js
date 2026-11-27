@@ -1,6 +1,6 @@
 // RISK BLASTER — a rail shooter. Each answer is a target flying down a neon
 // tunnel; shoot the right one before the targets reach your shields.
-const WAVE_COLORS = [0xff3ad4, 0x35efff, 0xffe14f, 0x86ff5e, 0xa65fff, 0xff9b3d];
+const WAVE_COLORS = [0xff3ad4, 0x35efff, 0xffe14f, 0x4dffa6, 0xa65fff, 0xff9b3d];
 const WAVE_LEN = 10;
 // (The world round the fighter is open space: see 20f-blasterspace.js.)
 
@@ -51,7 +51,7 @@ class BlasterShards {
         void main(){
           vec3 n = normalize(cross(dFdx(vV), dFdy(vV)));
           float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0);
-          float rim = pow(1.0 - abs(dot(n, normalize(-vV))), 2.0);
+          float rim = pow(abs(1.0 - abs(dot(n, normalize(-vV)))), 2.0);
           gl_FragColor = vec4(vC * (0.3 + 1.2 * l + 1.4 * rim), 1.0);
         }`,
     });
@@ -138,6 +138,17 @@ class BlasterGame extends QuizGame {
     this.speed = 26;
     this.targets = [];
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the three skies, the starfighter, the demon. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, fighter: null, demon: null, props: {}, brood: {} };
+    if (this.has3D && GFX.ok) {
+      for (const n of ["blaster-deep-1", "blaster-deep-4", "blaster-deep-5"]) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.fighter = Assets.model("starfighter");
+      this.gen.demon = Assets.model("demon");
+      for (const n of SPACE_GEN_PROPS) { const m = Assets.model(n); if (m) this.gen.props[n] = m; } // (passing ships and drifting rocks: see BlasterSpace.genKit)
+      for (const n of BLASTER_ESCORT.NEAR.concat(BLASTER_ESCORT.FAR)) { const m = Assets.model(n); if (m) this.gen.props[n] = m; } // (the allies, made ready the same way: see BlasterEscort)
+      for (const n of BLASTER_ESCORT.BROOD) { const m = Assets.model(n); if (m) this.gen.brood[n] = m; } // (the overlord's brood: only their shapes are drawn)
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-blaster">
       <div class="hud">
@@ -170,7 +181,8 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.03, bloom: 0.7, threshold: 1.1, saturation: 1.18, contrast: 1.16, vignette: 1.0, fringe: 0.2, sharpen: 0.3, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.28,
+    s.userData.lightBudget = { dir: 3, point: 2 }; // (the lights this screen draws: the key and the region's two rims; the engine's glow and one blast, or the overlord's own lamp. See LightPool in 04-gfx.js)
+    s.userData.post = { exposure: 1.03, bloom: 0.7, threshold: 1.1, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.0, fringe: 0.2, sharpen: 0.3, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.28,
       dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
@@ -199,6 +211,10 @@ class BlasterGame extends QuizGame {
     s.add(this.boomLight);
     this.engineLight = new THREE.PointLight(COLORS.orange, 1.4, 5, 2);
     s.add(this.engineLight);
+    // the panoramas, when they arrived: the sky, the lamps and what chrome mirrors (20i-blastersky.js)
+    this.pano = null;
+    if (this.gen.skies["blaster-deep-1"]) { try { this.pano = new BlasterSky(this, this.gen.skies, SPACE_REGIONS[0].id); } catch (e) { this.pano = null; } }
+    if (this.pano) s.userData.post.dof.max = 0.0042; // (against a painted sky, what drifts far behind keeps its shape: softened, not smeared to a blot)
     this.waveCol = neon(WAVE_COLORS[0], 1);
     this.waveTarget = this.waveCol.clone();
     this.makeStreaks();
@@ -208,11 +224,16 @@ class BlasterGame extends QuizGame {
     this.director = this.space.director || { force() { return null; }, update() {}, log: [] };
     // the wave's carrier, far ahead (when the demon is the wave's enemy, there is none)
     this.carrier = this.enemy ? { update() {}, arrive() {}, destroy() {}, volley() {} } : new BlasterCarrier(this);
-    // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
-    this.warmExtra = this.enemy ? [] : this.slotMats.map((M, i) => {
+    // a stand-in of every target material, drawn once off-screen at start (GFX.warm): the drones, their letters (every
+    // badge an answer can carry: A to D, T and F) and, round the demon, the dark glass behind each, so the first
+    // question compiles and uploads nothing (on a phone that was a stall as the first drones flew in)
+    this.warmExtra = this.slotMats.map((M, i) => {
       const g = new THREE.Group();
       g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
       g.add(new THREE.Mesh(this.drones[i].body, this.dronePaint), new THREE.Mesh(this.drones[i].lamps, M.lamp));
+      g.add(new THREE.Sprite(this.badge(SLOT_KEYS[i], i)));
+      if (i < 2) g.add(new THREE.Sprite(this.badge(["T", "F"][i], i)));
+      if (this.enemy && i === 0) g.add(new THREE.Mesh(this.platesGeo(), this.platesMat()));
       g.position.z = -40;
       return g;
     });
@@ -222,6 +243,7 @@ class BlasterGame extends QuizGame {
     s.add(this.ship);
     this.trails = [0, 1].map(() => new Trail({ length: 12, width: 0.07, color: 0xff7a3d, intensity: 2 }));
     this.trails.forEach((t) => s.add(t.mesh));
+    if (this.jet.model) this.trails.forEach((t) => { t.mesh.visible = false; }); // (the starfighter burns its own five flames)
     this.flashSprite = glowSprite(0xffffff, 1, 0);
     this.flashSprite.visible = false;
     this.flashSprite.renderOrder = 8;
@@ -240,6 +262,17 @@ class BlasterGame extends QuizGame {
     this._v = new THREE.Vector3();
     this.camBase.set(0, 0, 0);
     this.lookAt.set(0, 0, -20);
+    // The combat as it is staged round the overlord (20l-blasterstage.js): its own effects kit (this.kit) and a set
+    // of show-only timers (this.show). With the built-in demon there is none, and everything is shown as it always was.
+    this.stage = this.enemy && this.enemy.model ? new BlasterStage(this) : null;
+    if (this.stage && this.stage.crackGeo) { const c = new THREE.Mesh(this.stage.crackGeo, this.stage.crackMat); c.renderOrder = 9; c.position.z = -40; this.warmExtra.push(c); } // (the crack a bolt leaves across a drone, readied with the rest: its shader was made at the first hit, a stall mid-fight: the master overhaul's census, 2026-11-23)
+    if (this.stage && this.stage.edge) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last shield: BandEdge.warmPiece)
+    if (this.jet.model || this.stage) s.userData.post.ssaa = 2; // (with the models: the scene is drawn at twice the screen's size and brought down, so chrome edges, rims and seams of light are smooth lines)
+    if (this.stage) { // (staged) the answers' letters are drawn last, over the finished picture: no flash, colour split, tint or shake touches them
+      this.over = { scene: new THREE.Scene(), cam: this.camera.clone() };
+      this._white = new THREE.Color(3, 3, 3); this._red = new THREE.Color(1.6, 0.12, 0.2);
+      s.userData.overlay = (r) => this.drawOver(r);
+    }
   }
 
   // Star streaks: bright heads, tails fading into the dark; they stretch at warp.
@@ -280,7 +313,8 @@ class BlasterGame extends QuizGame {
     // and which strikes back when it is wrong. In a build without that model (or if it will not decode) every
     // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
     this.enemy = null;
-    if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
+    if (this.gen.demon) { try { this.enemy = new BlasterOverlord(this, this.gen.demon); } catch (e) { console.warn("demon: " + e.message); this.enemy = null; } } // (the overlord, when its model arrived: 20k)
+    if (!this.enemy && DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
     // With the demon, the answers still have targets: four holo-drones that hold station round it, one to
     // an answer, in the answer's colour and carrying its letter. The fighter fires on the one you tap.
     this.dronePaint = racerCarPaint(this.env, false);
@@ -309,6 +343,21 @@ class BlasterGame extends QuizGame {
       return M;
     });
   }
+  // the dark glass behind a drone round the demon (one shape and one material for all four)
+  platesGeo() { return this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)); }
+  platesMat() {
+    return this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: true,
+      vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `varying vec2 vP;
+        void main(){
+          float r = length(vP) / 1.74;
+          float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
+          vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
+          gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
+        }`,
+    }));
+  }
   badge(text, i) {
     const key = text + i;
     if (!this.badges.has(key)) {
@@ -332,11 +381,21 @@ class BlasterGame extends QuizGame {
     this.space.flash(pos, color, this.boomFast ? 0.45 : 1); // its light on the dust and on whatever is near
   }
 
+  // What a loaded model's chrome mirrors: the region's sky and its lamps (BlasterSky.mirror), or, without a panorama,
+  // the map the built-in fighter wears. k: how strongly.
+  chrome(mat, k = 1) {
+    if (this.pano) return this.pano.mirror(mat, k);
+    mat.envMap = this.shipEnv || this.env;
+    mat.envMapIntensity = k * 0.6;
+    mat.needsUpdate = true;
+    return mat;
+  }
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
   // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
     let jet = null;
-    if (FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
+    if (this.gen.fighter) { try { jet = new BlasterStarfighter(this, this.gen.fighter); } catch (e) { console.warn("starfighter: " + e.message); jet = null; } } // (the starfighter, when its model arrived: 20j)
+    if (!jet && FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
     if (!jet) jet = new BlasterJet(this);
     this.jet = jet;
     this.nozzles = jet.nozzles;
@@ -348,8 +407,8 @@ class BlasterGame extends QuizGame {
   }
 
   start() {
-    Sound.play("game");
-    Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
+    Sound.play("blaster");
+    if (this.stage) this.stage.start(); else Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.director.force("squadron"); // a flight of fighters crosses as the game opens
     if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in
     if (this.enemy) this.enemy.arrive(); // to meet the demon coming up out of the distance
@@ -360,7 +419,7 @@ class BlasterGame extends QuizGame {
     UI.text($("[data-score]", this.el), fmtScore(this.score));
     UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
     UI.text($("[data-combo]", this.el), "x" + this.combo);
-    this.lives(this.shields, 3);
+    this.lives(this.shields + (this.stage ? this.stage.owed : 0), 3); // (staged: a shield is seen to go when the demon's blow lands, a moment after the rule took it)
     // the combo meter: seven pips that fill and change colour as the multiplier climbs
     const cb = $("[data-combo]", this.el);
     cb.dataset.tier = this.combo >= 8 ? 3 : this.combo >= 6 ? 2 : this.combo >= 4 ? 1 : 0;
@@ -368,9 +427,20 @@ class BlasterGame extends QuizGame {
     if (this.combo > (this.comboShown || 1)) { cb.classList.remove("pop"); void cb.offsetWidth; cb.classList.add("pop"); }
     this.comboShown = this.combo;
   }
+  // where a bolt spins up when the streak reaches a new tier (QuizGame.propTier): over the fighter (staged fights only)
+  tierAt() {
+    if (!this.stage) return null;
+    const p = this.stage.shipPos(new THREE.Vector3());
+    p.y += 1.25 * this.shipScale;
+    return { p, size: 0.8 * this.shipScale };
+  }
+  // (Phase 4's review: a resize, the governor's step among them, sets the view back to the band as it stands; the lift and
+  // the standing back are applied again from there, in that frame. Before, an explanation lost them until it closed)
+  onResize() { this.liftSet = 0; this.liftScSet = 1; this.cutT = 2; }
   onLayout() {
     if (!this.has3D) return;
-    this.liftSet = 0; // (the band was just laid out afresh: any lift is applied again from there)
+    this.liftSet = 0; this.liftScSet = 1; // (the band was just laid out afresh: any lift, or standing back, is applied again from there)
+    this.cutT = 2; // (staged: the picture has jumped to its new place, which is not a move of the camera. See update.)
     const far = this.bandSize(12);
     this.fx = Math.min(3.4, far.w * 0.27);
     this.fy = Math.min(1.8, far.h * 0.22);
@@ -443,17 +513,7 @@ class BlasterGame extends QuizGame {
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       if (this.enemy) { // dark glass behind it: nothing shows through its collar or its ring. (It writes depth and is drawn before the demon's ring of light, so that ring passes behind the station.)
-        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)), this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
-          transparent: true, depthWrite: true,
-          vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-          fragmentShader: `varying vec2 vP;
-            void main(){
-              float r = length(vP) / 1.74;
-              float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
-              vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
-              gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
-            }`,
-        })));
+        const plate = new THREE.Mesh(this.platesGeo(), this.platesMat());
         plate.position.z = -0.62;
         frame.add(plate);
         g.userData.plate = plate;
@@ -463,7 +523,8 @@ class BlasterGame extends QuizGame {
       g.userData.label = label; g.userData.halo = halo;
       label.position.z = 1.35;
       label.renderOrder = 10;
-      g.add(halo, frame, rot, label);
+      g.add(halo, frame, rot);
+      if (this.over) { this.over.scene.add(label); label.visible = false; } else g.add(label); // (staged: the letter is drawn over the finished picture. See drawOver.)
       g.userData.frame = frame;
       g.userData.slot = i;
       g.userData.spin = rand(0.6, 1.6) * (i % 2 ? 1 : -1);
@@ -477,7 +538,7 @@ class BlasterGame extends QuizGame {
   }
   clearTargets() {
     // the meshes share geometry, materials and badges with the kit: only detach them
-    this.targets.forEach((t) => this.scene.remove(t));
+    this.targets.forEach((t) => { this.scene.remove(t); if (this.over) this.over.scene.remove(t.userData.label); });
     this.targets = [];
   }
 
@@ -494,10 +555,11 @@ class BlasterGame extends QuizGame {
     // round. (Look and sound: the answer is checked and scored in resolve, as it always was.)
     const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
     const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
-    if (opens) Sound.sfx("laser", this.panAt);
-    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
+    if (this.stage) this.stage.fire(i, right); // (staged: three volleys from both cannons as the fighter turns toward its target: 20l)
+    else if (opens) Sound.sfx("laser", this.panAt);
+    if (opens && this.has3D && !this.stage) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
     if (this.enemy && !right) this.enemy.attack();
-    if (at) {
+    if (at && !this.stage) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(at));
       this.ship.updateMatrixWorld();
@@ -534,38 +596,47 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
-      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); this.space.onRight(SLOT_COLORS[i]); } // (it boosts; the traffic parts; fireworks)
+      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); if (this.stage) this.space.traffic.part(); else this.space.onRight(SLOT_COLORS[i]); } // (it boosts; the traffic parts; fireworks. Staged: the blow itself is the show.)
       if (this.combo >= 4) Sound.sfx("combo");
-      Sound.sfx("boom", this.panAt);
+      if (!this.stage) Sound.sfx("boom", this.panAt); // (staged: the drone's burst and the blow on the demon's core have their own sounds)
       Sound.sfx("correct");
       UI.flash("good");
-      GFX.pulse(4, 0.1);
+      GFX.pulse(this.stage ? 1.6 : 4, this.stage ? 0.03 : 0.1); // (staged: the blow has its own flash where it lands; the whole picture is not lifted to white over it)
       GFX.hitStop(70);
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
-      const p = this.bandPoint(0.3);
+      const p = this.bandPoint(this.stage ? 0.17 : 0.3); // (staged: above the burst on the demon's core, never on it, and outlined in black)
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
-      if (this.enemy) {
+      if (this.stage) this.outline(UI.root.lastElementChild);
+      if (this.stage) { this.stage.right(i); this.enemy.hit(SLOT_COLORS[i]); } // (staged: the drone bursts, a lance goes through it into the demon's core)
+      else if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
         if (t) { this.space.fx.lance(t.position, this.enemy.aimPoint(new THREE.Vector3()), 0.34, [c.r * 2.1 + 0.06, c.g * 2.1 + 0.06, c.b * 2.1 + 0.06], 0.5 * t.scale.x); this.explode(t, SLOT_COLORS[i], 0.45); }
         this.enemy.hit(SLOT_COLORS[i]);
       } else this.explode(this.targets[i], SLOT_COLORS[i]);
-      if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
+      if (this.combo >= 4) { UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + (this.stage ? 17 : 30), COLORS.magenta); if (this.stage) this.outline(UI.root.lastElementChild); }
     } else {
       this.combo = 1;
       this.shields--;
       title = this.shields > 0 ? "WRONG TARGET! SHIELD DOWN" : "WRONG TARGET! SHIELDS GONE";
-      this.shieldHit();
-      if (this.has3D) this.space.onWrong(); // (sparks off the hull, arcs across the shield)
-      Sound.sfx("wrong");
-      Sound.sfx("hit");
-      UI.flash("hit");
-      this.shake(0.35);
-      GFX.pulse(12, 0);
-      Haptics.buzz([60, 40, 90]);
-      Sound.setIntensity(0);
-      this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
+      if (this.stage) { // (staged: the shot dies on the drone in a dull red fizzle now; the shield is seen to go when the demon's strike lands)
+        this.jet.setCombo(1);
+        this.stage.wrong(i);
+        Sound.sfx("wrong");
+        Sound.setIntensity(0);
+      } else {
+        this.shieldHit();
+        if (this.has3D) this.space.onWrong(); // (sparks off the hull, arcs across the shield)
+        Sound.sfx("wrong");
+        Sound.sfx("hit");
+        UI.flash("hit");
+        this.shake(0.35);
+        GFX.pulse(12, 0);
+        Haptics.buzz([60, 40, 90]);
+        Sound.setIntensity(0);
+        this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
+      }
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -583,14 +654,20 @@ class BlasterGame extends QuizGame {
     this.quiz.reveal(-1);
     this.combo = 1;
     this.shields--;
-    this.shieldHit();
-    if (this.has3D) this.space.onWrong();
-    Sound.sfx("hit");
-    UI.flash("hit");
-    this.shake(0.5);
-    GFX.pulse(12, 0);
-    Haptics.buzz([60, 40, 90]);
-    Sound.setIntensity(0);
+    if (this.stage) { // (staged: the shield is seen to go when the demon's strike lands. It began to wind up as the clock ran down.)
+      this.jet.setCombo(1);
+      this.stage.timeout();
+      Sound.setIntensity(0);
+    } else {
+      this.shieldHit();
+      if (this.has3D) this.space.onWrong();
+      Sound.sfx("hit");
+      UI.flash("hit");
+      this.shake(0.5);
+      GFX.pulse(12, 0);
+      Haptics.buzz([60, 40, 90]);
+      Sound.setIntensity(0);
+    }
     this.targets.forEach((t, i) => {
       if (i === r.correct) return this.highlight(t);
       const z0 = t.position.z, s0 = t.scale.x;
@@ -661,20 +738,20 @@ class BlasterGame extends QuizGame {
       const bonus = this.shields * 500 + this.wave * 250;
       this.score += bonus;
       this.shields = Math.min(3, this.shields + 1);
-      if (this.has3D) { this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1); this.space.setRegion((this.wave - 1) * 2, 2.4); }
+      if (this.has3D) { this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1); if (!this.stage) this.space.setRegion((this.wave - 1) * 2, 2.4); }
       Sound.sfx("levelup");
-      Sound.sfx("warp");
+      if (!this.stage) Sound.sfx("warp");
       if (this.has3D) {
         // the wave's carrier goes up, the fighter rolls through the wreck, the next carrier comes up out of the dark
         this.carrier.destroy();
         if (this.enemy) this.enemy.destroy(); // (or the wave's demon does, and the next wave's flies up)
-        this.jet.warp();
-        this.jet.shieldUp();
+        if (this.stage) this.stage.waveEnd((this.wave - 1) * 2, "WAVE " + this.wave); // (the announcer calls the wave once the demon has gone) (staged: the demon's death is seen first; the warp, the roll and the next region follow its last blast. Look only.)
+        else { this.jet.warp(); this.jet.shieldUp(); }
         this.tw.wait(1.2, () => { if (!this.unmounted) { this.carrier.arrive(this.wave); if (this.enemy) this.enemy.arrive(); } });
       }
-      this.warp = 1.4;
-      GFX.pulse(6, 0.2);
-      UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
+      if (!this.stage) this.warp = 1.4;
+      GFX.pulse(this.stage ? 2 : 6, 0.2); // (staged: the demon's death starts here, and is seen sharp)
+      this.quietly(() => UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED", Assets.on ? "fit" : "")); // (served, Phase 6: it comes in from just over its size, inside the screen's edges: from 2.2 times its size its line ran off both)
       this.hud();
       this.state = "intro";
       this.tw.wait(1.5, () => this.nextQuestion());
@@ -686,13 +763,16 @@ class BlasterGame extends QuizGame {
     this.state = "over";
     Sound.stopMusic();
     Sound.engine(false);
-    Sound.sfx("gameover");
-    UI.banner("GAME OVER", COLORS.red);
+    if (!this.stage) Sound.sfx("gameover"); // (staged: the blast, the call, the demon's roar and the jingle come one after another, each with its picture. See the stage's over.)
+    this.quietly(() => UI.banner("GAME OVER", COLORS.red));
     if (this.has3D) {
-      this.bursts.burst(this.ship.position, COLORS.cyan, { n: 90, speed: 6, size: 0.3, life: 1.4 });
-      this.shards.burst(this.ship.position, COLORS.cyan, 20, 0.7, 6);
-      this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
-      this.boom(this.ship.position, COLORS.orange, 6);
+      if (this.stage) this.stage.over(); // (staged: a layered blast, then a second as a tank goes)
+      else {
+        this.bursts.burst(this.ship.position, COLORS.cyan, { n: 90, speed: 6, size: 0.3, life: 1.4 });
+        this.shards.burst(this.ship.position, COLORS.cyan, 20, 0.7, 6);
+        this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
+        this.boom(this.ship.position, COLORS.orange, 6);
+      }
       this.jet.down(); // (the ship goes: at once, or in pieces)
       this.trails.forEach((t) => { t.mesh.visible = false; });
       this.engineLight.intensity = 0;
@@ -710,6 +790,7 @@ class BlasterGame extends QuizGame {
 
   update(dt) {
     super.update(dt);
+    if (this.stage) this.shakeAmt = Math.min(this.shakeAmt, 0.16); // (staged: a shake never carries what stands in the band's corners out of it)
     if (this.paused) return;
     if (this.state === "ask") {
       this.tLeft -= dt;
@@ -721,7 +802,7 @@ class BlasterGame extends QuizGame {
     let w = 0;
     if (this.warp > 0) {
       this.warp = Math.max(0, this.warp - dt);
-      w = Math.sin((this.warp / 1.4) * Math.PI);
+      w = Math.sin((this.warp / (this.warpDur || 1.4)) * Math.PI); // (warpDur: staged, a shorter warp that follows the demon's death)
       this.camera.fov = 60 + w * 22;
       this.camera.updateProjectionMatrix();
     }
@@ -735,10 +816,15 @@ class BlasterGame extends QuizGame {
       if (p[i * 6 + 5] > 2) this.resetStreak(i, -170);
     }
     this.streaks.geometry.attributes.position.needsUpdate = true;
-    this.streaks.material.color.setScalar(0.4 + w * 2.2);
+    this.streaks.material.color.setScalar((0.4 + w * 2.2) * GFX.ss); // (lines are a pixel wide in the scene's own pixels: brought down from a larger scene they keep their light)
     // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
-    GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
+    // warp streaks the picture outward. (Staged: the warp follows the demon's death and is still running as the next
+    // question comes up. From then on the picture is not streaked: the stars still stretch and the view still rolls,
+    // and the answers' drones are sharp.)
+    if (this.warpBlur === undefined) this.warpBlur = 0.9;
+    if (this.stage) this.warpBlur += ((this.state === "ask" ? 0 : 0.9) - this.warpBlur) * Math.min(1, dt * 12);
+    GFX.speedBlur = w * this.warpBlur + GFX.fever * 0.12;
     if (this.boomT > 0) {
       this.boomT = Math.max(0, this.boomT - dt * (this.boomFast ? 6.5 : 2.6));
       const k = this.boomT;
@@ -764,14 +850,22 @@ class BlasterGame extends QuizGame {
         const dz = Math.max(this.enemy.root.position.z + 6.2, -DEMON_FAR + 5), b = this.bandSize(-dz);
         u.s = clamp(Math.min(b.h * 0.06, b.w * 0.054), 0.2, 1.3); // (a fifth smaller, and out in the corners: clear of its wings and claws)
         t.position.set(u.sx * b.w * 0.37 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
+        // (staged) while an explanation is up the picture rides higher: the drones keep inside the band, the upper row
+        // against its top edge and the lower row under it
+        // (and the picture drawn smaller on a wide window, k: Phase 4)
+        if (this.stage && this.liftSet > 0.5 && this.band) { const k = this.liftScSet || 1, ppu = (this.band.h / b.h) * k, rad = u.s * 1.9 * ppu, yPx = (0.5 - u.sy) * this.band.h * k - this.liftSet, min = u.sy > 0 ? rad + 4 : 3 * rad + 10; if (yPx < min) t.position.y -= (min - yPx) / ppu; }
         // the letter, the glass and the halo sit on the line of sight through the station's middle (out in the corners
         // of the view, a letter set straight in front of its drone stood off-centre in it)
         const ld = this._ld || (this._ld = new THREE.Vector3());
         ld.copy(this.camera.position).sub(t.position).normalize();
-        u.label.position.copy(ld).multiplyScalar(1.35);
+        if (this.over) { u.label.position.copy(t.position).addScaledVector(ld, 1.35 * t.scale.x); u.label.scale.setScalar(2.04 * t.scale.x * (1 - (u.shat || 0))); u.label.visible = t.visible; } else u.label.position.copy(ld).multiplyScalar(1.35);
         u.halo.position.copy(ld).multiplyScalar(-0.9);
         if (u.plate) u.plate.position.copy(ld).multiplyScalar(-0.62);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
+        if (this.stage) { // (staged) a pair of bolts lands on it: its housing jolts and its edges flash white; a pair that does not bite: red
+          if (u.jolt > 0) { u.jolt = Math.max(0, u.jolt - VFX.dt * 9); if (!u.gone && !u.hot) t.scale.setScalar(u.s * (1 + 0.1 * u.jolt)); if (!u.hot && !u.rejected) u.M.edge.color.copy(u.M.baseEdge).lerp(this._white, u.jolt); }
+          if (u.refuse > 0) { u.refuse = Math.max(0, u.refuse - VFX.dt * 7); if (!u.hot && !u.rejected) { u.M.edge.color.copy(u.M.baseEdge).lerp(this._red, u.refuse); u.M.lamp.color.copy(u.M.baseLamp).lerp(this._red, u.refuse); } }
+        }
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);
         t.position.x = u.bx + Math.sin(this.t * 1.3 + i * 1.7) * 0.18 * this.ts;
@@ -784,10 +878,16 @@ class BlasterGame extends QuizGame {
       if (u.hot) {
         const pulse = 1 + Math.sin(this.t * 10) * 0.12;
         t.scale.setScalar((this.enemy ? u.s : this.ts) * pulse * 1.15);
-        u.M.edge.color.setHex(Math.sin(this.t * 10) > 0 ? 0xffffff : 0x86ff5e).multiplyScalar(2.6);
-        u.M.rim.uniforms.uColor.value.setHex(0x86ff5e).multiplyScalar(1.4);
-        u.M.lamp.color.setHex(0x86ff5e).multiplyScalar(2.3 + 0.7 * Math.sin(this.t * 10)); // (its ring and lamps go lime too: this was the one)
-        u.M.halo.color.setHex(0x86ff5e).multiplyScalar(1.5);
+        u.M.edge.color.setHex(Math.sin(this.t * 10) > 0 ? 0xffffff : 0x4dffa6).multiplyScalar(2.6);
+        u.M.rim.uniforms.uColor.value.setHex(0x4dffa6).multiplyScalar(1.4);
+        u.M.lamp.color.setHex(0x4dffa6).multiplyScalar(2.3 + 0.7 * Math.sin(this.t * 10)); // (its ring and lamps go lime too: this was the one)
+        u.M.halo.color.setHex(0x4dffa6).multiplyScalar(1.5);
+      }
+      if (u.rejected && !u.gone) { // (staged) the wrong one took the shot and locked out: it shrinks back, its lamps a dull red
+        u.rej = Math.min(1, (u.rej || 0) + VFX.dt * 5);
+        t.scale.setScalar(u.s * (1 - 0.2 * u.rej));
+        u.M.edge.color.setRGB(0.7, 0.07, 0.1); u.M.lamp.color.setRGB(1.5, 0.14, 0.22); u.M.halo.color.setRGB(0.35, 0.03, 0.05); // (its ring stays lit, a clear red: the housing is seen to be locked, not gone)
+        u.M.rim.uniforms.uColor.value.setRGB(0.5, 0.05, 0.08);
       }
     });
     // the ship: drift, bank, engine flicker, blinking wing lights, ribbon trails
@@ -795,14 +895,18 @@ class BlasterGame extends QuizGame {
     const ease = Math.min(1, dt * 3);
     this.ship.position.y += (this.shipY - this.ship.position.y) * ease;
     this.ship.scale.setScalar(this.ship.scale.x + (this.shipScale - this.ship.scale.x) * ease);
-    if (this.state === "ask") this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12);
+    if (this.state === "ask" && !this.stage) this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12); // (staged: the stage eases it between its hover and its aim)
     const fl = 1 + Math.sin(this.t * 15) * 0.12 + Math.sin(this.t * 9.3) * 0.08 + w * 0.6;
     this.engineGlows.forEach((g, j) => g.scale.setScalar(0.5 * fl * (j ? 1.04 : 0.96)));
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
     if (this.enemy && this.enemy.late) this.enemy.late(); // (the demon's heat haze, when it has more of it than the engines)
-    Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
+    if (this.stage) { // the staged combat, on the show clock: its timers, what it has in flight, and the effects kit
+      this.show.update(VFX.dt);
+      this.stage.update(dt, sp, w);
+      this.kit.update(VFX.dt);
+    } else Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
@@ -819,39 +923,84 @@ class BlasterGame extends QuizGame {
     this.camBase.set(Pointer.x * 0.5, -Pointer.y * 0.3, 0);
     this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
-    { // while an explanation is up the picture rides higher, so the fighter and its shield stay in view above it
-      const b = this.band, up = b && this.quiz && this.quiz.sheet && this.sheetTop != null && this.state === "explain" ? clamp(b.bottom - this.sheetTop + 10, 0, b.h * 0.4) : 0;
-      this.lift = (this.lift || 0) + (up - (this.lift || 0)) * Math.min(1, dt * 6);
-      if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
+    { // while an explanation is up the picture rides higher, so the fighter and its shield stay in view above it.
+      // (Phase 4, 2026-11-25: on a wide window, a Mac's, the lens stands back first: the picture is drawn smaller about
+      // the band's top, to 72% at most, so the fighter clears the sheet while the demon stays below the question; only
+      // what still does not fit is lifted. Lifted whole, the demon's head went under the question panel: Phase 2's audit
+      // #15. A phone held upright is as it was.)
+      const b = this.band, over = b && this.quiz && this.quiz.sheet && this.sheetTop != null && this.state === "explain" ? clamp(b.bottom - this.sheetTop + 10, 0, b.h * 0.4) : 0;
+      let sc = 1, up = over;
+      if (b && over > 0 && GFX.w / GFX.h > 1.2) { sc = clamp((b.h - over) / b.h, 0.72, 1); up = Math.max(0, b.h * sc - (b.h - over)); }
+      const ease = Math.min(1, dt * 6);
+      this.lift = (this.lift || 0) + (up - (this.lift || 0)) * ease;
+      this.liftSc = (this.liftSc || 1) + (sc - (this.liftSc || 1)) * ease;
+      if (b && (Math.abs(this.lift - (this.liftSet || 0)) > 0.2 || Math.abs(this.liftSc - (this.liftScSet || 1)) > 0.002)) {
         this.liftSet = this.lift < 0.25 ? 0 : this.lift;
-        this.camera.setViewOffset(GFX.w, GFX.h, 0, GFX.h / 2 - ((b.top + b.bottom) / 2 - this.liftSet), GFX.w, GFX.h);
+        this.liftScSet = this.liftSc > 0.998 ? 1 : this.liftSc;
+        const k = this.liftScSet; // (the frame drawn k times as large: what the lens sees, from the band's top, k times as tall)
+        this.camera.setViewOffset(GFX.w * k, GFX.h * k, (GFX.w * (k - 1)) / 2, (GFX.h * k) / 2 - (b.top + (k * b.h) / 2 - this.liftSet), GFX.w, GFX.h);
+        this.cutT = 2;
       }
     }
-    if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
+    // (staged) the picture sliding to a new place on the page is not the camera moving: for those frames it is not
+    // streaked as if it were. Nor while a blow shakes it: a shaken picture stays sharp, so the answers' letters can
+    // be read through it.
+    // (Phase 4's review: and unstaged too, the picture standing back or riding up is not the camera moving, so it is not
+    // streaked: before, the fallback streaked the change as a zoom at the screen's sides)
+    { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || (this.stage && (this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask"))) ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
+    this.warpRoll = w > 0.001 && !REDUCED_MOTION ? Math.sin(this.warp * 2.4) * w * 0.14 : 0;
+    if (this.warpRoll) this.camera.rotateZ(this.warpRoll);
     this.space.follow(this.camera);
     FX.sync(this.scene, this.t);
   }
+  // (staged) The answers' letters, drawn over the finished picture from where the camera stands unshaken: whatever
+  // a blow does to the picture (flash, colour split, tear, tint, shake), the four letters are not touched by it.
+  drawOver(r) {
+    const o = this.over;
+    if (!GFX.ok || !o || !this.targets.length) return;
+    const c = o.cam, cam = this.camera;
+    c.projectionMatrix.copy(cam.projectionMatrix); c.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
+    c.position.copy(this.camBase); c.lookAt(this.lookAt);
+    if (this.warpRoll) c.rotateZ(this.warpRoll);
+    c.updateMatrixWorld(true);
+    const ac = r.autoClear;
+    r.autoClear = false;
+    try { r.setRenderTarget(null); r.render(o.scene, c); } catch (e) { /* the picture stands without them */ }
+    r.autoClear = ac;
+  }
+  // a score popup, outlined in black so it reads on whatever is behind it
+  outline(el) { if (el && el.classList.contains("floater")) { el.style.textShadow = "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 0 #000, 0 0 5px #000"; el.style.fontSize = "13px"; } }
+  // a banner whose words the announcer speaks later, with their picture (the banner itself is shown now, as it always was)
+  quietly(fn) { if (!this.stage) return fn(); const say = Sound.say; Sound.say = () => {}; try { fn(); } finally { Sound.say = say; } }
   pause() {
     super.pause();
-    if (this.paused) Sound.engine(false);
+    if (this.paused) { if (this.stage) this.stage.pause(); else Sound.engine(false); } // (nothing keeps sounding behind the menu)
   }
   resume() {
     super.resume();
-    if (this.state !== "over") Sound.engine(true);
+    if (this.state !== "over") { if (this.stage) this.stage.resume(); else Sound.engine(true); }
   }
   dispose() {
     Sound.engine(false);
+    if (this.stage) this.stage.dispose();
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
     if (this.enemy) this.enemy.dispose();
+    if (this.jet && this.jet.dispose) this.jet.dispose();
     if (this.has3D) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
+      // (the dark glass behind the drones round the demon: made on first use, and by the time the screen closes its
+      // drones, and with them every plate, are already gone from the scene: it stayed on the graphics chip a visit at a
+      // time. Phase 7's soak)
+      if (this.dronePlate) this.dronePlate.dispose();
+      if (this.dronePlateMat) this.dronePlateMat.dispose();
     }
-    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
+    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); } // (the space's dispose lets the passing ships' and rocks' maps go)
+    if (this.pano) this.pano.dispose();
     super.dispose();
   }
 }

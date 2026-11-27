@@ -1,0 +1,15 @@
+{
+ "name": "boss-void",
+ "source": "boss-void",
+ "blockade": {
+  "id": 15930873,
+  "style": "M3 Scifi Concept Art",
+  "seed": 896091981,
+  "prompt": "Ominous dark void sky: black storm clouds in a great spiral overhead with cracks of violet and crimson light, distant lightning, drifting embers, a faint cold glow along the far horizon, mostly darkness. Menacing, high contrast, retro synthwave palette, crisp detail."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 449726,
+ "lightAt": 271,
+ "mean": 0.192
+}

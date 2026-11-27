@@ -45,7 +45,10 @@ function mergeStates(a, b) {
     for (const [k, v] of Object.entries(src.stats || {})) if (typeof v === "number") out.stats[k] = Math.max(out.stats[k] || 0, v);
   }
   const newer = (b && b.updated) > (a && a.updated) ? b : a;
-  out.settings = Object.assign(freshState().settings, (a && a.settings) || {}, (newer && newer.settings) || {});
+  // (Phase 8, 2026-11-26: a Graphics setting fixed in a copy saved before then goes back to AUTO once, whichever device
+  // the copy comes from: GFX.init does it for this one)
+  const once = (st) => (st && !(st.qv >= 2) ? Object.assign({}, st, { quality: "auto", qv: 2 }) : st);
+  out.settings = Object.assign(freshState().settings, once(a && a.settings) || {}, once(newer && newer.settings) || {});
   out.updated = Math.max((a && a.updated) || 0, (b && b.updated) || 0);
   return out;
 }

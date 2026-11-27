@@ -1,0 +1,43 @@
+{
+ "name": "boss-3",
+ "about": "Boss Rush: Solvency Specter (a hooded wraith in tattered plate with an empty vault in its chest). Tripo H3.1 from concept boss03-specter-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss03-animA.glb",
+ "more": [
+  "post/boss03-animB.glb"
+ ],
+ "seg": "post/boss03-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    250,
+    300
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.4,
+   0.7
+  ]
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

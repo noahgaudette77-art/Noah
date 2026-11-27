@@ -18,12 +18,12 @@ const HUB_NG = 16;
 const HUB_SIDE = [[-0.72, 0], [0.7, 0], [0.7, 1.1], [0.98, 1.2], [1, 1.36], [0.46, 1.56], [0.24, 3.08], [0.54, 3.2], [0.58, 3.98], [-0.48, 4.08], [-0.72, 3.72]];
 const HUB_BODY = [[-0.7, 0], [0.655, 0], [0.655, 1.11], [0.935, 1.205], [0.955, 1.335], [0.43, 1.53], [0.2, 3.07], [0.5, 3.19], [0.535, 3.95], [-0.47, 4.05], [-0.7, 3.71]];
 const HUB_MINI = [[-0.55, 0], [0.5, 0], [0.5, 1], [0.78, 1.1], [0.8, 1.22], [0.36, 1.38], [0.18, 2.68], [0.42, 2.78], [0.45, 3.32], [-0.45, 3.4], [-0.55, 3.1]];
-const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#ff9b3d", "#a65fff", "#ff4769"];
+const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#ff9b3d", "#a65fff", "#ff4769"];
 const HUB_TITLES = ["COMET SKIRMISH", "NOVA SORTIE", "REDLINE RALLY", "SKYLIGHT SLALOM", "TIN TUSSLE", "NEON HAIRPIN", "LASER LATTICE", "PIXEL PILGRIM", "REGOLITH RUSH", "GALE GLIDER", "LANTERN MAZE", "RIFT SKIPPER", "BUMPER BLITZ", "WYVERN DUEL", "STACKWORKS", "STRATO ACE"]; // (made-up titles for the machines in the background; each was searched for and is no real game's name)
 const HUB_RINGS = [[3.62, "#35efff"], [4.72, "#ff3ad4"], [4.92, "#ff3ad4"]]; // wall neon: height, colour (the pink pair passes behind every marquee, well under each cabinet's top edge)
 const HUB_EYE = 2.5; // the camera's height on the floor
 // Neon signs on the wall: text, colour, angle, width (their atlas row is the index).
-const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#86ff5e", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
+const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#4dffa6", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
 // The room is rebuilt every time the player comes back from a game, so its
 // static geometry and artwork are kept for the session (once the pixel font
 // has loaded, so nothing is frozen in a fallback font).
@@ -284,6 +284,56 @@ function hubDustMaterial(levels) {
       void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(uColor * vB * (1.0 - smoothstep(0.05, 0.5, d)), 1.0); }`,
   });
 }
+// The club lasers, all eight in one mesh (one draw where there were eight, and no work a frame but its fade): each a
+// flat ribbon turned to face the lens, swept in its shader just as the beams were swept before, from its point in the
+// ring above the cabinets to a point on the floor that swings to and fro. Across the ribbon, the beam's hot core as
+// it was (never under three pixels across: thinner, a far beam crawled like a scratch on the picture), and round it a
+// soft halo, the haze it lights (the master overhaul, Phase 5: one beam read as a hairline from the ceiling to the floor).
+const HUB_LASER = { r: 10.5, half: 0.6, core: 0.075, halo: 0.62 };
+function hubLasers(cols) {
+  const n = cols.length, beam = new Float32Array(n * 16), col = new Float32Array(n * 12), idx = [];
+  cols.forEach((c, i) => {
+    const cc = neon(c, 1.25), az = (i / n) * Math.PI * 2 + 0.2, ph = i * 1.7;
+    for (let k = 0; k < 4; k++) { beam.set([az, ph, k >> 1, k & 1 ? 1 : -1], (i * 4 + k) * 4); col.set([cc.r, cc.g, cc.b], (i * 4 + k) * 3); }
+    idx.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 2, i * 4 + 1, i * 4 + 3);
+  });
+  const geo = new THREE.BufferGeometry(), L = HUB_LASER, f = (v, d = 3) => v.toFixed(d);
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 12), 3)); // (each corner is placed in the shader)
+  geo.setAttribute("aBeam", new THREE.BufferAttribute(beam, 4)); // its beam's turn round the room and phase, which end, which side
+  geo.setAttribute("aCol", new THREE.BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uFade: { value: 0 }, uHalo: { value: L.halo } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
+    vertexShader: `attribute vec4 aBeam; attribute vec3 aCol; uniform float uTime; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float az = aBeam.x, ph = aBeam.y, sw = az + sin(uTime * 0.31 + ph) * 0.55, reach = 15.5 + sin(uTime * 0.23 + ph * 2.0) * 2.0;
+        vec3 a = vec3(sin(az) * ${f(L.r, 2)}, ${f(HUB_CEIL - 0.3, 2)}, -cos(az) * ${f(L.r, 2)}), b = vec3(sin(sw) * reach, 0.05, -cos(sw) * reach);
+        vec4 mv = modelViewMatrix * vec4(mix(a, b, aBeam.z), 1.0);
+        vec3 side = cross((modelViewMatrix * vec4(b - a, 0.0)).xyz, mv.xyz);
+        float l = length(side);
+        mv.xyz += (l > 1e-6 ? side / l : vec3(1.0, 0.0, 0.0)) * aBeam.w * ${f(L.half)};
+        vCol = aCol; vB = aBeam.wz;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_NOISE}
+      uniform float uTime; uniform float uFade; uniform float uHalo; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float s = abs(vB.x), cw = ${f(L.core / L.half, 4)}, w = max(cw, fwidth(vB.x) * 1.5);
+        float q = s / w, e = sqrt(max(0.0, 1.0 - q * q));
+        float core = (pow(e, 6.0) * 2.5 + pow(e, 1.5)) * cw / w; // (a cylinder of light seen side on, as the beams were drawn)
+        float crawl = 0.7 + 0.3 * vnoise(vec3(vB.y * 30.0 - uTime * 25.0, vB.x * 3.0, uTime));
+        vec3 c = (vCol + vec3(core * 0.6)) * core * crawl;
+        float halo = 0.68 * exp(-s * s * 16.0) + 0.32 * exp(-s * s * 3.5) * (1.0 - s);
+        c += vCol * uHalo * halo * (0.85 + 0.15 * crawl) * smoothstep(0.0, 0.03, vB.y) * (1.0 - smoothstep(0.9, 1.0, vB.y)); // (it thins out at the floor, where the ribbon meets it)
+        gl_FragColor = vec4(c * uFade, 1.0);
+      }`,
+  }));
+  m.frustumCulled = false;
+  m.renderOrder = 6;
+  m.visible = false;
+  return m;
+}
 // A cabinet's CRT behind its bezel: curved glass, scanlines, a warm-up line
 // when it powers on, and coloured light spilling onto the bezel art.
 function hubScreenMaterial(tex, color) {
@@ -324,12 +374,12 @@ function hubScreenMaterial(tex, color) {
         crt *= 1.0 - 0.5 * smoothstep(-0.11, 0.0, sd); // the tube sits back in its bezel: its edge is in shadow
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.8;
         // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
-        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.11 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.07);
+        crt += (uTint * 0.4 + 0.6) * ((1.0 - smoothstep(0.0, 0.09, abs(q.x - 0.55 + q.y * 0.12))) * 0.11 + (1.0 - smoothstep(0.0, 0.28, abs(q.y - 0.8))) * 0.07);
         { // and one curved highlight across its upper corner (the glass is a bulge, not a flat pane): a thin bright arc, a soft one inside it
           vec2 ha = q - vec2(0.42, -0.62);
           float hr = length(ha), hp = atan(ha.y, ha.x);
           float span = smoothstep(1.84, 2.04, hp) * (1.0 - smoothstep(2.5, 2.72, hp));
-          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * (smoothstep(0.03, 0.0, abs(hr - 1.25)) * 0.72 + smoothstep(0.2, 0.0, abs(hr - 1.15)) * 0.17);
+          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * ((1.0 - smoothstep(0.0, 0.03, abs(hr - 1.25))) * 0.72 + (1.0 - smoothstep(0.0, 0.2, abs(hr - 1.15))) * 0.17);
         }
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
@@ -381,12 +431,14 @@ function hubMachineScreenMaterial(levels) {
 // The floor: polished dark tiles that mirror the room, a blacklight carpet
 // beyond them, an LED inlay ring between the two, soft contact shadows under
 // the machines and pools of coloured light thrown by the cabinets.
-function hubFloorMaterial(mirror, carpet) {
+function hubFloorMaterial(mirror, carpet, pano = null, panoB = null, angB = 0) {
   const v2 = () => CABINETS.map(() => new THREE.Vector2());
   const v3 = () => CABINETS.map(() => new THREE.Color(0));
   const N = CABINETS.length, TR = HUB_TILE_R.toFixed(2), BR = HUB_BG_R.toFixed(2);
   return new THREE.ShaderMaterial({
+    defines: pano ? { HUB_PANO: "" } : {}, // (the generated hall: the polished tiles also take a soft sheen of its panorama)
     uniforms: Object.assign(fogUniforms(), {
+      tPano: { value: pano }, tPanoB: { value: panoB || pano }, uPanoB: { value: angB }, // (the second hall's sheen takes over toward the trophy stand)
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 }, tCarpet: { value: carpet },
       uBlack: { value: 1 }, uInlay: { value: 1 }, uInlayCol: { value: neon(0xff3ad4, 2.2) }, uBg: { value: 1 }, uRoom: { value: 1 },
       uCab: { value: v2() }, uPoolPos: { value: v2() }, uPoolCol: { value: v3() }, uConeCol: { value: v3() },
@@ -395,7 +447,7 @@ function hubFloorMaterial(mirror, carpet) {
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect;
+      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect; uniform sampler2D tPano; uniform sampler2D tPanoB; uniform float uPanoB;
       uniform float uBlack; uniform float uInlay; uniform vec3 uInlayCol; uniform float uBg; uniform float uRoom;
       uniform vec2 uCab[${N}]; uniform vec2 uPoolPos[${N}]; uniform vec3 uPoolCol[${N}]; uniform vec3 uConeCol[${N}];
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -435,6 +487,12 @@ function hubFloorMaterial(mirror, carpet) {
             + (texture2D(tReflect, ruv + vec2(0.0, s)).rgb + texture2D(tReflect, ruv - vec2(0.0, s)).rgb) * 0.2
             + (texture2D(tReflect, ruv + vec2(0.0, s * 2.4)).rgb + texture2D(tReflect, ruv - vec2(0.0, s * 2.4)).rgb) * 0.1;
           col += rc * mix(0.06, mix(0.22, 0.68, grout), tiles) * fres * uReflect;
+          #ifdef HUB_PANO
+          { vec3 d = vec3(-V.x, V.y, -V.z); // (the reflected ray, looked up in the panorama as a sky is: blurred, faint, on the tiles)
+            vec2 pu = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+            vec3 pc = mix(texture2D(tPano, pu, 3.5).rgb, texture2D(tPanoB, pu, 3.5).rgb, (1.0 - smoothstep(0.22, 0.62, abs(atan(p.x, -p.y) - uPanoB))));
+            col += pc * pc * mix(0.025, 0.15 * grout, tiles) * fres * uReflect; }
+          #endif
         }
         float dr = abs(r - ${TR});
         float wr = max(0.03, fr * 1.2);
@@ -463,7 +521,7 @@ function hubWallMaterial() {
         vec2 d = vec2((ang - fa) * ${HUB_WALL.toFixed(1)}, y - 5.2);
         float r = length(d);
         float th = atan(d.y, d.x) + uTime * sp;
-        return smoothstep(0.5, 0.95, abs(sin(th * 2.0))) * smoothstep(3.4, 1.0, r) * smoothstep(0.1, 0.7, r);
+        return smoothstep(0.5, 0.95, abs(sin(th * 2.0))) * (1.0 - smoothstep(1.0, 3.4, r)) * smoothstep(0.1, 0.7, r);
       }
       void main(){
         float ang = atan(vWorld.x, -vWorld.z);
@@ -673,6 +731,71 @@ function hubArtAtlas() {
     [X + 66, X + Wp - 66].forEach((ex) => { x.fillStyle = "rgba(6,4,12,0.72)"; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.fill(); x.strokeStyle = cab.color; x.lineWidth = 1.5; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.stroke(); hubEmblem(x, cab.id, ex, Y + Hp / 2, 17, "#ffffff"); });
     x.restore();
   });
+  // The generated cabinet's lower body (see HubGen.cabinet): its front sheet, 156 x 123 from (i * 160 + 2, 802), whose
+  // middle the model's coin door covers (from 0.23 to 0.77 across), and its side art, 136 x 124 from (134 + i * 148, 426),
+  // whose right edge is the cabinet's front edge (the stripes painted over it run up across its upper left); and the
+  // kick plate under the sheet, 246 x 24 from (770, 562): brushed steel, a rolled top edge, a screw at each end (one
+  // plate for all six, tinted by each cabinet's colour).
+  { const X = 770, Y = 562, W = 246, H = 24;
+    const g = x.createLinearGradient(0, Y, 0, Y + H);
+    g.addColorStop(0, "#f4f2ff"); g.addColorStop(0.1, "#c9c7da"); g.addColorStop(0.16, "#5c5a6e"); g.addColorStop(0.24, "#b4b2c6"); g.addColorStop(0.62, "#9a98ae"); g.addColorStop(1, "#6a687e");
+    x.fillStyle = g; x.fillRect(X, Y, W, H);
+    for (let k = 0; k < 34; k++) { // (brush marks along it: from a hash of the row, never the game's randomness)
+      const h = (Math.sin(k * 12.9898) * 43758.5453) % 1, yy = Y + 4.5 + ((k * 7) % 19);
+      x.fillStyle = h > 0 ? `rgba(255,255,255,${(0.05 + 0.08 * h).toFixed(3)})` : `rgba(20,18,32,${(0.05 - 0.08 * h).toFixed(3)})`;
+      x.fillRect(X + ((k * 37) % 60), yy, W - ((k * 53) % 90), 0.6);
+    }
+    x.fillStyle = "rgba(20,18,32,0.55)"; x.fillRect(X, Y + H - 1.2, W, 1.2);
+    [X + 7, X + W - 7].forEach((sx) => { x.fillStyle = "#3c3a4e"; x.beginPath(); x.arc(sx, Y + 13.5, 2.4, 0, 7); x.fill(); x.fillStyle = "#e8e6f6"; x.beginPath(); x.arc(sx - 0.6, Y + 12.9, 1, 0, 7); x.fill(); });
+  }
+  CABINETS.forEach((cab, i) => {
+    const col = cab.color, acc = HUB_ACCENT[cab.id] || COLORS.cyan;
+    const disc = (ex, ey, r, s) => {
+      x.fillStyle = "rgba(6,4,12,0.85)"; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.fill();
+      x.strokeStyle = col; x.lineWidth = 1.6; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.stroke();
+      x.strokeStyle = hubRGB(acc, 1, 0.7); x.lineWidth = 0.8; x.beginPath(); x.arc(ex, ey, r + 2.4, 0, 7); x.stroke();
+      hubEmblem(x, cab.id, ex, ey, s, "#ffffff");
+    };
+    { // the front sheet: either side of the door, bands of its two colours rising from the outer foot, its emblem above them
+      const X = i * 160 + 2, Y = 802, W = 156, H = 123;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      const bg = x.createLinearGradient(0, Y, 0, Y + H);
+      bg.addColorStop(0, "#1c1138"); bg.addColorStop(1, "#0a0614");
+      x.fillStyle = bg; x.fillRect(X, Y, W, H);
+      for (const sd of [0, 1]) for (let k = 0; k < 6; k++) {
+        x.fillStyle = hubRGB(k % 2 ? acc : col, 1 - k * 0.1, 0.95 - k * 0.12);
+        const x0 = sd ? X + W + 4 - k * 8 : X - 4 + k * 8, dx = sd ? -34 : 34, w = sd ? -4.5 : 4.5;
+        x.beginPath(); x.moveTo(x0, Y + H); x.lineTo(x0 + dx, Y + H * 0.42); x.lineTo(x0 + dx + w, Y + H * 0.42); x.lineTo(x0 + w, Y + H); x.fill();
+      }
+      [X + W * 0.116, X + W * 0.884].forEach((ex) => disc(ex, Y + H * 0.24, 12, 7.5));
+      x.strokeStyle = hubRGB(col, 1, 0.9); x.lineWidth = 1.5; x.strokeRect(X + 1.5, Y + 1.5, W - 3, H - 3);
+      x.restore();
+    }
+    { // the side art: a sweep of its colour up from the front foot, speed lines along it, its emblem large in the sweep;
+      // its top and back edges the side panel's own black, so it has no edge of its own there (the stripes cross it)
+      const X = 134 + i * 148, Y = 426, W = 136, H = 124;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      x.fillStyle = "#06040c"; x.fillRect(X, Y, W, H);
+      const glow = x.createRadialGradient(X + W, Y + H, 0, X + W, Y + H, W * 1.15);
+      glow.addColorStop(0, "#1e1240"); glow.addColorStop(1, "rgba(6,4,12,0)");
+      x.fillStyle = glow; x.fillRect(X, Y, W, H);
+      for (let k = 1; k < 8; k++) { // (a faint grid, fading out toward the panel's black)
+        x.strokeStyle = hubRGB(col, 0.8, 0.05 + 0.025 * k); x.lineWidth = 0.75;
+        x.beginPath(); x.moveTo(X + W * 0.06, Y + k * 9 + 40); x.lineTo(X + W * 0.62, Y + k * 9 + 40); x.stroke();
+        x.beginPath(); x.moveTo(X + k * 11 + 8, Y + H * 0.3); x.lineTo(X + k * 11 + 8, Y + H * 0.92); x.stroke();
+      }
+      const sw = x.createLinearGradient(X + W, Y + H, X + W * 0.45, Y + H * 0.25); // (from the front foot toward the stripes)
+      sw.addColorStop(0, hubRGB(col, 1, 0.95)); sw.addColorStop(0.55, hubRGB(col, 0.75, 0.6)); sw.addColorStop(1, hubRGB(col, 0.5, 0));
+      x.fillStyle = sw;
+      x.beginPath(); x.moveTo(X + W * 0.1, Y + H); x.quadraticCurveTo(X + W * 0.62, Y + H * 0.82, X + W, Y + H * 0.08); x.lineTo(X + W, Y + H); x.closePath(); x.fill();
+      [[0.0, acc, 1.6, 0.95], [0.07, "#ffffff", 0.8, 0.8], [0.13, acc, 1.1, 0.7]].forEach(([o, c, lw, a]) => {
+        x.strokeStyle = hubRGB(c, 1, a); x.lineWidth = lw;
+        x.beginPath(); x.moveTo(X + W * (0.02 + o), Y + H); x.quadraticCurveTo(X + W * (0.56 + o * 0.5), Y + H * (0.76 - o), X + W, Y + H * (0.0 - o * 0.4)); x.stroke();
+      });
+      disc(X + W * 0.72, Y + H * 0.66, 19, 12);
+      x.restore();
+    }
+  });
   if (hubFontsReady()) HUB_CACHE.art = c;
   return c;
 }
@@ -785,7 +908,7 @@ function hubWallAtlas() {
     x.textAlign = "left";
   });
   const r = rankOf(xpTotal());
-  x.fillStyle = "#86ff5e";
+  x.fillStyle = "#4dffa6";
   x.fillText(`LV${r.level} ${r.name}`, 28, 252);
   x.textAlign = "right";
   x.fillText(`MASTERY ${overallMastery()}%`, 484, 252);
@@ -806,8 +929,15 @@ function hubWallAtlas() {
     x.lineWidth = 4;
     x.strokeRect(2, 2, 92, 140);
     const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#6a5aa6", k);
-    x.imageSmoothingEnabled = false;
-    x.drawImage(face, 18, 14, 60, 60);
+    if (face.classList.contains("gen")) { // (the bust drawn from its model: larger, smooth, and grey until the boss is beaten)
+      x.imageSmoothingEnabled = true;
+      if (!stars) x.filter = "grayscale(0.75) brightness(0.62)";
+      x.drawImage(face, 8, 6, 80, 80);
+      x.filter = "none";
+    } else {
+      x.imageSmoothingEnabled = false;
+      x.drawImage(face, 18, 14, 60, 60);
+    }
     x.textAlign = "center";
     x.textBaseline = "alphabetic";
     x.font = '8px "Press Start 2P", monospace';
@@ -836,8 +966,14 @@ class HubScene extends Scene3D {
     this.cabs = [];
     if (!this.has3D) return;
     const s = this.scene;
+    // the generated cabinets, toppers and trophies, when they are in hand (see 11c-hubgen.js); otherwise the hall's own
+    this.gen = hubGenTake();
+    this.hg = this.gen ? new HubGen(this, this.gen) : null;
+    if (this.gen && this.gen.sky && this.gen.sky.env) s.environment = this.gen.sky.env; // (the models mirror the hall's panorama and are lit by it)
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.33, threshold: 1.38, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
+    s.userData.lightBudget = { dir: 1, point: 3 }; // (the lights this screen draws: the hall: its key, and the cabinet in front's own three lamps. See LightPool in 04-gfx.js)
+    s.userData.post = { exposure: 1.22, bloom: 0.55, threshold: 1.16, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 0.95, // (Phase 5: brought to the games' grade: it was the darkest screen, with the least glow)
+      fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
     this.screenY = 2.3;
     this.texs = [];
@@ -858,7 +994,7 @@ class HubScene extends Scene3D {
         { pos: [-16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [-12, 1.6, 12], w: 7, h: 2.4, color: 0xffe14f, k: 1.4 },
-        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x86ff5e, k: 1.3 },
+        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x4dffa6, k: 1.3 },
         { pos: [0, 2, 17], w: 10, h: 3, color: 0xa65fff, k: 1.6 },
       ],
     });
@@ -872,7 +1008,7 @@ class HubScene extends Scene3D {
     this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.backLight = new THREE.PointLight(0xa9c6ff, 0, 13, 1.3);
     this.deskLight = new THREE.PointLight(0xffd29a, 0, 3.4, 1.6);
-    this.lightCol = new THREE.Color(CABINETS[this.sel].color);
+    this.lightCol = new THREE.Color((CABINETS[this.sel] || { color: COLORS.gold }).color); // (the seventh stop, in the generated hall, is the trophy stand)
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight, this.backLight, this.deskLight);
     // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
     this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
@@ -883,7 +1019,7 @@ class HubScene extends Scene3D {
       uniforms: { uColor: { value: new THREE.Color(0, 0, 0) } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(vUv.y, 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(max(vUv.y, 0.0), 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
     }));
     this.heroSpill.matrixAutoUpdate = false;
     this.heroSpill.frustumCulled = false;
@@ -900,13 +1036,18 @@ class HubScene extends Scene3D {
     this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
     const artTex = this.canvasTex(hubArtAtlas());
-    const B = { lit: new HubBatch("lit", 0.6), art: new HubBatch("art"), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
+    const v = this.gen ? "-gen" : ""; // (the generated hall's batches are cached apart from the hall's own)
+    const B = { lit: new HubBatch("lit" + v, 0.6), art: new HubBatch("art" + v), glow: new HubBatch("glow" + v), marq: new HubBatch("marq" + v), panels: new HubBatch("panels" + v), signs: new HubBatch("signs" + v), screens: new HubBatch("screens" + v), cones: new HubBatch("cones" + v) };
     this.dustPts = { p: [], x: [], g: [] };
     const K = new HubKit();
     this.addRoom(B, K);
     this.addWall(B, K, atlas);
     CABINETS.forEach((cab, i) => this.cabs.push(this.makeCabinet(cab, i, B, K)));
     this.addMachines(B, K);
+    if (this.hg) { this.hg.stand(B, K); this.hg.vaultProp(); }
+    // the trophy stand is a seventh stop along the row: lit and framed like a cabinet when you walk to it
+    this.stops = CABINETS.length + (this.hg && this.hg.items.length ? 1 : 0);
+    if (this.stops > CABINETS.length) this.standCab = { scr: { power: 1, target: 1 }, color: new THREE.Color(COLORS.gold), focus: this.sel === CABINETS.length ? 1 : 0 };
     K.dispose();
     const lv = this.lv;
     s.add(B.lit.mesh(hubLitMaterial(this.env), "color"));
@@ -936,14 +1077,8 @@ class HubScene extends Scene3D {
     s.add(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
-    this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
-      const beam = makeBeam(col, 1.25);
-      const az = (i / 8) * Math.PI * 2 + 0.2;
-      beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
-      beam.material.uniforms.uFade.value = 0;
-      s.add(beam);
-      return beam;
-    });
+    this.lasers = hubLasers([0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff]);
+    s.add(this.lasers);
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -971,7 +1106,7 @@ class HubScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     const carpet = carpetTexture();
     this.texs.push(carpet);
-    this.floorMat = hubFloorMaterial(this.mirror, carpet);
+    this.floorMat = hubFloorMaterial(this.mirror, carpet, this.gen && this.gen.sky ? this.gen.sky.map : null, this.gen && this.gen.skyB ? this.gen.skyB.map : null, this.cabAngle(CABINETS.length));
     CABINETS.forEach((_, i) => {
       const a = this.cabAngle(i);
       this.floorMat.uniforms.uCab.value[i].set(Math.sin(a) * HUB_R, -Math.cos(a) * HUB_R);
@@ -1052,6 +1187,9 @@ class HubScene extends Scene3D {
     const at = (...args) => base.clone().multiply(hubM(...args));
     const g = HUB_G.cab + i;
     const col = new THREE.Color(cab.color);
+    const G = this.hg ? this.hg.cabinet(cab, i, B, K, g, col) : null; // (the generated cabinet: the model, its neon, marquee and topper)
+    let zf = HUB_BODY[1][0], onPanel = null;
+    if (!G) { // the hall's own cabinet
     const W = 2.2, T = 0.07, IW = W - 2 * T;
     const GLOSS = [0.25, 0.24], SATIN = [0.3, 0.36], METAL = [1, 0.2], CHROME = 0xd2d0e4;
     [W / 2, -W / 2 + T].forEach((xo) => B.lit.add(K.get("side", () => hubPrism(HUB_SIDE, T)), at(xo, 0, 0, 0, -Math.PI / 2), col, { k: 0.44, aux: GLOSS }));
@@ -1067,7 +1205,6 @@ class HubScene extends Scene3D {
       [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), cab.id === "exam" ? 0xdcc8ff : col, { k: cab.id === "exam" ? 2.7 : 2.1, g }));
     }
     // kick plate, coin door with lit slots, stripes either side
-    const zf = HUB_BODY[1][0];
     K.box(B.lit, IW, 0.16, 0.03, at(0, 0.08, zf + 0.015), CHROME, { aux: METAL });
     K.box(B.lit, 0.7, 0.68, 0.02, at(0, 0.62, zf + 0.01), CHROME, { aux: METAL });
     K.box(B.lit, 0.62, 0.6, 0.03, at(0, 0.62, zf + 0.018), 0x23212c, { aux: [0.85, 0.32] });
@@ -1086,7 +1223,7 @@ class HubScene extends Scene3D {
     { const sf2 = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.021); (this.panelMs = this.panelMs || [])[i] = at(0, sf2.y, sf2.z, sf2.rx).multiply(new THREE.Matrix4().makeScale(IW - 0.03, sf2.len - 0.012, 1)); }
     K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
     K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
-    const onPanel = (x, s, h) => {
+    onPanel = (x, s, h) => {
       const f = hubFace(HUB_BODY[4], HUB_BODY[5], s, 0.012 + h / 2);
       return at(x, f.y, f.z, f.rx).multiply(hubM(0, 0, 0, Math.PI / 2));
     };
@@ -1103,6 +1240,7 @@ class HubScene extends Scene3D {
     K.quad(B.marq, IW - 0.04, 0.67, at(0, mf.y, mf.z, mf.rx), 0xffffff, { k: 1.02, g, uv: hubUV(0, i * 170, 512, 170) });
     const sp = hubFace(HUB_BODY[6], HUB_BODY[7], 0.62, 0.004);
     K.quad(B.glow, IW - 0.12, sp.len * 0.3, at(0, sp.y, sp.z, sp.rx), col, { k: 0.9, g });
+    } else (this.panelMs = this.panelMs || [])[i] = G.panelM;
     // the CRT
     const canvas = document.createElement("canvas");
     canvas.width = 320; // drawn in 160 x 120 units at 2x, so the attract text is legible
@@ -1114,11 +1252,11 @@ class HubScene extends Scene3D {
     this.texs.push(tex);
     const mat = hubScreenMaterial(tex, cab.color);
     const sf = hubFace(HUB_BODY[5], HUB_BODY[6], 0.5, 0.005);
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.96, 1.5), mat);
-    screen.applyMatrix4(at(0, sf.y, sf.z, sf.rx));
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(G ? G.sw : 1.96, G ? G.sh : 1.5), mat);
+    screen.applyMatrix4(G ? G.screenM : at(0, sf.y, sf.z, sf.rx));
     this.scene.add(screen);
     // what makes this cabinet unlike the other five (see 11b-hubextras.js)
-    hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
+    if (!G) hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
     const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(baseL);
     const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(baseL);
@@ -1140,7 +1278,7 @@ class HubScene extends Scene3D {
       D.x.push(Math.random(), rr);
       D.g.push(g);
     }
-    if (cab.id === "guide") { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
+    if (cab.id === "guide" && !G) { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
     const demo = { canvas, ctx: canvas.getContext("2d"), tex, t: Math.random() * 10, cab };
     drawDemo(demo, 0);
     return { demo, mat, scr: { power: 1, target: 1 }, color: col, coneCol, focus: i === this.sel ? 1 : 0 };
@@ -1237,6 +1375,7 @@ class HubScene extends Scene3D {
     this.dolly = this.restDolly;
   }
   focus(i) { this.sel = i; }
+  choose(i) { if (this.cabs[i]) this.cabs[i].chosen = 1; }
   // Each cabinet is framed for its own height in the strip above the card: what stands on it (horns, a clock, a
   // dish) sits just under the strip's top edge, clear of the mission banner, and its foot stands well above the
   // card, so the floor in front of it and its reflection show. A tall cabinet is seen from further back.
@@ -1247,14 +1386,16 @@ class HubScene extends Scene3D {
     const f = h / (2 * tanH); // the lens, in px
     const mT = 26, mB = clamp(bandH * 0.13, 22, 58);
     const tt = Math.atan((bandH / 2 - mT) / f), tf = Math.atan((bandH / 2 - mB) / f);
-    this.fits = CABINETS.map((cab) => {
-      const SH = HUB_SHAPE[cab.id] || [1, 1], top = HUB_TOP[cab.id] || 4.6;
+    this.fits = CABINETS.map((cab, i) => {
+      const SH = (this.hg ? [0.92, HUBGEN.SCREEN.y * HUBGEN.S / 2.3] : HUB_SHAPE[cab.id]) || [1, 1], top = (this.hg && this.hg.cabTop[i]) || HUB_TOP[cab.id] || 4.6; // (a generated cabinet: its own roof and topper; its screen where the model's glass is)
       let lo = 3.5, hi = 40;
       for (let k = 0; k < 24; k++) { const d = (lo + hi) / 2; if (Math.atan((top - HUB_EYE) / d) + Math.atan(HUB_EYE / (d - 0.96)) > tt + tf) lo = d; else hi = d; }
       const d = clamp(Math.max(hi, (3.5 * SH[0] * f) / (0.94 * w) + 0.6), HUB_R - 1.6, HUB_R + 9); // (and its fins, tyres or shoulders inside the width)
       return { dolly: HUB_R - d, look: HUB_EYE - d * Math.tan(tt - Math.atan((top - HUB_EYE) / d)), screen: 2.3 * SH[1] };
     });
-    const F = this.fits[this.sel];
+    // the trophy stand: low and wide, seen from close by and a little above, its three steps filling the strip
+    if (this.stops > CABINETS.length) { const d = clamp((2.9 * f) / (0.94 * w) + 0.4, 4.6, 9); this.fits.push({ dolly: HUB_R - d, look: 0.95, screen: 1.4 }); }
+    const F = this.fits[this.sel] || this.fits[0];
     this.restDolly = F.dolly; this.restLook = F.look; this.screenY = F.screen;
     if (!this.zooming) this.dolly = this.restDolly;
     if (this.dust) this.dust.material.uniforms.uScale.value = (h * GFX.scenePR()) / (2 * tanH);
@@ -1272,6 +1413,7 @@ class HubScene extends Scene3D {
   }
   update(dt) {
     super.update(dt);
+    hubCall(this, dt); // (served: Boss Rush's cabinet, in front for a few seconds, calls out once: 11d-hubcall.js)
     if (!this.has3D) return;
     const target = this.cabAngle(this.sel);
     // A dolly move between cabinets: a damped spring eases out and in, and the camera
@@ -1317,16 +1459,11 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
-    // the lasers come on once the room has power, then sweep slowly
-    const lf = this.introRunning ? 0 : 1;
-    this.lasers.forEach((b) => {
-      const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
-      u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
-      aimBeam(b, u.from, u.to, 0.035);
-      const f = b.material.uniforms.uFade;
-      f.value += (lf * 0.55 - f.value) * Math.min(1, dt * 1.5);
-      b.material.uniforms.uTime.value = this.t;
-    });
+    // the lasers come on once the room has power, then sweep slowly (their sweep is in their shader: see hubLasers; its
+    // clock, uTime, is the scene's, set with every shader's by FX.sync below)
+    const lf = this.introRunning ? 0 : 1, lu = this.lasers.material.uniforms;
+    lu.uFade.value += (lf * 0.4 - lu.uFade.value) * Math.min(1, dt * 1.5);
+    this.lasers.visible = lu.uFade.value > 0.002;
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
@@ -1344,6 +1481,7 @@ class HubScene extends Scene3D {
       }
     });
     this.extras.update(dt);
+    if (this.hg) this.hg.update(dt);
     FX.sync(this.scene, this.t);
   }
   // Turn lamp states into light: neon levels, the room's real lights, and the
@@ -1361,7 +1499,8 @@ class HubScene extends Scene3D {
     this.cabs.forEach((c, i) => {
       c.focus += ((i === this.sel ? 1 : 0) - c.focus) * Math.min(1, dt * 4);
       cabsOn += on[G.cab + i];
-      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
+      if (c.chosen) c.chosen = Math.max(0, c.chosen - dt * 1.4); // (only ever set in the generated hall: see choose)
+      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0) + 0.45 * (c.chosen || 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
     lv[G.bg] *= 0.28; lv[G.signs] *= 0.34; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
@@ -1377,20 +1516,22 @@ class HubScene extends Scene3D {
     const room = this.room;
     this.hemi.intensity = 0.8 * room;
     this.key.intensity = 0.62 * room;
-    const sc = this.cabs[this.sel];
+    if (this.standCab) { const st = this.standCab, gs = G.cab + CABINETS.length; st.focus += ((this.sel === CABINETS.length ? 1 : 0) - st.focus) * Math.min(1, dt * 4); lv[gs] = on[gs] * (0.78 + 0.3 * st.focus); }
+    const sc = this.cabs[this.sel] || this.standCab;
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);
     this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.55 * lv[G.cab + this.sel]; // (the cabinet in front is a lit object, not an outline: its lamp is the brightest light in the hall)
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
-    this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
+    this.rimLight.color.set(HUB_ACCENT[(CABINETS[this.sel] || {}).id] || 0xffffff);
     this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     // a cool light behind and above it, from the other side: what stands on the cabinet gets a lit top and a bright edge
     this.backLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.backLight.position.set(Math.sin(a - 0.17) * (HUB_R + 2.1), 7.1, -Math.cos(a - 0.17) * (HUB_R + 2.1));
     if (this.deskAt) { this.deskLight.position.copy(this.deskAt); this.deskLight.intensity = 1.5 * lv[G.cab + this.deskCab]; }
+    else if (this.hg && this.hg.lampFor(this.sel, this.deskLight.position)) { this.deskLight.color.setHex(0xfff2e6); this.deskLight.distance = 4.6; this.deskLight.intensity = 2.4 * lv[G.cab + this.sel]; } // (the generated hall: a lamp on what stands on the cabinet in front, or on the trophies)
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
       this.heroCone.position.set(hx, 7.4, hz);
@@ -1432,6 +1573,7 @@ class HubScene extends Scene3D {
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;
   }
   refreshWall() {
+    if (this.hg) this.hg.refresh(); // (the trophies on the stand)
     const sig = hubWallSig();
     if (!this.wallTex || sig === this.wallSig) return;
     this.wallSig = sig;
@@ -1664,6 +1806,19 @@ function hubScene() {
 }
 
 function showHub() {
+  // The first time, when the page can fetch them, the hall is built with its models: at once if they are in hand (the
+  // title asks for them while it is up), else behind the loading line. After that it is kept (see hubScene), and
+  // from disk there is nothing to wait for. Its sound is asked for too, but never waited for.
+  if (Assets.on && !(Scenes.cur instanceof HubScene) && !(Hub.scene && !Hub.scene.disposed)) {
+    Assets.need("hubsound");
+    const p = Assets.need("hub");
+    if (p) {
+      UI.loading(true);
+      Assets.onProgress = (d, n) => UI.loading(true, d / n);
+      p.then(() => { Assets.onProgress = null; UI.loading(false); UI.cover(showHub); }); // (built behind black, then the screen comes on)
+      return;
+    }
+  }
   Sound.play("hub");
   Sound.setIntensity(0);
   const fresh = !(Scenes.cur instanceof HubScene);
@@ -1673,6 +1828,7 @@ function showHub() {
     scene.powerOn();
     Hub.booting = true;
     setTimeout(() => Sound.ambience(true), 2600);
+    if (Assets.on) setTimeout(() => { Sound.say("WELCOME"); Sound.say("SELECT YOUR GAME"); }, 2300); // (the first visit of a session, as the room comes on)
   } else {
     scene.zoomOut();
     Sound.ambience(true);
@@ -1708,8 +1864,10 @@ function showHub() {
   };
   window.addEventListener("resize", fitDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (el.isConnected) fitDesc(); });
+  const stops = scene.stops || CABINETS.length; // (the generated hall has a seventh stop: the trophy stand)
+  if (Hub.index >= stops) Hub.index = 0;
   const render = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     card.style.setProperty("--c", cab.color);
     const best = Store.best(cab.id);
     const meta = {
@@ -1719,31 +1877,36 @@ function showHub() {
       memory: `CARDS BANKED <b>${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</b>`,
       exam: `BEST EXAM <b>${Store.state.stats.bestExam || 0}%</b>`,
       guide: `<b>${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)}</b> NOTE PAGES`,
+      stand: `TROPHIES <b>${Trophies.count()}/${TROPHIES.length}</b>`,
     }[cab.id];
+    const dots = CABINETS.map((c) => c.color).concat(stops > CABINETS.length ? [COLORS.gold] : []);
     card.innerHTML = `<div class="hub-nav">
         <button class="iconbtn" data-act="prev" aria-label="Previous cabinet">${icon("left")}</button>
         <div><div class="hub-name">${esc(cab.name)}</div><div class="hub-tag">${esc(cab.tag)}</div></div>
         <button class="iconbtn" data-act="next" aria-label="Next cabinet">${icon("right")}</button>
       </div>
       <p class="hub-desc"><span>${esc(cab.desc)}</span></p>
-      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${CABINETS.length}">${CABINETS.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c.color}"></i>`).join("")}</span></div>
-      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : "PLAY"} ${icon("play")}</button>`;
+      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${dots.length}">${dots.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c}"></i>`).join("")}</span></div>
+      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : cab.id === "stand" ? "SEE THEM ALL" : "PLAY"} ${icon("play")}</button>`;
     fitDesc();
     scene.focus(Hub.index);
     requestAnimationFrame(() => scene.setBand($(".spacer", el)));
   };
   const move = (d) => {
-    Hub.index = (Hub.index + d + CABINETS.length) % CABINETS.length;
-    Sound.sfx("move", d * 0.7);
+    Hub.index = (Hub.index + d + stops) % stops;
+    Sound.sfx(Sound.bank.ui_click ? "ui_click" : "move", d * 0.7); // (the recorded click when it has loaded)
     render();
   };
   const play = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     Sound.sfx("select");
+    if (Assets.on && cab.id !== "stand") { if (Sound.bank.coin_insert) Sound.sfx("coin_insert", 0, { vol: 0.7 }); Sound.say(cab.name); } // (the coin drops and the announcer calls the game)
+    if (scene.hg) scene.choose(Hub.index); // (its topper spins up, its neon flares)
     scene.zoomIn();
     setTimeout(() => {
       UI.flash("crt-on");
-      if (cab.id === "guide") showGuide();
+      if (cab.id === "stand") showStats();
+      else if (cab.id === "guide") showGuide();
       else if (cab.id === "exam") showExamSetup();
       else showSelect(cab.id);
     }, 520);
@@ -1793,8 +1956,8 @@ function showHub() {
       }
     },
     key: (e) => {
-      if (e.key === "ArrowLeft") move(-1);
-      else if (e.key === "ArrowRight") move(1);
+      if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); } // (the arrows' own: a button the keyboard had moved to lets go, see UI.init)
+      else if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
       else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(); }
       else if (e.key === "Escape") showTitle();
     },

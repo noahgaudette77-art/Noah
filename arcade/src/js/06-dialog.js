@@ -144,7 +144,7 @@ function drawBossBust(canvas, key, color) {
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
   const pal = { K: "#1b1730", S: "#69708c", B: "#e2dac6", C: color, W: "#ffffff", D: "#07040f", G: "#ffc93d", R: "#ff4769", "0": "#0c0326" };
-  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#86ff5e", 0.4] };
+  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#4dffa6", 0.4] };
   x.fillStyle = "#0c0326";
   x.fillRect(0, 0, 24, 24);
   x.globalAlpha = 0.16; // its own light behind it
@@ -165,6 +165,8 @@ function drawBossBust(canvas, key, color) {
 
 // A boss portrait: its own bust when the boss is known (by its key), else a plain horned block in its colour.
 function drawBossPortrait(canvas, color, key) {
+  if (key !== undefined && key !== null && genBossPortrait(canvas, color, key)) return canvas; // (its bust drawn from its 3D model, when that strip has loaded)
+  if (key !== undefined && key !== null && Assets.on) { canvas.dataset.bossKey = key; canvas.dataset.bossColor = color; } // (and if it arrives later, this one is drawn again: see 05c-genicons.js)
   if (key !== undefined && key !== null && BUSTS[key]) return drawBossBust(canvas, key, color);
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");

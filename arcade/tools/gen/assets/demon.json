@@ -1,0 +1,297 @@
+{
+ "name": "demon",
+ "about": "Risk Blaster's enemy, second version (the first, demon-v1.json, had a round chest core too close to a known film armour, a face that did not read and noisy wings). Tripo H3.1 from the skull-faced overlord concept (demon-d-nb-0): a skull face with eye slits, matte ram horns, chrome armour with cyan seams, a glowing rift down the chest, violet wing membranes, a segmented tail. Parts from Tripo segmentation v2 (balanced); the horns are lifted out of the detailed segmentation. L and R are the demon's own left and right (it faces +Z, so its left is +X).",
+ "src": "cand/demon2/demon-d-nb-0.tripo.glb",
+ "seg": "post/demon2-seg-bal.glb",
+ "seg2": "post/demon2-seg-det.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 60000,
+ "tex": 1024,
+ "texBase": 2048,
+ "groups": {
+  "wingL": [
+   0
+  ],
+  "wingR": [
+   2
+  ],
+  "tail": [
+   1
+  ],
+  "head": [
+   3
+  ],
+  "shoulderR": [
+   6
+  ],
+  "shoulderL": [
+   7
+  ],
+  "elbowL": [
+   8
+  ],
+  "elbowR": [
+   9
+  ],
+  "handL": [
+   10
+  ],
+  "handR": [
+   11
+  ]
+ },
+ "lift": {
+  "hornL": [
+   4
+  ],
+  "hornR": [
+   1
+  ]
+ },
+ "tree": {
+  "elbowL": "shoulderL",
+  "handL": "elbowL",
+  "elbowR": "shoulderR",
+  "handR": "elbowR",
+  "hornL": "head",
+  "hornR": "head"
+ },
+ "pivots": {
+  "wingL": [
+   "min",
+   0.15,
+   -0.04
+  ],
+  "wingR": [
+   "max",
+   0.15,
+   -0.04
+  ],
+  "head": [
+   "c",
+   0.17,
+   0.07
+  ],
+  "tail": [
+   0,
+   "max",
+   "c"
+  ],
+  "shoulderL": [
+   "min",
+   0.17,
+   "c"
+  ],
+  "shoulderR": [
+   "max",
+   0.17,
+   "c"
+  ],
+  "elbowL": [
+   "c",
+   "max",
+   "c"
+  ],
+  "elbowR": [
+   "c",
+   "max",
+   "c"
+  ],
+  "handL": [
+   "c",
+   "max",
+   "c"
+  ],
+  "handR": [
+   "c",
+   "max",
+   "c"
+  ],
+  "hornL": [
+   "min",
+   0.28,
+   "c"
+  ],
+  "hornR": [
+   "max",
+   0.28,
+   "c"
+  ]
+ },
+ "keep": {
+  "head": 1.7,
+  "body": 1.2,
+  "hornL": 1.2,
+  "hornR": 1.2
+ },
+ "anchors": {
+  "core": [
+   0,
+   0.09,
+   0.2
+  ],
+  "mouth": {
+   "of": "head",
+   "at": [
+    "c",
+    0.195,
+    "max"
+   ],
+   "ride": "head"
+  },
+  "eyes": {
+   "of": "head",
+   "at": [
+    "c",
+    0.27,
+    "max"
+   ],
+   "ride": "head"
+  },
+  "clawL": {
+   "of": "handL",
+   "at": [
+    "c",
+    "min",
+    "max"
+   ],
+   "ride": "handL"
+  },
+  "clawR": {
+   "of": "handR",
+   "at": [
+    "c",
+    "min",
+    "max"
+   ],
+   "ride": "handR"
+  },
+  "wingTipL": {
+   "of": "wingL",
+   "at": [
+    "max",
+    "max",
+    "c"
+   ],
+   "ride": "wingL"
+  },
+  "wingTipR": {
+   "of": "wingR",
+   "at": [
+    "min",
+    "max",
+    "c"
+   ],
+   "ride": "wingR"
+  },
+  "tailTip": {
+   "of": "tail",
+   "at": [
+    "min",
+    "min",
+    "c"
+   ],
+   "ride": "tail"
+  },
+  "thrusters": [
+   0,
+   -0.26,
+   0.03
+  ]
+ },
+ "emissive": {
+  "gain": 0
+ },
+ "paint": [
+  {
+   "groups": [
+    "body",
+    "head",
+    "tail",
+    "shoulderL",
+    "shoulderR",
+    "elbowL",
+    "elbowR",
+    "handL",
+    "handR"
+   ],
+   "where": {
+    "h": [
+     165,
+     352
+    ],
+    "s": [
+     0.5,
+     1
+    ],
+    "v": [
+     0.5,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "groups": [
+    "wingL",
+    "wingR"
+   ],
+   "where": {
+    "h": [
+     165,
+     210
+    ],
+    "s": [
+     0.45,
+     1
+    ],
+    "v": [
+     0.5,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "groups": [
+    "wingL",
+    "wingR"
+   ],
+   "where": {
+    "h": [
+     245,
+     345
+    ],
+    "s": [
+     0.3,
+     1
+    ],
+    "v": [
+     0.15,
+     1
+    ]
+   },
+   "glow": 0.2,
+   "rough": 0.3,
+   "metal": 0
+  },
+  {
+   "groups": [
+    "hornL",
+    "hornR"
+   ],
+   "rough": 0.8,
+   "metal": 0.05,
+   "val": 0.85
+  }
+ ],
+ "surface": {
+  "roughMin": 0.14
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

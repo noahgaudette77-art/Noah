@@ -90,7 +90,7 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
         if (uStars > 0.0 && h > 0.02) {
           vec3 p = d * 240.0; vec3 c = floor(p); float r = hash13(c);
           if (r > 0.972) {
-            float s = smoothstep(0.3, 0.0, length(fract(p) - 0.5));
+            float s = (1.0 - smoothstep(0.0, 0.3, length(fract(p) - 0.5)));
             float tw = 0.5 + 0.5 * sin(uTime * (1.2 + r * 5.0) + r * 77.0);
             col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
           }
@@ -108,7 +108,7 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
             vec2 head = m0 + mv * k * 0.5;
             float along = clamp(dot(sp - head, -mv), 0.0, 0.16);
             float dist = length(sp - head + mv * along);
-            col += vec3(1.0, 0.92, 0.85) * smoothstep(0.006, 0.0, dist) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
+            col += vec3(1.0, 0.92, 0.85) * (1.0 - smoothstep(0.0, 0.006, dist)) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
           }
         }
         // Encode like built-in materials do: identity in the scene, RGBE when the
@@ -135,7 +135,7 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
         vec3 n = normalize(vN);
         float lit = max(dot(n, normalize(vec3(-0.62, 0.45, 0.64))), 0.0);
         float band = 0.5 + 0.5 * sin(vP.y * ${(11 / radius).toFixed(3)} + sin(vP.x * ${(5 / radius).toFixed(3)}) * 1.3);
-        float limb = pow(1.0 - max(n.z, 0.0), 2.6);
+        float limb = pow(max(1.0 - max(n.z, 0.0), 0.0), 2.6);
         gl_FragColor = vec4(mix(uA, uB, band) * (0.03 + 1.25 * lit) + uRim * limb * (0.12 + lit), 1.0);
       }`,
   }));
@@ -147,7 +147,7 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
       void main(){
         float r = (length(vP) - ${(radius * 1.35).toFixed(2)}) / ${(radius * 0.8).toFixed(2)};
         float lanes = 0.35 + 0.65 * abs(sin(r * 21.0)) * step(0.08, fract(r * 3.1));
-        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * smoothstep(1.0, 0.85, r) * 0.55, 1.0);
+        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * (1.0 - smoothstep(0.85, 1.0, r)) * 0.55, 1.0);
       }`,
   }));
   rings.rotation.x = Math.PI / 2 - 0.42;
@@ -183,7 +183,7 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           vec3 en = vec3(q, sqrt(max(0.0, 1.0 - r * r)));
           float lit = clamp(dot(en, normalize(vec3(-0.45, 0.5, 0.74))), 0.0, 1.0);
           col *= 0.74 + 0.6 * lit;
-          col += uTop * uTint * uI * 0.55 * pow(lit, 14.0);
+          col += uTop * uTint * uI * 0.55 * pow(max(lit, 0.0), 14.0);
           col += uTop * uTint * uI * 0.34 * (1.0 - r * r); // lit from inside
           col += mix(uBottom, uTop, 0.5) * uTint * uI * 0.95 * smoothstep(0.84, 1.0, r); // a bright edge all round
           vec2 sq = floor(q * 22.0), sf = fract(q * 22.0) - 0.5;
@@ -282,7 +282,24 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null, probe = null, plates = null } = {}) {
+  // probe (the master overhaul, Phase 2, 2026-11-23: the floors reflect, on every tier): { map, min, max, at, k, rough, f0 }:
+  // the room drawn once from inside it into a cube (map, mipmapped; see roomProbe), the room's box (min, max: Vector3)
+  // and where it was drawn from (at); the floor gives the room back where the reflected ray meets the box's walls (so a
+  // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel:
+  // f0 of it looking straight down, 0.3 unless given). probe.tint (a Vector4, Phase 5): the room as it is now where it
+  // was drawn as it was: what it gives back turned toward the colour in xyz (each pixel's brightness kept), by w. Boss
+  // Rush's rage: its neon turns red after the capture was taken.
+  // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
+  // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
+  // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
+  // (plates.tint, a Color: a stone's veins, where its blue is darkest, in that colour: the exam's dark marble, 2026-11-23)
+  // (plates.fade, [the map's texels across, a bias, from, how much]: the relief read at the size of the pixel's longer
+  // way on the deck (at a slant, its length down the floor), not its shorter: what is finer than the pixel each way is
+  // gone, what is coarser (a plate's seams) stays; and where a pixel covers more of the map's texels than from (to four
+  // times that), the rest fades toward level and the mean roughness, by as much as asked: the title hall's deck, Phase
+  // 2's polish, 2026-11-24. Read finer than the pixel, the relief broke what the floor gives back into speckle that
+  // crawled as the lens moved)
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -295,9 +312,21 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     uRoad: { value: new THREE.Vector2(road, roadGrid) },
     uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
     uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
+    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && ROOM_PROBE_SIZE.get(probe.map) ? Math.log2(ROOM_PROBE_SIZE.get(probe.map)) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
+    uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
+    tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
+    uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
+  if (plates && plates.fade) uniforms.uPlatesFade = { value: new THREE.Vector4().fromArray(plates.fade) };
+  if (probe && probe.tint) uniforms.uProbeTint = { value: probe.tint };
+  const defines = {};
+  if (probe) defines.PROBE = "";
+  if (probe && probe.tint) defines.PROBE_TINT = "";
+  if (probe && plates) defines.PLATES = "";
+  if (probe && plates && plates.tint) defines.PLATES_TINT = "";
+  if (probe && plates && plates.fade) defines.PLATES_FADE = "";
   const mat = new THREE.ShaderMaterial({
-    uniforms, extensions: { derivatives: true },
+    uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
@@ -305,8 +334,54 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse; uniform vec2 uFall;
       uniform vec2 uRoad; uniform vec4 uSunCol; uniform vec3 uSunA; uniform vec3 uSunB;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
+      #ifdef PROBE
+      uniform samplerCube tProbe; uniform vec4 uProbe; uniform vec3 uBoxMin; uniform vec3 uBoxMax; uniform vec3 uProbeAt;
+      #endif
+      #ifdef PLATES
+      uniform sampler2D tPlates; uniform vec2 uPlates;
+      #endif
+      #ifdef PLATES_TINT
+      uniform vec3 uPlatesTint;
+      #endif
+      #ifdef PLATES_FADE
+      uniform vec4 uPlatesFade;
+      #endif
+      #ifdef PROBE_TINT
+      uniform vec4 uProbeTint;
+      #endif
       void main(){
         vec3 col = uBase;
+        #ifdef PROBE
+        {
+          vec3 nrm = vec3(0.0, 1.0, 0.0); float rough = uProbe.y;
+          #ifdef PLATES
+          #ifdef PLATES_FADE
+          vec2 pf = fwidth(vWorld.xz / uPlates.x) * uPlatesFade.x; // (the map's texels a pixel covers, each way)
+          float pl = max(max(pf.x, pf.y), 1.0);
+          vec3 pm = mix(texture2DLodEXT(tPlates, vWorld.xz / uPlates.x, log2(pl) + uPlatesFade.y).rgb, vec3(0.5, 0.5, 0.72), uPlatesFade.w * smoothstep(uPlatesFade.z, uPlatesFade.z * 4.0, pl));
+          #else
+          vec3 pm = texture2D(tPlates, vWorld.xz / uPlates.x).rgb;
+          #endif
+          vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
+          nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
+          rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
+          #ifdef PLATES_TINT
+          col += uPlatesTint * (1.0 - smoothstep(0.0, 0.5, pm.b));
+          #endif
+          #endif
+          vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
+          vec3 Rs = mix(vec3(-1.0), vec3(1.0), step(0.0, R)) * max(abs(R), vec3(1e-4)); // (no axis exactly naught: a ray along a wall meets it far off, not in a NaN)
+          vec3 t1 = (uBoxMax - vWorld) / Rs, t2 = (uBoxMin - vWorld) / Rs, tf = max(t1, t2);
+          vec3 dir = vWorld + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn; from outside the box, straight from there)
+          float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
+          #ifdef PROBE_TINT
+          vec3 pr = textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb;
+          col += mix(pr, uProbeTint.xyz * max(max(pr.r, pr.g), pr.b), uProbeTint.w) * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #else
+          col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #endif
+        }
+        #endif
         float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;
         if (uReflect > 0.0) {
           vec2 ruv = vRefl.xy / vRefl.w;
@@ -383,8 +458,86 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   return floor;
 }
 
+// A room drawn once from inside it into a cube, for its floor and glass to give back (makeNeonFloor's probe): the
+// master overhaul, Phase 2, 2026-11-23. size: each face's pixels (a reflection is blurred by its surface: 128 on a
+// phone, 256 on a desktop); hide: what is left out while it is drawn (the floor, so the floor never reflects itself).
+// capture() asks for all six faces again; step() draws the next one, a face a frame (the room's draws six times over,
+// spread out), and returns true while any is left. The cube's smaller copies are made after each face.
+// swap: uniforms that read this cube ({ value }), pointed at a blank cube while it is drawn, so what reads it can still
+// be drawn into it (the hall's glass: its own light is the cells' colour in the floor).
+let _blankCube = null;
+// each probe's size by its picture (a cube target's picture has no width of its own in three r128: makeNeonFloor reads
+// how many sizes of it there are, for how far a rough floor blurs what it gives back, from here)
+const ROOM_PROBE_SIZE = new WeakMap();
+function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = [] } = {}) {
+  const rt = new THREE.WebGLCubeRenderTarget(size, {
+    format: THREE.RGBAFormat, type: GFX.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType,
+    generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
+  });
+  ROOM_PROBE_SIZE.set(rt.texture, size);
+  const cam = new THREE.CubeCamera(near, far, rt);
+  cam.position.copy(at);
+  cam.updateMatrixWorld(true);
+  return {
+    rt, map: rt.texture, at: at.clone(), cam, left: 0, hide, swap,
+    made: 0, done: 0, // (captures finished, and the last one a user has taken up)
+    capture() { this.left = 6; },
+    step(scene, layers) {
+      if (!this.left || !GFX.ok || GFX.lost) return null; // (nothing to draw: null, as against false, the frame the last face was drawn; lost: its faces wait)
+      const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
+      this.hide.forEach((o) => { o.visible = false; });
+      // (and every set of points: a point's size is in the page's pixels, so in a face 128 or 256 across a light stick or
+      // a mote would be drawn ten to forty times too big and frozen into the floor: Phase 2's gate review)
+      const pts = [];
+      scene.traverse((o) => { if (o.isPoints && o.visible) { pts.push(o); o.visible = false; } });
+      if (!_blankCube) _blankCube = new THREE.WebGLCubeRenderTarget(1).texture;
+      this.swap.forEach((u) => { u.value = _blankCube; });
+      face.layers.mask = layers;
+      try { r.setRenderTarget(rt, i); r.render(scene, face); } catch (e) { /* a reflection missed this time */ }
+      r.setRenderTarget(was);
+      this.swap.forEach((u) => { u.value = rt.texture; });
+      this.hide.forEach((o, k) => { o.visible = vis[k]; });
+      for (const o of pts) o.visible = true;
+      this.left--;
+      if (!this.left) this.made++;
+      return this.left > 0;
+    },
+    dispose() { rt.dispose(); },
+  };
+}
+
 // A distant city: merged boxes with lit windows and a glowing roofline.
-function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff, winK = 2.2 } = {}) {
+// A grid of windows as a picture (Phase 5): 8 x 8 bays, each pane lit or dark, amber, cyan or magenta, with glazing bars;
+// alpha is the pane. It is drawn with its smaller copies, so a far wall shows its windows' average light, never a crawl
+// of noise. One for the page, shared.
+let _winTex = null;
+function windowGridTexture() {
+  if (_winTex) return _winTex;
+  const N = 8, S = 64, c = document.createElement("canvas");
+  c.width = c.height = N * S;
+  const x = c.getContext("2d");
+  x.clearRect(0, 0, c.width, c.height);
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const blk = ((Math.floor(i / 4) * 7 + Math.floor(j / 3) * 13) % 10) / 10, lit = rnd() < (blk < 0.4 ? 0.12 : 0.62), r2 = rnd();
+    const px = i * S + S * 0.2, py = j * S + S * 0.2, w = S * 0.6, h = S * 0.55;
+    if (lit) {
+      const hot = 0.3 + 0.7 * r2 * r2 + (r2 > 0.9 ? 0.4 : 0), col = r2 > 0.84 || blk < 0.6 ? [255, 170 + 50 * r2, 80 + 50 * r2] : blk < 0.8 ? [80, 240, 255] : [255, 80, 205];
+      x.fillStyle = `rgba(${Math.round(col[0] * Math.min(1, hot))},${Math.round(col[1] * Math.min(1, hot))},${Math.round(col[2] * Math.min(1, hot))},1)`;
+      x.fillRect(px, py, w, h);
+      x.fillStyle = "rgba(0,0,0,0.85)"; x.fillRect(px + w * 0.47, py, w * 0.06, h); x.fillRect(px, py + h * 0.5, w, h * 0.05); // glazing bars
+      if (r2 > 0.5) { x.fillStyle = "rgba(0,0,0,0.5)"; x.fillRect(px, py, w, h * (0.25 + 0.3 * rnd())); } // a blind part-way down
+    } else { x.fillStyle = "rgba(6,9,18,1)"; x.fillRect(px, py, w, h); }
+  }
+  _winTex = new THREE.CanvasTexture(c);
+  _winTex.wrapS = _winTex.wrapT = THREE.RepeatWrapping;
+  _winTex.minFilter = THREE.LinearMipmapLinearFilter;
+  _winTex.generateMipmaps = true;
+  _winTex.dispose = () => {}; // (shared by every scene that has a city: it stays)
+  return _winTex;
+}
+function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff, winK = 2.2, grid = false } = {}) {
   const pos = [], nor = [], seed = [];
   let x = -width / 2;
   for (let i = 0; i < count && x < width / 2; i++) {
@@ -402,14 +555,26 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
   geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
   geo.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
   const mat = new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, winK) }, uLit: { value: lit }, uTime: { value: 0 } }),
+    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, winK) }, uLit: { value: lit }, uTime: { value: 0 } }, grid ? { tWin: { value: windowGridTexture() } } : {}),
+    defines: grid ? { WIN_GRID: "" } : {},
     extensions: { derivatives: true },
     vertexShader: `attribute float aSeed; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vN = normal; vSeed = aSeed; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
       uniform vec3 uBase; uniform vec3 uWin; uniform float uLit; uniform float uTime; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
+      #ifdef WIN_GRID
+      uniform sampler2D tWin;
+      #endif
       void main(){
         vec3 col = uBase * (0.6 + 0.4 * max(vN.z, 0.0)) * (0.7 + 0.5 * smoothstep(0.0, 30.0, vWorld.y));
+        #ifdef WIN_GRID
+        if (abs(vN.z) > 0.5 || abs(vN.x) > 0.5) { // (the windows as a picture: far off, their average light)
+          vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
+          vec4 tw = texture2D(tWin, (q + vec2(floor(vSeed * 8.0) * 3.0, floor(fract(vSeed * 13.0) * 8.0) * 2.0)) / 8.0);
+          col = mix(col, col * 0.5, tw.a);
+          col += tw.rgb * (0.4 + 1.8 * uLit) * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
+        }
+        #else
         if (abs(vN.z) > 0.5 || abs(vN.x) > 0.5) {
           vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
           vec2 cell = floor(q); vec2 f = fract(q);
@@ -421,6 +586,7 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
           vec3 wc = mix(uWin, uWin.bgr * 0.8, step(0.8, hash13(vec3(cell, 9.0))));
           col += wc * win * on * flick * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
         }
+        #endif
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -510,7 +676,7 @@ function fresnelShell(geometry, color, { power = 2.4, intensity = 2, scale = 1.0
     uniforms: { uColor: { value: neon(color, 1) }, uP: { value: power }, uI: { value: intensity } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
+    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
   }));
   m.scale.setScalar(scale);
   return m;
@@ -565,8 +731,12 @@ class Trail {
 
 // An environment map for glossy materials, made from a small neon scene:
 // a gradient sky plus a few bright panels that show up as reflections.
-function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
+// (kept: GFX.keepEnv draws it again after a lost graphics context, into the same target)
+function makeEnvMap(o = {}) {
   if (!GFX.ok) return null;
+  return ownTarget(GFX.keepEnv(() => envMapScene(o)));
+}
+function envMapScene({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
@@ -577,8 +747,13 @@ function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glo
   }
   const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
   disposeTree(sc);
-  // In three r128 a render target's texture is only freed through the target, so
-  // disposing the returned texture (as scenes do) frees the whole target.
+  return rt;
+}
+// A render target's texture handed out on its own. In three r128 a target's texture is only freed through the target,
+// so disposing the texture (as scenes do) frees the whole target. (Made out here: made where the scene drawn into the
+// target was built, the closure held that scene for as long as the texture lived, and a closing screen's materials,
+// and their reflections, are kept for their shaders: GFX.park. The performance re-check.)
+function ownTarget(rt) {
   rt.texture.dispose = () => rt.dispose();
   return rt.texture;
 }
@@ -601,7 +776,7 @@ function beamMaterial(color, intensity = 3) {
       uniform vec3 uColor; uniform float uTime; uniform float uFade; varying vec3 vN; varying vec3 vV; varying vec2 vUv;
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));
-        float core = pow(f, 6.0) * 2.5 + pow(f, 1.5);
+        float core = pow(abs(f), 6.0) * 2.5 + pow(max(f, 0.0), 1.5);
         float crawl = 0.7 + 0.3 * vnoise(vec3(vUv.y * 30.0 - uTime * 25.0, vUv.x * 6.0, uTime));
         gl_FragColor = vec4((uColor + vec3(core * 0.6)) * core * crawl * uFade, 1.0);
       }`,
@@ -709,7 +884,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.3) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW), R = reflect(-V, n);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 3.0);
           // the glass mirrors the sky: cyan off the towers to the left, magenta off those to the right
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
           col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
@@ -732,7 +907,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
             vec3 bc = b3 < 0.44 ? uWin : (b3 < 0.72 ? uCool : uHot);
             // structure: a pier every sixth bay, a spandrel under every window, two sashes to a bay
             float pier = step(0.5, mod(id.x, 6.0));
-            float pane = smoothstep(0.1, 0.16, f.x) * smoothstep(0.9, 0.84, f.x) * smoothstep(0.22, 0.28, f.y) * smoothstep(0.9, 0.84, f.y) * pier;
+            float pane = smoothstep(0.1, 0.16, f.x) * (1.0 - smoothstep(0.84, 0.9, f.x)) * smoothstep(0.22, 0.28, f.y) * (1.0 - smoothstep(0.84, 0.9, f.y)) * pier;
             pane *= 0.3 + 0.7 * smoothstep(0.0, 0.04, abs(f.x - 0.5));
             vec3 wc = h2 < 0.76 ? bc : (h2 < 0.86 ? uWin : (h2 < 0.93 ? uCool : uHot)); // (a few rooms keep their own colour)
             float level = 0.42 + 0.58 * h3 * h3; // most rooms dim, a few bright (none so dim its amber goes khaki)
@@ -746,7 +921,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
             col += (uSunCol * pow(max(dot(R, uSunDir), 0.0), 9.0) * 0.5 + vec3(0.6, 0.72, 1.0) * uFlash * 0.5) * gl * (0.15 + 0.85 * fres);
             col += skyc * 0.06 * smoothstep(0.55, 1.0, vnoise(vec3(along * 1.1, vW.y * 0.06, 2.0))) * fine; // rain running down the glass
           }
-          col += uStreet * smoothstep(26.0, 0.0, vW.y) * (0.2 + 0.6 * fres);
+          col += uStreet * (1.0 - smoothstep(0.0, 26.0, vW.y)) * (0.2 + 0.6 * fres);
           col += vec3(0.6, 0.72, 1.0) * uFlash * 0.05;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
@@ -776,7 +951,7 @@ function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xf
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.75) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 2.6);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 2.6);
           col = vC * (0.5 + uKey * max(dot(n, uKeyDir), 0.0) * 2.2 + uUnder * max(-n.y, 0.0) * 1.6) + uSky * fres * 0.5 + uKey * pow(max(dot(reflect(-V, n), uKeyDir), 0.0), 24.0) * 0.6;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.85);
@@ -874,7 +1049,7 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
 // colour, rimmed dark and then pale, its letter dark with a pale edge. It stands in the answer's lane in Nest Egg
 // Run and is the face of the answer's drone in Risk Blaster: one badge, wherever an answer is shown.
 function answerBadgeTexture(label, color, wide) {
-  const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 256;
+  const c = document.createElement("canvas"), K = 2, W = wide ? 512 : 256, H = 256; // (twice finer than drawn: 512 px across, crisp at any size it is shown)
   c.width = W * K;
   c.height = H * K;
   const x = c.getContext("2d");
@@ -926,6 +1101,6 @@ function answerBadgeTexture(label, color, wide) {
   x.fillStyle = "#12052e";
   x.fillText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY;
   return t;
 }

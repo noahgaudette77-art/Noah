@@ -187,6 +187,56 @@ function fighterFlame(o, p, r, len, core, kind) {
   }
 }
 
+// At warp: a bow wave of light off the nose (a dome whose top points down the way ahead).
+function fighterBowMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uW: { value: 0 }, uColor: { value: new THREE.Color(0.5, 0.95, 1.4) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 1.6);
+        float a = atan(vP.y, vP.x);
+        float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
+        gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
+      }`,
+  });
+}
+// The shield: a hexagon lattice on a bubble of force, all but invisible until something hits it.
+function fighterShieldMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.25, 0.85, 1.0) }, uOn: { value: 1 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) }, uGlow: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 2.4);
+        const vec2 s = vec2(1.0, 1.7320508);
+        vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
+        vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+        vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
+        vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+        float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
+        float dist = distance(vP, uHitP);
+        float ring = uHit * exp(-pow(abs((dist - (1.0 - uHit) * 2.4) * 3.0), 2.0));
+        float flare = uHit * uHit * exp(-dist * 3.0);
+        float near = exp(-dist * 1.5); // (how close to the blow)
+        float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
+        gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.7) + fres * (ring + flare * 0.4) * 0.8) + vec3(1.7, 1.5, 1.4) * uHit * uHit * exp(-dist * 9.0), 1.0);
+      }`,
+  });
+}
+
+// The cockpit glass's look: clear looking straight through it, a mirror at its edges. (Made out here, not in the
+// fighter's constructor: a hook made there held the constructor's scope, and with it the fighter and its game, while a
+// closing scene's materials are kept for their shaders, GFX.park: the performance re-check.)
+function fighterGlassLook(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\ndiffuseColor.a = mix(0.36, 0.95, pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0));");
+  };
+  m.customProgramCacheKey = () => "blaster-fighter-glass";
+}
+
 class BlasterFighter {
   constructor(game) {
     const g = (this.g = game), env = g.shipEnv || g.env, S = FTR_S, geo = FighterModel.geometry();
@@ -230,10 +280,10 @@ class BlasterFighter {
         void main(){
           vec2 p = (vUv - 0.5) * vec2(2.0, 1.0);
           float r = length(p);
-          float ring = smoothstep(0.03, 0.0, abs(r - 0.3)) + smoothstep(0.02, 0.0, abs(r - 0.12)) * 0.7;
-          float cross = (smoothstep(0.02, 0.0, abs(p.x)) + smoothstep(0.02, 0.0, abs(p.y))) * step(0.16, r) * step(r, 0.42);
-          float ladder = smoothstep(0.012, 0.0, abs(fract(vUv.y * 7.0 + uTime * 0.15) - 0.5) - 0.44) * step(0.62, abs(p.x)) * step(abs(p.x), 0.86);
-          float edge = smoothstep(0.5, 0.42, abs(vUv.x - 0.5)) * smoothstep(0.5, 0.4, abs(vUv.y - 0.5));
+          float ring = (1.0 - smoothstep(0.0, 0.03, abs(r - 0.3))) + (1.0 - smoothstep(0.0, 0.02, abs(r - 0.12))) * 0.7;
+          float cross = ((1.0 - smoothstep(0.0, 0.02, abs(p.x))) + (1.0 - smoothstep(0.0, 0.02, abs(p.y)))) * step(0.16, r) * step(r, 0.42);
+          float ladder = (1.0 - smoothstep(0.0, 0.012, abs(fract(vUv.y * 7.0 + uTime * 0.15) - 0.5) - 0.44)) * step(0.62, abs(p.x)) * step(abs(p.x), 0.86);
+          float edge = (1.0 - smoothstep(0.42, 0.5, abs(vUv.x - 0.5))) * (1.0 - smoothstep(0.4, 0.5, abs(vUv.y - 0.5)));
           gl_FragColor = vec4(vec3(0.35, 1.5, 1.25) * (ring + cross * 0.8 + ladder * 0.7 + 0.05) * edge * uK * (0.9 + 0.1 * sin(uTime * 5.0)), 1.0);
         }`,
     });
@@ -242,10 +292,7 @@ class BlasterFighter {
     this.hud.renderOrder = 3;
     // the glass: clear looking straight through it, a mirror at its edges
     this.glassMat = new THREE.MeshStandardMaterial({ color: 0x0c1c2c, metalness: 0.85, roughness: 0.05, envMap: env, envMapIntensity: 2.4, transparent: true, opacity: 0.5, depthWrite: false, emissive: 0x08304a, emissiveIntensity: 0.25 });
-    this.glassMat.onBeforeCompile = (sh) => {
-      sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\ndiffuseColor.a = mix(0.36, 0.95, pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0));");
-    };
-    this.glassMat.customProgramCacheKey = () => "blaster-fighter-glass";
+    fighterGlassLook(this.glassMat);
     this.glass = new THREE.Mesh(geo.glass || new THREE.BufferGeometry(), this.glassMat);
     this.glass.renderOrder = 4;
     rig.add(this.pilot, this.hud, this.glass);
@@ -284,9 +331,9 @@ class BlasterFighter {
       fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uIon; ${FLAME_VARY}
         void main(){
           float f = abs(dot(normalize(vN), normalize(vV)));
-          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float body = pow(max(1.0 - vT, 0.0), 1.4) * (0.35 + 0.65 * f);
           float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
-          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
+          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(max(1.0 - vT, 0.0), 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
           gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.5 : 0.42)), 1.0);
         }`,
     });
@@ -330,18 +377,7 @@ class BlasterFighter {
     rig.add(this.cores, this.flames);
 
     // ---- at warp: a bow wave of light off the nose --------------------------------------
-    this.bowMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uW: { value: 0 }, uColor: { value: new THREE.Color(0.5, 0.95, 1.4) } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-      vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-      fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
-        void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.6);
-          float a = atan(vP.y, vP.x);
-          float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
-          gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
-        }`,
-    });
+    this.bowMat = fighterBowMaterial();
     const dome = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
     dome.rotateX(-Math.PI / 2); // the dome's top points down the tunnel
     this.bow = new THREE.Mesh(dome, this.bowMat);
@@ -352,27 +388,7 @@ class BlasterFighter {
     rig.add(this.bow);
 
     // ---- the shield: a hexagon lattice on a bubble of force, all but invisible until something hits it ----
-    this.shieldMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.25, 0.85, 1.0) }, uOn: { value: 1 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) }, uGlow: { value: 0 } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-      fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
-        void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
-          const vec2 s = vec2(1.0, 1.7320508);
-          vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
-          vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
-          vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
-          vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
-          float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
-          float dist = distance(vP, uHitP);
-          float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
-          float flare = uHit * uHit * exp(-dist * 3.0);
-          float near = exp(-dist * 1.5); // (how close to the blow)
-          float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
-          gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.7) + fres * (ring + flare * 0.4) * 0.8) + vec3(1.7, 1.5, 1.4) * uHit * uHit * exp(-dist * 9.0), 1.0);
-        }`,
-    });
+    this.shieldMat = fighterShieldMaterial();
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), this.shieldMat);
     this.shield.scale.set(2.1, 1.2, 2.15);
     this.shield.position.set(0, 0.12, 0);

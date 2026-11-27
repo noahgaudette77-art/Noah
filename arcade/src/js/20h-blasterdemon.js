@@ -231,7 +231,7 @@ function demonSkin(env, U) {
         // a cool key from the upper left: its front is no longer a black shape cut out by its rim
         totalEmissiveRadiance += (diffuseColor.rgb * 2.6 + vec3(0.012, 0.014, 0.024)) * vec3(0.55, 0.68, 1.0) * (pow(max(dot(normal, normalize(vec3(-0.55, 0.62, 0.56))), 0.0), 1.6) * 1.15 * dmShade);
         // rim lights: magenta and cyan from the sides, the wave's colour, and a cold one from above and behind
-        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(1.0 - dmNV, 4.0) + vec3(0.42, 0.5, 0.95) * (pow(1.0 - dmNV, 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
+        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(abs(1.0 - dmNV), 4.0) + vec3(0.42, 0.5, 0.95) * (pow(max(1.0 - dmNV, 0.0), 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
         // its own light spills on the armour near it: the core's on its chest, jaw and arms, the eyes' on its brow and cheeks
         vec3 dmLc = vec3(0.008, 0.256, 0.21) - vDmP, dmLe = vec3(sign(vDmP.x) * 0.04, 0.455, 0.21) - vDmP, dmL3 = vec3(0.003, 0.514, 0.24) - vDmP;
         float dmDc = dot(dmLc, dmLc), dmDe = dot(dmLe, dmLe), dmD3 = dot(dmL3, dmL3);
@@ -252,14 +252,14 @@ function demonSkin(env, U) {
           vec2 dmCd = vDmP.xy - vec2(0.008, 0.256);
           totalEmissiveRadiance += mix(vec3(2.4, 0.3, 1.0), vec3(3.0, 0.25, 0.35), uDmRage) * dmOn * (0.03 + 1.9 * exp(-dot(dmCd, dmCd) * 750.0)) * (0.35 + 0.9 * dmT.r) * (1.0 - 0.75 * neonGroove(dmT)) * (0.5 + 0.9 * uDmBeat + 0.8 * uDmExpose);
         }
-        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(dmTip, 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
-        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(dmTip, 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
+        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(abs(dmTip), 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
+        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(abs(dmTip), 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
         if (dmZone > 5.5 && dmZone < 6.5) totalEmissiveRadiance += vec3(2.4, 0.4, 1.3) * (1.0 - smoothstep(0.0, 0.1, dmCut)) * dmOn; // the burning edge of its tatters
         if (dmZone > 0.5 && dmZone < 1.5) { // the skull: lit from inside its eye sockets and its mouth
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(max(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -297,6 +297,7 @@ class BlasterDemon {
     this.core = spr("body", DEMON.core, new THREE.Color(2.4, 0.25, 0.9), 0.3);
     this.maw = spr("head", DEMON.mouth, new THREE.Color(2.6, 0.5, 1.0), 0.16);
     this.claws = [spr("clawL", DEMON.hands[0], new THREE.Color(1.3, 0.35, 2.6), 0.2), spr("clawR", DEMON.hands[1], new THREE.Color(1.3, 0.35, 2.6), 0.2)];
+    this.glows = new GlowBatch(g.scene, [...this.eyes, this.third, this.core, this.maw, ...this.claws], 0); // (its seven small lights in one draw: GlowBatch, 04-gfx.js; the large glow behind it stays a sprite)
     this.glow = glowSprite(new THREE.Color(0.5, 0.1, 0.75), 1.9, 0); // (a breath of violet light round it)
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
@@ -313,7 +314,7 @@ class BlasterDemon {
           float R = 0.6;
           float wd = mix(0.006, 0.016, smoothstep(-0.7, 0.6, p.y)); // (the line swells over its shoulders and thins under it)
           float gap = smoothstep(0.012, 0.034, abs(fract(a * 0.4775 + uTime * 0.012) - 0.5)); // three breaks in it, turning slowly
-          float limb = (exp(-pow((r - R) / wd, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0))) * (0.2 + 0.8 * gap);
+          float limb = (exp(-pow(abs((r - R) / wd), 2.0)) + 0.35 * exp(-pow(abs((r - R) / 0.03), 2.0))) * (0.2 + 0.8 * gap);
           float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
           float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
           float back = (1.0 - smoothstep(R - 0.06, R, r)) * (1.0 - 0.62 * smoothstep(0.0, R, r)); // a disc of light inside the ring: wings and horns are dark against it
@@ -454,8 +455,8 @@ class BlasterDemon {
   // advance: how much of the question's time has gone (0 to 1), or null between questions
   update(dt, advance) {
     const g = this.g, t = g.t, U = this.U, J = this.J, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
-    this.S += (this.fitS - this.S) * Math.min(1, dt * 3);
-    this.yK += (this.fitY - this.yK) * Math.min(1, dt * 3);
+    this.S = Motion.damp(this.S, this.fitS, 3, dt);
+    this.yK = Motion.damp(this.yK, this.fitY, 3, dt);
     const S = this.S, k6 = S / 6;
     this.puffs.update(dt, g.camera, t);
     NEON_T.value = t;
@@ -494,7 +495,7 @@ class BlasterDemon {
     }
     this.rageOn = rageNow;
     this.rageT += dt;
-    this.rage += ((rageNow ? 1 : 0) - this.rage) * Math.min(1, dt * 1.5);
+    this.rage = Motion.damp(this.rage, rageNow ? 1 : 0, 1.5, dt);
     const rage = this.rage, hurt = clamp((this.hits - 1) / 7, 0, 1), onset = smoothstep(0, 0.25, this.rageT) * (1 - smoothstep(0.55, 1.3, this.rageT));
     // the run is over: it has won, and roars over the wreck with its wings spread
     if (g.state === "over" && this.alive && this.gloatT < 0) { this.gloatT = 0; Sound.sfx("demonroarlong"); }
@@ -503,7 +504,7 @@ class BlasterDemon {
     const tele = A ? smoothstep(0, 0.4, A.time) * (1 - smoothstep(0.42, 0.56, A.time)) : 0; // rearing up: the warning
     const strike = A ? smoothstep(0.42, 0.56, A.time) * (1 - smoothstep(0.8, 1.35, A.time)) : 0;
     this.kickTo *= Math.pow(0.03, dt);
-    this.kick += (this.kickTo - this.kick) * Math.min(1, dt * 22);
+    this.kick = Motion.damp(this.kick, this.kickTo, 27.4, dt);
     // dying: it sags and staggers; in its last stand it rears back and roars instead
     const stag = dying ? smoothstep(0, 0.25, this.dieT) : 0, kick = this.kick, roar = dying && this.finale && !this.blown ? stag : 0, sag = stag - roar;
     const raise = Math.min(1.2, tele + 0.8 * roar + 0.7 * gloat + 0.5 * onset); // (arms up and out, claws open)
@@ -514,8 +515,8 @@ class BlasterDemon {
     const ph = this.flap, beat = Math.pow(0.5 + 0.5 * sin(t * (5.4 + 3 * rage)), 6), beatN = Math.floor((ph - 1.5708) / 6.2832);
     if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying) Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6)); }
     // ---- where it is: as far ahead as the time left says, further when a hit has thrown it back, flying up when it is new
-    if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, dt * 5);
-    else if (!A) this.adv += (0 - this.adv) * Math.min(1, dt * 1.1);
+    if (advance !== null) this.adv = Motion.damp(this.adv, advance, 5, dt);
+    else if (!A) this.adv = Motion.damp(this.adv, 0, 1.1, dt);
     const lunge = strike * (A && A.kind === 1 ? 5.5 : 2.2) * (REDUCED_MOTION ? 0.3 : 1);
     const z = -lerp(DEMON_FAR, DEMON_NEAR, this.adv) - kick * (REDUCED_MOTION ? 3 : 8) - inK * 120 + lunge - stag * 2.5 + gloat * 3;
     const bob = quiet ? 0 : -sin(ph + 0.4) * 0.016 * S * (1 + 0.5 * rage);
@@ -545,8 +546,8 @@ class BlasterDemon {
     J.waist.rotation.set(0.05 * sin(t * 0.9 + 1) * sway - 0.2 * raise + 0.25 * strike + 0.3 * kick, 0, 0.07 * sin(t * 0.9) * sway);
     J.tail.rotation.set(0.1 * sin(t * 0.9 + 0.2) * sway - 0.25 * raise + 0.35 * strike + 0.4 * kick + 0.3 * sag, 0, 0.14 * sin(t * 0.9 - 0.9) * sway);
     // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
-    this.look += ((quiet ? 0 : 0.12 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.25) * (1 - strike) - this.look) * Math.min(1, dt * 7);
-    this.nod += ((0.16 - clamp(Pointer.y, -1, 1) * 0.1) - 0.3 * tele + 0.22 * strike - 0.45 * kick - 0.32 * roar - 0.28 * gloat - 0.22 * onset - this.nod) * Math.min(1, dt * 9);
+    this.look = Motion.damp(this.look, (quiet ? 0 : 0.12 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.25) * (1 - strike), 7.4, dt);
+    this.nod = Motion.damp(this.nod, (0.16 - clamp(Pointer.y, -1, 1) * 0.1) - 0.3 * tele + 0.22 * strike - 0.45 * kick - 0.32 * roar - 0.28 * gloat - 0.22 * onset, 9.8, dt);
     J.head.rotation.set(this.nod + (rage > 0.5 && !quiet ? 0.03 * sin(t * 7.3) * sin(t * 1.3) : 0) + 0.35 * sag * sin(this.dieT * 3 + 1), this.look + 0.3 * sag * sin(this.dieT * 4), 0.05 * sin(t * 0.8) * sway + this.twist * 0.25 * kick + 0.3 * sag);
     J.jaw.rotation.set(open, 0, 0);
     // arms: hanging and swaying; raised and spread as it rears or roars; swept in and down as it strikes; thrown wide by a hit
@@ -562,10 +563,10 @@ class BlasterDemon {
 
     // ---- its light
     const lit = this.inT > 0.55 && !dying;
-    this.pow += ((lit ? 1 : 0) - this.pow) * Math.min(1, dt * (dying ? 6 : 2.5));
+    this.pow = Motion.damp(this.pow, lit ? 1 : 0, dying ? 6 : 2.5, dt);
     U.uDmSweep.value = this.inT < 1 ? -0.1 + smoothstep(0.55, 1, this.inT) * 1.0 : 9;
     if ((this.hits >= 6 || dying) && !quiet) { if ((this.flickT -= dt) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.4 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
-    U.uDmDim.value += (this.flick - U.uDmDim.value) * Math.min(1, dt * 12);
+    U.uDmDim.value = Motion.damp(U.uDmDim.value, this.flick, 13.4, dt);
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.28 * tele + 0.22 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
@@ -574,8 +575,8 @@ class BlasterDemon {
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);
-    U.uDmCrack.value += ((dying ? 1 : hurt * 0.55) - U.uDmCrack.value) * Math.min(1, dt * 3);
-    U.uDmExpose.value += ((this.shed > 0.85 ? 1 : 0) - U.uDmExpose.value) * Math.min(1, dt * 2);
+    U.uDmCrack.value = Motion.damp(U.uDmCrack.value, dying ? 1 : hurt * 0.55, 3, dt);
+    U.uDmExpose.value = Motion.damp(U.uDmExpose.value, this.shed > 0.85 ? 1 : 0, 2, dt);
     U.uDmMouth.value = Math.min(1.6, open * 2.6) * this.pow;
     const charge = Math.max(tele, strike * 0.6, 0.35 * rage, 0.8 * roar, 0.7 * gloat);
     U.uDmClaw.value = charge * 1.6;
@@ -605,7 +606,8 @@ class BlasterDemon {
       this.aura.visible = true;
       this.aura.position.copy(cam.position).add(this._a.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.aura.quaternion.copy(cam.quaternion);
-      this.aura.scale.set(b.w * 1.3, b.h * 1.3, 1); // (its brightest part lies just outside the band)
+      const k = g.liftScSet || 1; // (Phase 4's review: on a Mac, while an explanation stands the lens back, its edge stays outside the screen)
+      this.aura.scale.set((b.w * 1.3) / k, (b.h * 1.3) / k, 1); // (its brightest part lies just outside the band)
       this.auraU.uK.value = au;
     }
 
@@ -686,6 +688,7 @@ class BlasterDemon {
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
+    this.glows.dispose();
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
     [this.mat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));

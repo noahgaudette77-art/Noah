@@ -11,7 +11,7 @@
   --cyan: #35efff;
   --magenta: #ff3ad4;
   --yellow: #ffe14f;
-  --lime: #86ff5e;
+  --lime: #4dffa6;
   --orange: #ff9b3d;
   --red: #ff4769;
   --violet: #a65fff;
@@ -52,13 +52,21 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #ui { position: fixed; inset: 0; z-index: 10; }
 #gl.post { image-rendering: auto; }
 #flash { position: fixed; inset: 0; pointer-events: none; z-index: 55; opacity: 0; }
-#fps { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 70; pointer-events: none; padding: 5px 7px; background: rgba(5, 1, 20, 0.93); border: 1px solid rgba(134, 255, 94, 0.5); font: 7px/1.7 var(--font-display); color: var(--lime); white-space: nowrap; text-align: right; }
+#fps { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 70; pointer-events: none; padding: 5px 7px; background: rgba(5, 1, 20, 0.93); border: 1px solid rgba(77, 255, 166, 0.5); font: 7px/1.7 var(--font-display); color: var(--lime); white-space: nowrap; text-align: right; }
 #fps[hidden] { display: none; }
 #flash.hit { animation: hitflash 0.45s ease-out; background: radial-gradient(circle, rgba(255, 71, 105, 0.15) 30%, rgba(255, 71, 105, 0.6) 100%); }
-#flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(134, 255, 94, 0.05) 40%, rgba(134, 255, 94, 0.35) 100%); }
+#flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(77, 255, 166, 0.05) 40%, rgba(77, 255, 166, 0.35) 100%); }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
 #flash.cover { opacity: 1; background: #000; }
+#gl-lost { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(9, 3, 32, 0.78); font: 10px "Press Start 2P", monospace; letter-spacing: 2px; color: #35efff; text-shadow: 0 0 10px rgba(53, 239, 255, 0.7); }
+#gl-lost span { animation: glLostBlink 1.2s steps(2, start) infinite; }
+#gl-lost .btn[hidden] { display: none; }
+@keyframes glLostBlink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { #gl-lost span { animation: none; } }
+#loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 56; display: flex; flex-direction: column; align-items: center; gap: 12px; font: 10px "Press Start 2P", monospace; letter-spacing: 2px; color: #35efff; text-shadow: 0 0 10px rgba(53, 239, 255, 0.7); pointer-events: none; }
+#loading .lbar { width: 168px; height: 6px; border: 1px solid rgba(53, 239, 255, 0.55); background: rgba(10, 4, 40, 0.9); }
+#loading .lbar i { display: block; height: 100%; background: linear-gradient(90deg, #ff3ad4, #35efff); transform-origin: left center; transform: scaleX(0.03); transition: transform 0.2s linear; box-shadow: 0 0 10px rgba(255, 58, 212, 0.7); }
 #flash.crt-on { animation: crton 0.55s ease-out forwards; background: #000; }
 #flash.crt-on::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: #fff; box-shadow: 0 0 18px #fff; transform-origin: center; animation: crtline 0.55s ease-out forwards; }
 @keyframes crton { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
@@ -97,7 +105,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   background: var(--panel); border: 2px solid var(--line); font: 9px/1 var(--font-display); color: var(--ink);
   box-shadow: 0 3px 0 #000;
 }
-.iconbtn:hover { border-color: var(--cyan); color: var(--cyan); }
+@media (hover: hover) { .iconbtn:hover { border-color: var(--cyan); color: var(--cyan); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 .iconbtn svg { width: 16px; height: 16px; }
 
@@ -107,7 +115,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   background: var(--c, var(--yellow)); border: 0; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.75), inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
 }
-.btn:hover { filter: brightness(1.12); }
+@media (hover: hover) { .btn:hover { filter: brightness(1.12); } }
 .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.75), inset 0 -2px 0 rgba(0, 0, 0, 0.25); }
 .btn.ghost { background: var(--panel); color: var(--c, var(--ink)); box-shadow: 0 4px 0 #000, inset 0 0 0 2px var(--c, var(--line)); }
 .btn.small { padding: 10px 12px; font-size: 10px; }
@@ -120,7 +128,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .meter > i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--c, var(--lime)) 0 6px, transparent 6px 8px); transition: width 0.6s ease; }
 
 .stars { display: inline-flex; gap: 2px; }
-.stars svg { width: 12px; height: 12px; }
+.stars svg { width: 15px; height: 15px; } /* (the master overhaul, 2026-11-23: 12 px read as specks) */
 
 /* ---- title / attract -------------------------------------------------------- */
 .scr-title { align-items: center; justify-content: flex-start; text-align: center; }
@@ -172,7 +180,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .mission .label { color: var(--dim); font-size: 8px; }
 .mission svg { width: 12px; height: 12px; flex: none; }
-.mission:hover { background: var(--panel-2); }
+@media (hover: hover) { .mission:hover { background: var(--panel-2); } }
 .hub-card {
   width: 100%; max-width: 560px; margin: 0 auto; background: var(--panel); border: 2px solid var(--c, var(--cyan));
   box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--cyan)); padding: 12px 14px 14px; display: grid; gap: 10px;
@@ -199,7 +207,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; text-align: left; padding: 10px;
   background: var(--panel); border: 2px solid var(--line); box-shadow: 0 3px 0 #000; min-width: 0;
 }
-.stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); }
+.stage:focus-visible { border-color: var(--c, var(--cyan)); }
+@media (hover: hover) { .stage:hover { border-color: var(--c, var(--cyan)); } }
 .stage .n { grid-row: span 3; width: 40px; height: 40px; display: grid; place-items: center; background: var(--c, var(--cyan)); color: #12052e; font: 13px/1 var(--font-display); }
 .stage .t { font-size: 20px; line-height: 1; min-width: 0; }
 .stage .meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; font: 8px/1.4 var(--font-display); color: var(--dim); }
@@ -265,10 +274,10 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .ans .k { flex: none; width: 30px; height: 30px; display: grid; place-items: center; background: var(--c); color: #12052e; font: 11px/1 var(--font-display); }
 .ans .tx { min-width: 0; }
-.ans:hover { background: var(--panel-2); }
+@media (hover: hover) { .ans:hover { background: var(--panel-2); } }
 .ans:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 .ans.sel { background: var(--panel-2); box-shadow: 0 0 0 2px var(--c), 0 0 18px -2px var(--c); }
-.ans.good { border-color: var(--lime); background: rgba(70, 160, 40, 0.42); }
+.ans.good { border-color: var(--lime); background: rgba(24, 150, 104, 0.42); }
 .ans.good .k { background: var(--lime); }
 .ans.bad { border-color: var(--red); background: rgba(160, 20, 50, 0.45); }
 .ans.bad .k { background: var(--red); }
@@ -285,6 +294,9 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   will-change: transform; /* its own layer: sliding in and leaving don't repaint the HUD */
 }
 @keyframes sheetin { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* (the master overhaul, 2026-11-23: while an explanation is up the answers stand back. On a wide window the sheet is
+   narrower than the answers' tray, and the cards showed either side of it cut off mid-word; the sheet names the answer) */
+.sheet-up .answers { opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
 .sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); text-wrap: balance; }
 .sheet .answer { font-size: clamp(20px, 4.6vw, 24px); color: var(--lime); line-height: 1.05; }
 .sheet .answer b { font-weight: 400; color: var(--dim); }
@@ -309,7 +321,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .trophy b { font: 11px/1.3 var(--font-display); color: var(--yellow); font-weight: 400; }
 .trophy i { font-style: normal; font-size: 19px; line-height: 1; color: var(--ink); }
 @keyframes trophyin { 0% { transform: translate(-50%, -280%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -280%); } }
-.trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 6px; margin-bottom: 12px; }
+.trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 6px; margin-bottom: 12px; } /* (three across on a Mac's 860 px column, not four: at 210 px a trophy's line wrapped to three or four lines beside its lock, the audit's #24; a phone keeps one across) */
 .trophies .tr { display: flex; gap: 9px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); opacity: 0.6; }
 .trophies .tr.on { opacity: 1; border-color: var(--yellow); }
 .trophies .tr svg { width: 18px; height: 18px; display: block; }
@@ -358,7 +370,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .charge > i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, var(--orange), var(--red)); }
 
 /* racer readout */
-.egg { font: clamp(12px, 3.4vw, 16px)/1.2 var(--font-display); color: var(--lime); text-shadow: 0 0 10px rgba(134, 255, 94, 0.7); }
+.egg { font: clamp(12px, 3.4vw, 16px)/1.2 var(--font-display); color: var(--lime); text-shadow: 0 0 10px rgba(77, 255, 166, 0.7); }
 .egg small { display: block; font-size: 8px; color: var(--dim); text-shadow: none; white-space: nowrap; }
 .goalbar { height: 6px; }
 
@@ -517,7 +529,7 @@ mark { background: var(--yellow); color: #12052e; }
   background: linear-gradient(180deg, rgba(32, 15, 82, 0.95), rgba(10, 4, 34, 0.96));
   box-shadow: 0 3px 0 #000, 0 0 16px -7px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.11);
 }
-.ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+@media (hover: hover) { .ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); } }
 .ans .k {
   width: 32px; height: 32px; border-radius: 50%;
   background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0, rgba(255, 255, 255, 0) 42%), var(--c);
@@ -557,6 +569,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* The Final Exam's ending: the exam's panels fade away, cinema bars close in, and the
    boss has the whole screen. One button skips to the results. */
 .scr-game.cine > :not(.exam-cine) { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.scr-game.cine.cine-now > :not(.exam-cine) { transition-duration: 0.2s; } /* (served: the exam's panels go first, and are gone before the ending's banner and SKIP come) */
+.scr-game.cine.cine-gone > :not(.exam-cine) { visibility: hidden; }
 .exam-cine { position: absolute; inset: 0; pointer-events: none; }
 .exam-cine .bar { position: absolute; left: 0; right: 0; height: 8vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease-out; }
 .exam-cine .bar.top { top: 0; transform-origin: top; }
@@ -583,18 +597,18 @@ mark { background: var(--yellow); color: #12052e; }
 }
 .qpanel { background: linear-gradient(180deg, rgba(44, 20, 108, 0.82), rgba(12, 5, 38, 0.9)); box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--violet), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -16px 28px -14px rgba(166, 95, 255, 0.34); }
 .ans { background: linear-gradient(180deg, rgba(34, 16, 88, 0.84), rgba(10, 4, 34, 0.92)); box-shadow: 0 3px 0 #000, 0 0 18px -6px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 22px -12px var(--c); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease, opacity 0.25s ease; }
-.ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); }
+@media (hover: hover) { .ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); } }
 .hub-card { background-color: rgba(13, 6, 40, 0.78); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 34px -14px var(--c, var(--cyan)); }
 .sheet { background: linear-gradient(180deg, rgba(42, 19, 104, 0.93), rgba(16, 7, 48, 0.96)); box-shadow: 0 0 0 2px #000, 0 0 32px -6px var(--c, var(--lime)), 0 -10px 30px -14px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 34px -16px var(--c, var(--lime)); }
 .chip, .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.8), rgba(10, 5, 34, 0.86)); box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.14); transition: transform 0.12s var(--ease-out), border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
-.iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+@media (hover: hover) { .iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); } }
 .mission { background: linear-gradient(180deg, rgba(66, 48, 12, 0.5), rgba(13, 6, 40, 0.88)); box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease; }
 .mission:active { transform: translateY(2px); }
 .dlg { box-shadow: 0 0 0 3px #000, 0 0 34px -6px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 30px -14px var(--c, var(--cyan)); }
 #toast, .trophy { box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
 
 /* full-page screens (stats, Setup, results, the guide, stage select) are a sheet of glass over the arcade: it glows through, out of focus */
-.screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.8), rgba(6, 2, 22, 0.92)) !important; -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); }
+.screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.9), rgba(6, 2, 22, 0.965)) !important; /* (the master overhaul, 2026-11-23: the hall behind a menu a faint glow, no longer a lattice of murky smudges) */ -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); }
 
 /* 2. buttons: a lit face, a glow of their own colour, a press you can feel, a sheen that crosses the big ones now and then */
 .btn { position: relative; overflow: hidden; transition: transform 0.1s var(--ease-out), box-shadow 0.16s ease, filter 0.16s ease; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.75), 0 0 24px -6px var(--c, var(--yellow)), inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.4); }
@@ -620,7 +634,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* 5. tiles, panels and rows: depth and a lit top edge; rows lift when touched */
 .tile, .panel, .stage, .review li, .client-card { box-shadow: 0 3px 0 #000, var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
 .stage { transition: transform 0.14s var(--ease-out), border-color 0.18s ease, box-shadow 0.18s ease; }
-.stage:hover, .stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+.stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+@media (hover: hover) { .stage:hover { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); } }
 .stage:active { transform: translateY(1px); }
 .tile .v { text-shadow: 0 0 10px var(--c, var(--cyan)); }
 .section-h::after { content: ""; display: block; height: 2px; margin-top: 6px; background: linear-gradient(90deg, var(--yellow), transparent 72%); opacity: 0.6; }
@@ -708,7 +723,8 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .setting { padding: 12px; margin-bottom: 8px; }
 .setting .sl { flex: 1 1 9.4em; } /* (inside a panel there is less room: the label gives way first, so a two-way switch stays on its right) */
 .mrow { padding: 9px 11px; }
-.stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
+.stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
+@media (hover: hover) { .stage:hover { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); } }
 
 /* 2. Colour by role. A stat's value is white unless its colour means something (green: a good rate or
       mastery; yellow: a reward; red: a poor rate). Dialogs share one frame; only their title takes the
@@ -720,7 +736,7 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .stage .meta { font-size: 9px; color: var(--dim); }
 .tile .k { font-size: 9px; color: var(--dim); }
 .label.note { font: 19px/1.15 var(--font-body); letter-spacing: 0.02em; color: #cfc6f8; text-transform: none; }
-.stars svg { width: 13px; height: 13px; }
+.stars svg { width: 16px; height: 16px; }
 .trophies .tr { opacity: 1; gap: 11px; padding: 9px 11px; }
 .trophies .tr .ic svg { width: 24px; height: 24px; }
 .trophies .tr b { font-size: 10px; color: #d8d0fb; }
@@ -774,6 +790,12 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .face .ftop { font-size: 9px; color: #cfc6f8; }
 .face .fhint { color: #cfc6f8; white-space: nowrap; font-size: clamp(7px, 2.05vw, 9px); } /* (one line on a phone) */
 .stage:not(.wide) .meta { white-space: nowrap; } /* (the two wide tiles at the top of a stage list carry a sentence, which wraps) */
+/* (a tile's words may not widen it: its text column shrinks with the tile, and a boss's name that will not fit beside
+   its stars takes a line of its own, at the right. On a Mac's three columns of tiles the names ran to the tile's edge
+   and its bar with them: the audit's #24) */
+.stage:not(.wide) { grid-template-columns: auto minmax(0, 1fr); }
+.stage:not(.wide) .meta { flex-wrap: wrap; row-gap: 3px; }
+.stage:not(.wide) .meta > span:last-child { margin-left: auto; }
 /* Guide: while there are search results the archive folds down to a strip; a chapter has one filled button. */
 .lib-window { transition: height 0.3s var(--ease-out); }
 .guide-lib.searching .lib-window { height: 64px; }
@@ -900,8 +922,10 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .scr-results .scroll .actions { grid-template-columns: 1fr; padding-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .res-hero::before, .ans.good .k::after, .ans.bad .k::after { animation: none !important; } }
 /* Title: the logo sits inside the frame with air either side (it ran edge to edge), and takes the light of a
-   lightning strike with the rest of the street. */
-.logo-main { font-size: clamp(40px, 13vw, 128px); }
+   lightning strike with the rest of the street. On a wide window it is held to a quarter of the window's height
+   (Phase 2: on a MacBook's 1470 x 830 it was 128 px a line, its lower line over the vault door the glide ends on,
+   only a slice of the door in sight); a phone held upright is held by its width, as it was. */
+.logo-main { font-size: clamp(40px, min(13vw, 12vh), 128px); }
 @media (max-height: 560px) and (orientation: landscape) { .logo-main { font-size: clamp(30px, 9vh, 60px); } }
 .logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.55)); }
 /* Stats opens on the player's rank: a medal with the level on it, the rank's name, and the way to the next. */
@@ -926,13 +950,13 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .vault-window {
   flex: 1 1 0; min-height: 84px; max-height: 330px; position: relative; pointer-events: none;
   border: 2px solid rgba(255, 201, 61, 0.8);
-  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(2, 8, 5, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
+  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(5, 2, 18, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
 }
 .vault-window > span { position: absolute; left: 10px; top: 9px; font: 400 8px/1 var(--font-display); letter-spacing: 0.1em; color: #ffe9b0; text-shadow: 0 1px 0 #000, 0 0 6px #000; }
 .scr-game .card-stage.below { flex: 0 1 372px; min-height: 232px; }
 .scr-game .card-stage.below::before {
   content: ""; position: absolute; z-index: -1; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); top: -3px; bottom: -120px;
-  background: linear-gradient(180deg, rgba(3, 9, 7, 0.9), rgba(3, 9, 7, 0.8) 40%, rgba(3, 9, 7, 0.72));
+  background: linear-gradient(180deg, rgba(9, 3, 32, 0.9), rgba(9, 3, 32, 0.8) 40%, rgba(9, 3, 32, 0.72));
 }
 /* A card's faces never grow wider than the card: the one-line hint on the back was wider than a 360-pixel
    phone's card and pushed the answer's text out under the frame. The hint now scales with the screen and may
@@ -1094,8 +1118,8 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-game .card-stage.below { flex: 0 1 392px; min-height: 250px; padding: 16px 9px 13px; }
 /* (These grounds are a hair short of opaque on purpose. Two fully opaque rectangles meeting round the window made the
    browser's compositor count the 3D canvas behind them as covered and stop drawing it: the window went blank.) */
-.scr-game .card-stage.below::before { top: -6px; background: rgba(3, 9, 7, 0.996); }
-.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(3, 9, 7, 0.996); pointer-events: none; }
+.scr-game .card-stage.below::before { top: -6px; background: rgba(9, 3, 32, 0.996); }
+.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(9, 3, 32, 0.996); pointer-events: none; }
 .vault-window::before { right: calc(100% + 2px); }
 .vault-window::after { left: calc(100% + 2px); }
 .vault-window.bank { animation: vault-bank 0.6s ease-out; }
@@ -1124,7 +1148,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 /* Memory Bank, third independent review. The band behind the HUD is solid ground too (a miss's red light showed
    behind it and stopped dead at the gutters). The card turns with less perspective, so it stays in its lane. The
    dial's ring behind a term fades where the term's lines pass. A hint breaks before a separating dot, never after. */
-.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(3, 9, 7, 0.996); }
+.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(9, 3, 32, 0.996); }
 .scr-game .card-stage.below { perspective: 2200px; }
 .face.front::after {
   -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%), linear-gradient(180deg, #000 0, #000 30%, transparent 40%, transparent 60%, #000 70%, #000 100%);
@@ -1342,6 +1366,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-notes .gsec { position: relative; background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0) 0 27px, rgba(255, 255, 255, 0.035) 27px 28px); }
 .scr-notes .gsec::after { content: ""; position: absolute; right: 0; top: 0; width: 18px; height: 18px; pointer-events: none;
   background: linear-gradient(225deg, #0b0527 0 50%, color-mix(in srgb, var(--c, var(--cyan)) 55%, #2a1c6a) 50% 100%); box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.45); }
+.scr-notes .gsec h3 { padding-right: 28px; } /* (the page's count clear of its turned corner: "PAGE 1•3" ran under it) */
 .boot-bar { border: 0; padding: 0; height: 12px; background: rgba(150, 130, 255, 0.24); box-shadow: none; } /* (segments of a dim track, a bright sweep running through them) */
 /* Hub dots: an outline in each cabinet's true colour (mixed into the card's violet, yellow and orange went olive and brown); the one in front is filled. */
 .hub-meta .dots i { background: transparent; box-shadow: inset 0 0 0 2px var(--d, var(--line)); opacity: 0.8; }
@@ -1385,7 +1410,8 @@ mark { padding: 0 3px; margin: 0 -1px; }
     radial-gradient(75% 150% at var(--sx) 50%, var(--spill), rgba(0, 0, 0, 0) 72%) padding-box,
     linear-gradient(var(--pf), var(--pf)) padding-box;
 }
-.stage:hover, .stage:focus-visible { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); }
+.stage:focus-visible { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); }
+@media (hover: hover) { .stage:hover { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); } }
 .stage.focal { border-color: transparent; background: none; box-shadow: none; --pb: var(--c, var(--cyan));
   --pf: color-mix(in srgb, var(--c, var(--cyan)) 19%, rgba(22, 13, 66, 0.94)); --spill: color-mix(in srgb, var(--c, var(--cyan)) 34%, transparent); --sx: 0%;
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--c, var(--cyan)) 78%, transparent)); }
@@ -1456,12 +1482,14 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .btn.ghost:active { transform: translateY(3px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f, inset 0 0 0 2px #5a48b4; }
 .btn.ghost[data-act="reset"], .btn.ghost[data-act="quit"] { color: #ff9ab0; box-shadow: 0 0 0 2px #05020f, 0 4px 0 0 #3a122c, 0 4px 0 2px #05020f, inset 0 0 0 2px #96406a, inset 0 4px 0 rgba(255, 255, 255, 0.08); }
 .iconbtn { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, inset 0 2px 0 rgba(255, 255, 255, 0.14); }
-.iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); }
+@media (hover: hover) { .iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
 /* the way forward lights the bar it stands on */
-.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
+/* (Phase 2, 2026-11-24: the glow stands under the first button wherever the row is: on a wide window the row is held to
+   860px in the middle and the glow, at a quarter of the window, lit the empty bar left of it as a teal band) */
+.actions.pinned { background: radial-gradient(min(46%, 400px) 130% at max(23%, calc(50% - 249px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
 .actions.pinned .wrap.one { grid-template-columns: 1fr; }
-.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+.actions.pinned:has(.wrap.one) { background: radial-gradient(min(70%, 640px) 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
 
 /* ---- a focus ring is the keyboard's (see UI.init): none until a key has been used ---- */
 html:not([data-input="keys"]) :focus-visible { outline: none !important; }
@@ -1525,7 +1553,7 @@ html:not([data-input="keys"]) :focus-visible { outline: none !important; }
 .pl-bar { position: relative; height: 14px; background: #05020f; border: 2px solid #3d2f92; box-shadow: inset 0 0 0 1px #000, inset 0 3px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.12); }
 .pl-bar i { position: absolute; left: 1px; top: 1px; bottom: 1px; width: calc(var(--v) * 1% - 2px); min-width: 0; background: linear-gradient(90deg, #ffb13a, var(--yellow)); box-shadow: 0 0 10px -2px var(--yellow); }
 .pl-bar b { position: absolute; left: 60%; top: -6px; bottom: -6px; width: 2px; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
-.pl-v { color: var(--lime); text-shadow: 0 0 8px rgba(134, 255, 94, 0.5); }
+.pl-v { color: var(--lime); text-shadow: 0 0 8px rgba(77, 255, 166, 0.5); }
 
 /* ---- loading: stars over the horizon, a warm light where the egg will rise, a track you can see ---- */
 .boot-logo::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 54vh; z-index: -1; pointer-events: none;
@@ -1598,7 +1626,7 @@ body:not(.crt-off) .tile, body:not(.crt-off) .board, body:not(.crt-off) .chip {
 .btn { isolation: isolate; }
 .btn:not(.ghost):not(.small)::after { z-index: -1; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.34) 50%, transparent 60%); }
 /* a star not yet earned is hollow (a solid violet one read as earned) */
-.stars svg[fill="#7868cc"] { fill: #170c40; filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0); }
+.stars svg[fill="#7868cc"] { fill: #170c40; filter: drop-shadow(1px 0 0 #8d7fe0) drop-shadow(-1px 0 0 #8d7fe0) drop-shadow(0 1px 0 #8d7fe0) drop-shadow(0 -1px 0 #8d7fe0); }
 .res-stars .stars svg[fill="#7868cc"] { filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)); }
 /* trophies: the emblem sits in a socket edged with the hue of what it is for; one not yet won shows that hue dimly */
 .trophies .tr .ic { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: #05020f; border: 2px solid #3d2f92; border-left: 4px solid color-mix(in srgb, var(--t, #8d82c8) 62%, #1a1050);
@@ -1710,6 +1738,13 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* ---- Risk Blaster, closing fixes after its third independent review ---- */
 /* the band fades under the question as it does over the answers (a hard panel edge cut the demon's horns and its ring) */
 .scr-blaster .band::before { content: ""; position: absolute; z-index: 1; left: -16px; right: -16px; top: -2px; height: 22px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0.86), rgba(7, 2, 26, 0)); }
+/* (on a wide window the question and the answers stop at 1040 px, the band spans the window: the two fades stay under
+   the panels they belong to and die away at their ends, instead of ruling a dark line across the open sky either side:
+   the audit's #15, its "hard scrim seams" on the Mac. Narrower, the panels span the window and so do the fades) */
+@media (min-width: 1100px) {
+  .scr-blaster .band::before, .scr-blaster .band::after { left: 50%; right: auto; width: min(1120px, 100%); transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
+}
 
 /* ---- Title, pass 8 ---- */
 /* the wordmark keeps its edge against the sky: a dark keyline round every letter, and ARCADE starts pale cyan (its periwinkle top melted into the violet) */
@@ -1750,3 +1785,342 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* The floor's horizon behind a menu page is a glow, not a line: as a bright 2 px line it ran through any words on the
    page's own ground that sat at its height (the caption under the stats tiles had a line through it). */
 .screen[style*="background:rgba(9,3,32"]::after { background: radial-gradient(64% 50% at 50% 50%, rgba(255, 58, 212, 0.2), rgba(120, 70, 255, 0.1) 46%, rgba(0, 0, 0, 0) 72%), linear-gradient(90deg, rgba(53, 239, 255, 0), rgba(53, 239, 255, 0.09) 30%, rgba(255, 58, 212, 0.09) 70%, rgba(255, 58, 212, 0)) 0 50% / 100% 2px no-repeat; }
+
+/* ==== combat pass: what a blow does to the HUD (see HudFX) ==== */
+.scr-game.hud-hurt .hud, .scr-game.hud-hurt .timer, .scr-game.hud-hurt .bossbar { animation: hud-hurt 0.6s steps(1, end); }
+@keyframes hud-hurt { 0% { opacity: 0.35; transform: translate(-3px, 1px) skewX(-4deg); filter: drop-shadow(3px 0 0 rgba(255, 40, 80, 0.85)) drop-shadow(-3px 0 0 rgba(53, 239, 255, 0.7)); } 12% { opacity: 1; transform: translate(2px, -1px) skewX(2deg); } 24% { opacity: 0.55; transform: translate(-1px, 0); filter: drop-shadow(2px 0 0 rgba(255, 40, 80, 0.7)) drop-shadow(-2px 0 0 rgba(53, 239, 255, 0.5)); } 40% { opacity: 1; transform: none; filter: none; } 62% { opacity: 0.8; } 100% { opacity: 1; transform: none; filter: none; } }
+.hud-cracks { position: absolute; z-index: 6; pointer-events: none; opacity: 0; }
+.hud-cracks svg { width: 100%; height: 100%; overflow: visible; }
+.hud-cracks path { fill: none; stroke: rgba(255, 236, 244, 0.95); stroke-width: 0.7; vector-effect: non-scaling-stroke; stroke-linejoin: bevel; filter: drop-shadow(0 0 3px rgba(255, 71, 105, 0.95)); stroke-dasharray: 220; stroke-dashoffset: 220; }
+.hud-cracks.go { animation: cracks-fade 1.5s ease-out forwards; }
+.hud-cracks.go path { animation: cracks-draw 0.16s ease-out forwards; }
+@keyframes cracks-draw { to { stroke-dashoffset: 0; } }
+@keyframes cracks-fade { 0% { opacity: var(--k, 1); } 55% { opacity: calc(var(--k, 1) * 0.8); } 100% { opacity: 0; } }
+.scr-game.hud-low .lives span:not(.lost) svg { animation: life-low 0.9s ease-in-out infinite; }
+.scr-game.hud-low .hud { box-shadow: inset 0 -2px 0 rgba(255, 71, 105, 0.75), 0 6px 18px -8px rgba(255, 40, 80, 0.9); }
+@keyframes life-low { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 71, 105, 0.7)); } 18% { transform: scale(1.28); filter: drop-shadow(0 0 11px rgba(255, 40, 80, 1)); } 36% { transform: scale(1.05); } 50% { transform: scale(1.2); filter: drop-shadow(0 0 9px rgba(255, 40, 80, 0.95)); } }
+.life-shard { position: fixed; z-index: 60; width: 5px; height: 7px; margin: -3px; background: #ff4769; clip-path: polygon(50% 0, 100% 60%, 30% 100%, 0 35%); box-shadow: 0 0 6px rgba(255, 71, 105, 0.9); pointer-events: none; animation: life-shard 0.6s cubic-bezier(0.2, 0.6, 0.4, 1) forwards; }
+@keyframes life-shard { 0% { transform: translate(0, 0) rotate(0) scale(1.2); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(0.4); opacity: 0; } }
+.reward-bit { position: fixed; z-index: 61; width: 16px; height: 16px; margin: -8px; pointer-events: none; opacity: 0; filter: drop-shadow(0 0 6px var(--c, #ffe14f)); will-change: transform; }
+.reward-bit svg { width: 100%; height: 100%; display: block; }
+.reward-bit.spark { width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: var(--c, #ffe14f); box-shadow: 0 0 10px var(--c, #ffe14f); }
+.reward-pop { animation: reward-pop 0.45s var(--ease-spring, ease-out); }
+@keyframes reward-pop { 0% { transform: scale(1); } 35% { transform: scale(1.32); filter: brightness(1.8) drop-shadow(0 0 10px #ffe14f); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .scr-game.hud-hurt .hud, .scr-game.hud-hurt .timer, .scr-game.hud-hurt .bossbar, .scr-game.hud-low .lives span:not(.lost) svg { animation: none; } }
+
+/* ---- icons and boss busts drawn from the 3D models (served, once their strips have loaded: see 05c-genicons.js) ---- */
+canvas.gen { image-rendering: auto !important; filter: none !important; }
+.gico { overflow: hidden; }
+.gico.off { filter: grayscale(1) brightness(0.5) !important; opacity: 0.75; }
+.stars .gico.off { filter: grayscale(1) brightness(0.62) !important; opacity: 0.85; } /* (a star not yet earned reads a little better beside the gold ones; #7868cc stays the colour that marks it unearned: GEN_ICON_OFF and the hollow star below key on it) */
+.trophies .tr .ic .gico, .trophy .ic .gico { width: 32px; height: 32px; }
+.tile .k .gico { width: 24px; height: 24px; margin: -7px 0 -5px -2px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.tile .k .tk0 { display: none; }
+.gico.gold { filter: brightness(1.3) saturate(1.6) drop-shadow(0 0 5px rgba(255, 208, 70, 0.6)) !important; }
+.res-hero > .gico { width: 64px; height: 64px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
+.world.wbar i .gico { width: 20px; height: 20px; }
+/* an earned cup is gilt (the model's is chrome: beside the gold coins it read as a grey cup), in each place it stands */
+.gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 0 5px rgba(255, 208, 70, 0.45)); }
+.tile .k .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.res-hero > .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
+/* the results' reward moment: what was earned arrives one by one under the headline */
+.res-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 10px; margin: 6px 12px 2px; min-height: 44px; }
+.res-rewards .rw.coin + .rw.coin { margin-left: -24px; } /* (the coins land in a little pile) */
+/* Memory Bank, served: the card seen flying into the vault, back onto the deck, or dealt off it (see 23c-memorygen.js) */
+.mem-fly { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; transform-origin: 50% 50%; border-radius: 12px; border: 3px solid #35efff; background: linear-gradient(160deg, #3b2392, #160a3e 70%); box-shadow: 0 0 22px -4px #35efff, 0 6px 0 rgba(0, 0, 0, 0.5); display: grid; place-items: center; will-change: transform, opacity; }
+.mem-fly.bank { border-color: #ffd36a; box-shadow: 0 0 26px -2px #ffc93d; }
+.mem-fly.again { border-color: #ff4769; box-shadow: 0 0 22px -4px #ff4769; }
+.mem-fly b { font: 400 clamp(14px, 5vw, 24px)/1.2 var(--font-display); color: #ffe9b0; text-shadow: 0 0 12px #ffc93d, 0 3px 0 #000; }
+.mem-fly.again b { color: #ffd0da; text-shadow: 0 0 12px #ff4769, 0 3px 0 #000; font-size: clamp(11px, 3.6vw, 18px); }
+.mem-fly i { width: 46%; aspect-ratio: 1; transform: rotate(45deg); border: 3px solid #ff3ad4; box-shadow: 0 0 18px #ff3ad4, inset 0 0 18px rgba(255, 58, 212, 0.5); }
+/* the label over the vault's 3D window stands on its own dark plate (served) */
+.assets-on .vault-window > span { background: rgba(14, 8, 2, 0.9); padding: 5px 8px 4px; box-shadow: 0 0 0 2px #000; left: 8px; top: 7px; }
+/* a banner on its own dark plate, inside the screen's edges (RANK UP! after a reward moment: it must not cross the score) */
+/* (Phase 6: the plate is opaque, with a heavier border, and stands a little longer; a dark scrim lies over the tiles
+   under it while it is up, so nothing of them shows through or beside its words) */
+.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: #080322; border: 3px solid var(--c, var(--yellow)); box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--yellow)), 0 5px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
+.banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
+/* (a banner whose small line nearly fills the screen comes in from just over its size, and its line wraps inside the
+   screen's edges: from 2.2 times its size it ran off both. Served, Phase 6) */
+.banner.fit { animation: banner-fit 1.3s ease-out forwards; }
+.banner.fit small { padding: 0 14px; white-space: normal; text-wrap: balance; }
+@keyframes banner-fit { 0% { transform: scale(1.1); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* (served, Phase 6: the explanation sheet slides in on its plate from its first frame, not fading in: half faded, what
+   flashed behind it, a shield's cracks, crossed its title) */
+.assets-on .sheet { animation-name: sheetslide; }
+@keyframes sheetslide { from { transform: translateY(24px); } to { transform: none; } }
+.banner.plated { animation: banner-plate 2.2s ease-out forwards; } /* (it never grows past the screen's edges) */
+@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 8% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; } }
+.rank-scrim { position: fixed; inset: 0; z-index: 29; pointer-events: none; background: rgba(3, 1, 12, 0.8); animation: rank-scrim 2.2s ease-out forwards; }
+@keyframes rank-scrim { 0% { opacity: 0; } 8% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+.res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
+.res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
+.res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
+.res-rewards .rw .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
+.res-rewards .rw.big .gico { width: 50px; height: 50px; }
+.res-rewards .rw.coin .gico { width: 32px; height: 32px; }
+@keyframes rw-in { 0% { opacity: 0; transform: translateY(-26px) scale(0.4); } 60% { opacity: 1; transform: translateY(3px) scale(1.12); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .res-rewards .rw.in { animation: rw-fade 0.4s ease-out backwards; } }
+@keyframes rw-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+/* The lite page (body.lite: the MEDIUM graphics tier and below, which is where every phone starts). A frosted panel
+   over the live 3D picture is blurred again on every frame, at the screen's full density: on a phone that is a dozen
+   full-screen blurs a frame. So no glass here: the panels are made a shade more solid instead, which reads the same. */
+body.lite .qpanel, body.lite .answers .ans, body.lite .hub-card, body.lite .mission, body.lite .chip, body.lite .iconbtn, body.lite .sheet,
+body.lite .dlg, body.lite .trophy, body.lite #toast, body.lite .attract, body.lite .exam-nav, body.lite .grade, body.lite .logo-kicker,
+body.lite .insert-coin, body.lite .modal, body.lite .rank, body.lite .screen { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body.lite .qpanel { background: linear-gradient(180deg, rgba(40, 18, 100, 0.94), rgba(12, 5, 38, 0.97)); }
+body.lite .answers .ans { background: linear-gradient(180deg, rgba(32, 15, 84, 0.95), rgba(10, 4, 34, 0.97)); }
+body.lite .hub-card { background-color: rgba(13, 6, 40, 0.92); }
+body.lite .chip, body.lite .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.93), rgba(10, 5, 34, 0.95)); }
+body.lite .screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.95), rgba(6, 2, 22, 0.98)) !important; }
+body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
+
+/* The containment hall (the title, served: 10d-titlehall.js). While the lens glides down the hall the logo and the
+   dock wait, and a quiet line invites a tap; they come up together when the glide arrives (a tap hurries it). */
+.scr-title .logo, .scr-title .title-dock { transition: opacity 1.1s ease, transform 1.1s ease; }
+.scr-title.gliding .logo { opacity: 0; transform: translateY(-16px); pointer-events: none; }
+.scr-title.gliding .title-dock { opacity: 0; transform: translateY(16px); pointer-events: none; }
+.title-enter { position: absolute; left: 0; right: 0; bottom: calc(var(--gut-b) + 30px); text-align: center; font: clamp(8px, 2.3vw, 10px)/1.6 var(--font-display); letter-spacing: 0.16em; color: #efeaff; text-shadow: 0 1px 0 #05010f, 0 0 8px #05010f, 0 0 16px rgba(53, 239, 255, 0.5); opacity: 0; transition: opacity 0.9s ease; pointer-events: none; }
+.scr-title.gliding .title-enter { opacity: 0.85; animation: enter-breathe 2.6s ease-in-out 1.5s infinite; }
+/* (the master overhaul, 2026-11-23: on its own backing, so it reads over the cells' hazard stripes and the floor's
+   reflections alike) */
+.title-enter { width: max-content; margin: 0 auto; padding: 6px 14px 5px; background: rgba(5, 1, 15, 0.66); border: 1px solid rgba(53, 239, 255, 0.3); border-radius: 3px; }
+@keyframes enter-breathe { 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.4s ease; transform: none; } .scr-title.gliding .title-enter { animation: none; } }
+/* which version this is, in small print under the top row: served (cyan) or the offline fallback (amber) */
+.title-mode { width: 100%; text-align: center; font: 7px/1.4 var(--font-display); letter-spacing: 0.18em; margin-top: -2px; text-shadow: 0 1px 0 #05010f, 0 0 6px #05010f; pointer-events: none; }
+.title-mode.served { color: var(--cyan); opacity: 0.7; }
+.title-mode.offline { color: #ffb86a; opacity: 0.95; }
+
+/* Memory Bank's card shows one face at a time (the owner, 2026-11-18). Turned in 3D, each face hid its back by
+   backface culling alone, and on iPhone Safari that was not enough: a box inside a face that the browser draws on a
+   layer of its own (the term's scrolling box, the dial's masked ring behind it) kept being drawn when its face turned
+   away, and the face turned away showed through the answer, mirrored. Now the face turned away is hidden outright,
+   switched at the moment the card stands edge-on (90 ms into the 0.68 s turn, by its curve), so nothing pops; the
+   culling stays as a second guard. (tools/card-faces.js checks it, in WebKit and Chromium.) The answer's face is
+   plain: one opaque ground under its text, without the front's faint rings. */
+.card3d .face { transition: visibility 0s linear 90ms; }
+.card3d .face.back { visibility: hidden; }
+.card3d.flipped .face.back { visibility: visible; }
+.card3d.flipped .face.front { visibility: hidden; }
+.face.back { background: radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.07), transparent 62%), linear-gradient(180deg, #26135e, #150a3c); }
+/* (reduced motion: the card turns at once, and its faces with it; the turn's own rule above came after the first
+   reduced-motion rule and had undone it) */
+@media (prefers-reduced-motion: reduce) { .card3d, .card3d .face { transition: none; } }
+
+/* ---- Title, the detail polish pass (the owner, 2026-11-22, from their phone's pictures) ----
+   The wordmark is bright and solid, a clean neon line round each letter, on a dark backing the sky behind it cannot
+   wash out; the line above it reads clearly on an opaque plate. When the glide arrives the logo and the dock come up
+   quickly (a fade of 1.1 s left them half see-through for a moment, the floor's lines across their words), and TAP TO
+   ENTER goes at once (fading, it lingered faint behind the tip). The tip and INSERT COIN stand on opaque plates, the
+   dock's shade is solid under its words, and INSERT COIN is lit and breathes. SERVED is not on the title any more
+   (Setup says which version this is; opened from disk, the amber OFFLINE FALLBACK line stays: it is the wrong one). */
+.logo::before { left: -12%; right: -12%; top: -4%; bottom: -12%; background: radial-gradient(ellipse 58% 54% at 50% 58%, rgba(5, 1, 18, 0.9) 0, rgba(5, 1, 18, 0.8) 52%, rgba(5, 1, 18, 0) 100%); }
+.logo-kicker { white-space: nowrap; letter-spacing: 0.1em; font-size: clamp(9px, 2.35vw, 12px); color: #c9fbff; text-shadow: 0 0 8px rgba(53, 239, 255, 0.85), 0 1px 0 #05010f; background: #0a0424; border-color: rgba(53, 239, 255, 0.62); box-shadow: 0 0 0 2px #05020f, 0 0 16px rgba(53, 239, 255, 0.22); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.logo-face { background-image: linear-gradient(180deg, #ffffff 0%, #e2fbff 36%, #b8efff 50%, #7fa2ff 57%, #ff5ae0 74%, #fff07a 100%);
+  -webkit-text-stroke: 1.5px rgba(226, 253, 255, 0.96);
+  filter: brightness(calc(1 + var(--bolt, 0) * 0.1)) drop-shadow(0 0 2px #170a44) drop-shadow(0 0 9px rgba(53, 239, 255, 0.7)); }
+.scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease-out, transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+.title-enter, .scr-title .title-enter { transition: none; visibility: hidden; }
+.scr-title.gliding .title-enter { visibility: visible; }
+.title-dock::before { background: linear-gradient(180deg, rgba(5, 1, 20, 0) 0%, rgba(5, 1, 20, 0.9) 14%, rgba(5, 1, 20, 0.97) 30%, #050114 100%); }
+.attract { background: linear-gradient(180deg, #13073a, #080322); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.insert-coin { color: #fff5c4; border-color: #ffe766; background: linear-gradient(180deg, #3b2577, #1b0e46);
+  text-shadow: 0 0 9px rgba(255, 225, 79, 0.9), 0 0 2px rgba(255, 255, 255, 0.6), 0 2px 0 #12052e;
+  animation: coin-pulse-y2 1.8s ease-in-out infinite, coin-breathe 1.8s ease-in-out infinite; }
+@keyframes coin-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }
+.insert-coin:active { filter: brightness(1.4); } /* (pressed: it flashes; its breathing owns its transform) */
+.title-mode.served { display: none; }
+
+/* ---- The detail polish pass, every other screen (the owner, 2026-11-22) ---- */
+/* Strategy Guide: a stage's long title takes three lines beside its picture, not five short ones */
+.ch-banner h2 { font-size: clamp(13px, 3.5vw, 18px); max-width: 88%; }
+/* Results: a flawless run's line reads at once: bright, on a plate of its own over the floor's grid */
+.section-h.flawless { display: inline-block; color: #8dffc8; padding: 8px 12px 7px; background: rgba(4, 22, 14, 0.9); border: 1px solid rgba(77, 255, 166, 0.5); box-shadow: 0 0 14px -4px rgba(77, 255, 166, 0.6); text-shadow: 0 0 8px rgba(77, 255, 166, 0.55), 0 1px 0 #000; }
+.section-h.flawless::after { display: none; }
+/* the lives in every game's HUD: the hearts and shields drawn from their models were dark at their size: lifted */
+.lives .gico { filter: brightness(1.35) saturate(1.2) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)); }
+.lives .lost .gico { filter: grayscale(1) brightness(0.7); }
+/* Setup's switches (and the exam's length and every segmented choice) answer a press, as every other button does */
+.seg button:active { transform: translateY(1px); filter: brightness(1.25); }
+/* (after its independent review) the title's quick entrance keeps to reduced motion (it came after the rule for it),
+   and INSERT COIN keeps still with Setup's Reduced effects as with the device's setting; on a screen narrower than a
+   phone's the line above the logo may wrap again */
+@media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease; transform: none; } }
+html.calm .insert-coin { animation: none; }
+@media (max-width: 340px) { .logo-kicker { white-space: normal; } }
+
+/* ---- The FPS readout, to be read on a phone and sent as a picture (the owner, 2026-11-22): the body face, larger, its
+   lines free to wrap, a graph of the last two seconds of frames between them (see 99-main.js) */
+#fps { font: 13px/1.2 var(--font-body); letter-spacing: 0.03em; white-space: normal; text-align: left; max-width: min(340px, calc(100vw - 20px)); padding: 6px 8px; background: #050114; } /* (solid: nothing behind it reads through in a picture of it) */
+#fps .fg { display: block; width: 180px; height: 48px; margin: 4px 0; }
+#fps .f3 { color: #ffe14f; }
+
+/* ---- The performance pass (the owner, 2026-11-22: smoothness first) ----
+   The page's endless animations are drawn by the compositor, not painted again every frame. INSERT COIN's glow pulsed
+   by changing its shadow: now its bright glow, drawn once, fades in and out beneath its keyline and lip, and the
+   button breathes in size as before. The question under threat pulsed an outline's colour: now a ring drawn once fades
+   in and out, just inside its frame (the panel clips anything outside it). The hearts at low life beat by their size
+   alone over their steady glow; the hot threat label by its opacity. Nothing repainted. */
+.insert-coin { position: relative; isolation: isolate; animation: coin-breathe 1.8s ease-in-out infinite;
+  box-shadow: 0 0 22px -2px rgba(255, 225, 79, 0.62), 0 26px 30px -14px rgba(255, 225, 79, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+/* (its dark keyline and gold lip over both glows, as they were first in its one list of shadows; the bright glow beneath
+   them, under the words too) */
+.insert-coin::before { content: ""; position: absolute; inset: -2px; pointer-events: none; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f; }
+.insert-coin::after { content: ""; position: absolute; inset: -2px; z-index: -1; pointer-events: none; box-shadow: 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42); opacity: 0; animation: coin-glow 1.8s ease-in-out infinite; will-change: opacity; }
+@keyframes coin-glow { 50% { opacity: 0.8; } }
+.scr-game.threat .qpanel { outline: none; animation: none; }
+.scr-game.threat .qpanel::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(255, 71, 105, 0.95); opacity: 0; animation: q-threat-o 0.7s ease-in-out infinite alternate; will-change: opacity; }
+@keyframes q-threat-o { to { opacity: 1; } }
+@keyframes threat-pulse { to { opacity: 0.55; } }
+@keyframes life-low { 0%, 100% { transform: scale(1); } 18% { transform: scale(1.28); } 36% { transform: scale(1.05); } 50% { transform: scale(1.2); } }
+/* held still (reduced motion, Reduced effects): INSERT COIN exactly as it stood still before, one list of shadows */
+@media (prefers-reduced-motion: reduce) { .scr-game.threat .qpanel::before { animation: none; opacity: 0.8; }
+  .insert-coin { animation: none; position: static; isolation: auto; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+  .insert-coin::before, .insert-coin::after { display: none; } }
+html.calm .insert-coin { animation: none; position: static; isolation: auto; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
+
+/* The Mac (the owner, 2026-11-23: mouse hover feedback, keyboard shortcuts). Where a mouse can hover, whatever can be
+   clicked answers it: a switch's choices light their edge, a card or a chip brightens; the pause menu lists the game's
+   keys. (Every :hover above is kept to devices that hover: a phone's tap left it lit.) */
+.dialog .keys { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .seg button:not([aria-pressed="true"]):hover { color: var(--ink); box-shadow: inset 0 0 0 2px var(--c, var(--cyan)); }
+  .hub-card[data-act]:hover, .chip[data-act]:hover, .tile[data-act]:hover, .trophies .tr[data-act]:hover, .mrow[data-act]:hover { filter: brightness(1.18); }
+  [data-act] { cursor: pointer; }
+  .dialog .keys { display: block; margin-top: 4px; font: 8px/1.7 var(--font-display); letter-spacing: 0.06em; color: var(--dim); text-align: center; }
+  /* (Phase 7, tools/scenarios/keys.js's hover pass: Memory Bank's grades and FLIP CARD kept their own filter over the
+     buttons' hover, the exam's question grid had none; and the card, unturned, lifts its glow as the mouse comes over
+     it. Its faces, not the card: a filter on the card would flatten its turn) */
+  .grade .btn:hover { filter: saturate(0.9) brightness(1.14); }
+  .palette button:hover { border-color: var(--cyan); color: #fff; }
+  .seg button[data-act="fx"][aria-pressed="true"]:hover { filter: brightness(1.15); } /* (an effect that is on: a click turns it off. A switch's chosen setting, which a click leaves as it is, stays still) */
+  .card3d.flipped[data-act] { cursor: default; } /* (turned, a click on it does nothing: its grades are under it) */
+  .card3d[data-act]:not(.flipped):hover .face.front { box-shadow: 0 0 0 2px #1a0f02, 0 0 0 6px #c8963a, 0 0 0 7px #5a3d0c, 0 0 0 9px #000, 0 0 56px -6px var(--c, var(--lime)), 0 30px 46px -12px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 48px -14px var(--c, var(--lime)); }
+}
+
+
+/* Memory Bank on a Mac (the master overhaul, Phase 2, 2026-11-23). A wide window uses its width: the vault room spans
+   the window and the card stands in a column at its left, over the wall of boxes, its grades under it; the vault is
+   framed in the rest, the whole height under the HUD (the lens is centred on that part: MemoryGame.resize). It was a
+   strip 305 px high across the top with 60% of the window an empty ground under it. A phone keeps its window over
+   the card. */
+@media (min-width: 1000px) and (min-height: 600px) and (min-aspect-ratio: 13/10) {
+  .scr-memory { display: grid; grid-template-columns: clamp(420px, 38vw, 600px) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto minmax(0, 1fr); column-gap: 28px; row-gap: 10px; }
+  .scr-memory > .hud { grid-column: 1 / -1; grid-row: 1; max-width: none; }
+  .scr-memory > .vault-window { grid-column: 2; grid-row: 2 / -1; max-height: none; min-height: 0; border-color: transparent; box-shadow: none; outline: none; }
+  .scr-memory > .card-stage.below { grid-column: 1; grid-row: 3; height: clamp(270px, 50vh, 410px); }
+  .scr-memory > .grade { grid-column: 1; grid-row: 4; max-width: none; }
+  /* (the grounds that hid the room round the phone's window give way: a shade under the HUD, and the card's column on
+     a darker part of the room, so the card is read against quiet ground) */
+  .scr-memory::before { height: calc(var(--gut-t) + 80px); background: linear-gradient(180deg, rgba(9, 3, 32, 0.92), rgba(9, 3, 32, 0.7) 55%, rgba(9, 3, 32, 0)); }
+  .vault-window::before, .vault-window::after { display: none; }
+  .scr-game .card-stage.below::before { left: calc(var(--gut-l) * -1 - 40px); right: -90px; top: -60px; bottom: -110px; background: radial-gradient(closest-side, rgba(9, 3, 32, 0.8), rgba(9, 3, 32, 0.55) 62%, rgba(9, 3, 32, 0)); }
+  /* (a banked card or a miss lights the vault's part of the window from its edges: it has no frame here) */
+  .vault-window.bank { animation: vault-bank-wide 0.95s ease-out; }
+  .vault-window.miss { animation: vault-miss-wide 0.7s ease-out; }
+}
+@keyframes vault-bank-wide { 0%, 38% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0); } }
+@keyframes vault-miss-wide { 0%, 20% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0); } }
+
+/* The title's end on a wide window (the master overhaul, Phase 5, 2026-11-24, from the audit's notes on it). The tip's
+   plate keeps its height, so INSERT COIN never moves as the tips change, and its heading stays at the top; its words
+   stand in the middle of the room under the heading (a short tip left the plate's lower third empty). The dock's
+   shade is a column under the dock, feathered at its sides, not a band the window's width: the cells' plinths, their
+   screens and the floor's light show either side of it (the lower half of the picture was black beside the card; the
+   avenue opened from disk keeps its band). A phone keeps its dock as it was. */
+@media (min-width: 1000px) and (min-height: 600px) and (min-aspect-ratio: 13/10) {
+  .scr-title .attract { align-content: stretch; }
+  .scr-title .attract > span { grid-template-rows: auto 1fr; }
+  .scr-title .attract i { align-self: center; }
+  .scr-title.hall .title-dock::before { left: 50%; right: auto; width: min(100vw, 980px); transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+}
+
+/* The menu pages on a Mac (Phase 7, 2026-11-25). On a wide landscape window the five full-page menus (results, stats,
+   Setup, stage select, the guide's front page) were one 860 px column with empty sides, and the results' mastery and
+   review sat below the fold under the pinned bar (on a short window even its tiles did). The art bible (section 6):
+   on the Mac the interface sits in columns. From 1100 px wide (two columns of 500 px and more fit inside the gutters;
+   narrower, the 860 px column already fills the window) on a window wider than it is tall by a quarter or more (a
+   square or upright window keeps the one column), whatever its height (a short window is where one column hides the
+   most). A phone never reaches it. Only the layout changes: every word, button and their order are as they were. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  /* results: the hero (medal, headline, stars, rewards, score) in a column of its own beside the run's details (the
+     client's word, tiles, XP bar, mastery, review), the pair in the middle of the page's height. The hero spans its
+     column's rows: twelve for the details (more than they ever take), then one for the hero alone, so a hero taller
+     than the details never spreads them apart. While a long review list scrolls the hero stays in sight, in the middle
+     of what the scroll shows (the window less its gutters and the pinned bar: 96 px). */
+  .scr-results .scroll { display: flex; flex-direction: column; }
+  .scr-results .scroll > .wrap { width: 100%; max-width: 1360px; margin: auto; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: repeat(12, auto) 1fr; column-gap: 56px; }
+  .scr-results .scroll > .wrap > * { grid-column: 2; min-width: 0; }
+  .scr-results .scroll > .wrap > .res-head { grid-column: 1; grid-row: 1 / -1; align-self: start; align-content: center; position: sticky; top: 0;
+    min-height: min(100%, calc(100vh - 96px)); }
+  .scr-results .res-head h1 { font-size: clamp(20px, 2.8vw, 40px); } /* (a thirteen-letter headline, RETIRED AT 65, keeps to one line in its column) */
+  .scr-results .scroll > .wrap > :has(+ .section-h) { margin-bottom: 0; } /* (a heading's own margin, as when the margins collapsed) */
+  .scr-results .scroll > .wrap > .section-h.flawless { justify-self: start; }
+  /* the tiles three to a row: one left over takes the row, two left over share it */
+  .scr-results .tiles .tile:nth-child(n) { grid-column: span 2; }
+  .scr-results .tiles .tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
+  .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1), .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1) + .tile { grid-column: span 3; }
+  /* the misses two to a row, read across (a line of some fifty letters, not ninety); the shorter of a pair keeps its
+     lines together at its top; one left over takes the row */
+  .scr-results .review { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scr-results .review li { align-content: start; }
+  .scr-results .review li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* the pinned bar keeps to the same columns: PLAY AGAIN under the hero, the other two under the details; its light
+     stays under PLAY AGAIN */
+  .scr-results .actions.pinned .wrap { max-width: 1360px; grid-template-columns: calc((100% - 56px) * 5 / 12 + 48px) minmax(0, 1fr) minmax(0, 1fr); }
+  .scr-results .actions.pinned .wrap > :first-child { margin-right: 48px; }
+  .scr-results .actions.pinned { background: radial-gradient(400px 130% at max(20.8%, calc(50% - 408px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+  /* RANK UP! after a reward moment stands on its plate over the details' column, so it never crosses the score */
+  .banner.plated { --w: min(1360px, 100% - 32px); left: calc((100% - var(--w)) / 2 + (var(--w) - 56px) * 5 / 12 + 56px); right: calc((100% - var(--w)) / 2); }
+
+  /* stats: the rank, the tiles and their note beside the trophies (the trophies' heading level with the rank's card,
+     a last row that stretches for whichever column is taller); then the mastery by stage, two to a row, and the four
+     high-score boards in a row, across the width. The left column keeps 440 px, so QUESTIONS MASTERED stays on one line;
+     the trophies take three to a row where they have the room for it (a Mac's 1470), two where not */
+  .scroll > .wrap:has(> .pcard) { max-width: 1360px; display: grid; grid-template-columns: minmax(440px, 1fr) minmax(0, 2fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 32px; }
+  .wrap:has(> .pcard) > * { grid-column: 1 / -1; min-width: 0; }
+  .wrap:has(> .pcard) > .pcard { grid-column: 1; grid-row: 1 / 3; }
+  .wrap:has(> .pcard) > .tiles { grid-column: 1; grid-row: 3; }
+  .wrap:has(> .pcard) > .note { grid-column: 1; grid-row: 4 / 6; }
+  .wrap:has(> .pcard) > .section-h:has(+ .trophies) { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .wrap:has(> .pcard) > .trophies { grid-column: 2; grid-row: 2 / 6; }
+  .wrap:has(> .pcard) > .mastery-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .wrap:has(> .pcard) > .boards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wrap:has(> .pcard) > .actions { grid-template-columns: minmax(0, 440px); justify-content: center; }
+
+  /* Setup: the rows in two columns of even height, read down the first and then the second, in their order, a row
+     never split between them: the sound rows head the first, tilt and graphics the second. (The columns' box is a
+     stacking context of its own: without one, WebKit (Safari) laid the second column's rows out but never drew them,
+     each row being a layer of its own, the plates' rule) */
+  .scroll > .wrap:has(> .setting) { max-width: 1360px; columns: 2; column-gap: 24px; isolation: isolate; }
+  .wrap:has(> .setting) > * { break-inside: avoid; }
+  .wrap:has(> .setting) > .section-h { break-after: avoid; }
+  /* (the graphics row's long description takes its row's width, its switch on the line under it: beside the switch it
+     ran to nine lines in a column of 300 px) */
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .sl { flex-basis: calc(100% - 42px); }
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .seg { margin-left: auto; }
+
+  /* stage select and the guide's front page: the stage cards in more columns across the width (five on a Mac's 1470,
+     a world of five stages in one row; four from 1100), a search's results two to a row. The guide's chapter pages
+     keep their column */
+  .scr-select .scroll > .wrap, .guide-lib:not(.scr-notes) .scroll > .wrap { max-width: 1360px; }
+  .guide-lib:not(.scr-notes) .ch-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Icons at the art bible's 20 px (section 5; Phase 7, 2026-11-25: carried from Phase 2's gate). An icon that stands for
+   itself is at least 20 px: an icon-only button (pause, sound, full screen, the exam's grid and flag, the hall's arrows),
+   the HUD's lives, a stage's stars, a trophy's lock, Setup's row icons, a world's mark on stage select. A glyph inside a
+   labelled button (PLAY AGAIN, NEXT, the back arrow beside BACK) keeps its size: the label speaks, and a 20 px glyph
+   would stand twice the height of its 11 px words. (The racer's narrowest phones keep their own smaller lives.) */
+.iconbtn svg, .lives svg, .stars svg, .trophies .tr .lk svg, .setting .si svg, .world.wbar i svg, .btn[data-act="flag"] svg { width: 20px; height: 20px; }
+/* (Nest Egg Run's top row holds the egg, its rate, the shields, the hearts and pause: at 20 px they fit from 400 px wide
+   (the review: at 375 to 393 the pause button stood 4 to 16 px past the row with two shields up); narrower, its own
+   16 px hearts and 14 px shields) */
+@media (min-width: 400px) { .scr-racer .lives svg { width: 20px; height: 20px; } }
+.iconbtn[data-act="back"] svg { width: 16px; height: 16px; }

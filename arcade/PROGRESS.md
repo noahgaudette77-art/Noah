@@ -2516,3 +2516,1316 @@ The rest, by area:
 - The fix round is one commit (`18b1466`); the record, the two reviews and the five sheets are the commit after it.
 - The pull request's description and the published artifact still describe the build before this round: the
   owner asked for the work to stop with the push.
+
+# Generated assets and combat effects (thirteenth pass): progress log
+
+The request: replace weak procedural visuals and audio with real generated assets (a starfighter and a flying
+demon boss for Risk Blaster, an armoured war rig for Nest Egg Run, new bosses for Boss Rush, a sky for every
+mode, a full sound design), integrate them at the highest quality, and give Risk Blaster, Boss Rush and Nest
+Egg Run a full combat and impact effects pass (weapons, telegraphs, attack types, hit reactions, low-health
+state, boss reactions and deaths, crashes, boost, layered explosions, synced audio, hit-stop). Providers:
+Tripo, fal.ai (Hyper3D Rodin V2.5 and image models), ElevenLabs, Blockade Labs; free CC0 sources first for
+textures and props. Study logic, questions, answers, scoring and content never change. Only `arcade/` is touched.
+
+## How to resume
+
+- Branch `claude/quirky-ride-9frte0`. Keys come from the environment (`TRIPO_API_KEY`, `FAL_KEY`,
+  `ELEVENLABS_API_KEY`, `BLOCKADE_API_KEY`); they are never printed or written anywhere, and `.env` is ignored.
+- `tools/gen/` is the generation toolkit: `lib.js` (the four providers, one ledger line per paid call in
+  `ledger.jsonl`), `concepts.js` (reference images), `candidates.js` (the same concept through Tripo and Rodin),
+  `tripo-post.js` (segmentation, completion, rig, retarget, texture), `render.js` (turnaround sheets of any
+  `.glb`). Raw candidates live in the session's scratch directory (`GEN_OUT`), not in the repo; only picks are kept.
+- `ASSETS.md` lists every kept asset and the spend per provider.
+- The rules of the games run on the scene's own clock, and the regression test compares every frame number with
+  the baseline. So nothing in this pass may change when a rule fires: all new motion (hit-stop, slow motion,
+  telegraphs, deaths) runs on a separate show clock that the rules never read.
+- The regression (`npm run arcade:regress`) opens the page from `file://`, where the page does not fetch its
+  asset files at all (a browser refuses them there) and plays with what is built in. `tools/regress-http.js`
+  runs the same test with the page served over HTTP and every asset loaded: both must be IDENTICAL.
+
+## Order of work (the owner's instruction, to be followed exactly)
+
+Phases run strictly one after another: a phase is not started until the one before it is committed and pushed. If a
+balance runs low, what is left goes to the war rig, the Boss Rush bosses, then sound.
+
+**How a phase is closed (the owner's change of 2026-11-15).** No score target and no repeated review rounds. Each
+phase gets at most one independent review, at its end, by one reviewer; what it finds that matters (anything
+broken, ugly, confusing, or too close to a famous character) is fixed, minor polish is left, and the phase is done
+when it works, looks good and consistent, its tests pass and no major defect is left. Then commit, push, next
+phase. Asset quality, animation, lighting and combat effects matter as before; only the reviewing is lighter.
+Before Phase 3 the owner gets a short projected spend for fal and Tripo, per boss.
+
+| Phase | What | Status |
+|---|---|---|
+| 0 | Setup: keys tested, asset folders, glTF loader with compression, audio manager (mixing, ducking, mute, autoplay rules), sky loader that drives environment light and reflections, `ASSETS.md` with the spend log, `.env` ignored, regression green, commit | done |
+| 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes, commit and push | done (see "Phase 1" below) |
+| 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | done (see "Phase 2" below) |
+| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | done (see "Phase 3" below) |
+| 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | done (see "Phase 4" below) |
+| 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | done (see "Phase 5" below) |
+| 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one final report to the owner, sent only when everything is committed and pushed: what was built per game and screen (visuals, animation, combat effects, sound), the best final capture of each and one short combat or boss-fight sequence, the final review and known flaws (and any lookalike left), both full regressions, the sequence test and console errors with numbers, spend and start/end balances per provider, token usage by model (measured from the session logs, estimates marked; exact figures under Settings > Usage), what is left and the one thing to improve next, the PR link, and that the study logic is unchanged | done (see "Phase 6" below) |
+
+Work done before this order arrived that belongs to later phases, kept as it is and not taken further until its
+phase: concept images and 3D candidates for the war rig and all twelve bosses (all twelve picked from Tripo; one
+boss rigged as a test), skies generated for every mode, sound effects and announcer lines generated for every mode,
+the war rig processed into `assets/models/warrig.glb` (a six-wheeler: it does not meet the owner's rule and is
+remade in Phase 2).
+
+## Phase 0: what is in place
+
+- **Keys.** All four answered a free read-only call (Tripo balance, fal balance, ElevenLabs subscription, Blockade
+  styles). `.env` is in `arcade/.gitignore`; no key is printed, logged or written anywhere (`lib.js` masks them).
+- **Asset files** live in `arcade/assets/` (`models/`, `sky/`, `audio/`) and are fetched when a screen needs them
+  (`src/js/03b-assets.js`). `tools/manifest.js` writes the list (`src/js/03a-files.js`). A page opened from disk
+  cannot fetch, so there every game plays with what is built in, exactly as before; the same for any file that is
+  missing or fails. A game's set loads behind a loading line before the game is built (`Assets.with` in
+  `startGame`), so the game's own clock starts as it always did.
+- **Models**: glTF (`vendor/GLTFLoader.js`, three r128's own, built into the page as `00v-gltfloader.js`),
+  geometry compressed with meshopt (decoder 1.3 in `00w-meshopt.js`), maps as WebP. `Assets.model(name)` hands a
+  scene a fresh copy with its named parts and anchors; `tuneModel` sets reflection and glow strength.
+- **Skies**: `Assets.loadSky` makes the panorama a texture and a prefiltered reflection map; `makePanoSky` draws it
+  (gain, highlight lift so stars and nebula cores bloom, tint, rotation, cross-fade between two skies) and
+  `applySkyEnv` makes it the scene's environment light (`src/js/08d-panosky.js`).
+- **Sound** (`src/js/02-sound.js`): a recording plays when its sprite is loaded and the old synth otherwise, so
+  nothing is ever silent. Takes of one effect are played in turn with a little variation; loops (`Sound.loop`);
+  recorded music with loop points, a filter that opens as the streak grows, and ducking under the announcer and the
+  biggest blasts; a limiter on the way out; announcer lines by name (`Sound.say`), falling back to the browser's
+  voice. Audio starts only after the first tap. Mute: the arcade floor's button, and now a SOUND switch in every
+  game's pause menu; muting also stops any running loop.
+- **KTX2** is not used: three r128 ships a KTX2 loader only as a module, and the page is built from classic scripts.
+  Maps are 2K WebP instead (a model's four maps are about 1.2 MB to download). Noted as a possible later step.
+- **Tests.** `npm run arcade:regress` (from disk, built-in assets) and `node arcade/tools/regress-http.js` (served,
+  every asset loaded) both IDENTICAL to the baseline; the sequence test passes.
+
+## A1/A2: what was generated and what was picked
+
+Concepts (fal.ai): every asset drawn as one object on a plain studio ground from one strong prompt (in
+`tools/gen/concepts.js`); two takes on Seedream 5.5 for everything, one more on Nano Banana Pro for each hero
+design. 54 images.
+
+3D candidates: the picked concept images through Tripo H3.1 (Ultra geometry, HD texture v3.5, PBR, 300K faces)
+and Rodin Gen-2.5 Extreme-High (500K triangles, PBR, HD texture, HighPack 4K), each rendered from six views.
+
+- **Starfighter**: three designs (arrowhead, manta wing, twin-nacelle gunship), each on both providers.
+  Picked: the manta wing from Tripo (`starfighter-b-sd-0.tripo`): the most original outline, three main engines
+  in a row (the view the player has is from behind), wing-tip twin cannons, chrome and black with cyan leading
+  edges and magenta engine rings. Rodin's version of the same concept is cleaner but reads as matte primer.
+- **Demon**: four designs. Picked: the ram-horned overlord with wings of armour blades from Tripo
+  (`demon-c-sd-0.tripo`): rigid blade wings suit split-part animation, a large reactor core gives the player's
+  shot a target, and chrome separates it from a dark nebula. Runner-up: the serpent-tailed biomech
+  (`demon-a-sd-0.tripo`). Rodin's wings came out as thick slabs on this design.
+- **War rig**: three designs (armoured coupe, lifted war truck, six-wheeled rig). Picked: the six-wheeler from
+  Rodin (`wartruck-c-sd-0.rodin`): gold body, black armour, cyan and magenta strips, a wing between two fins and
+  two exhaust cannons, by far the clearest from behind and above, which is where the game's camera sits. Its
+  surface is matte as delivered; it gets lacquer and metal in processing.
+
+## Phase 1: Risk Blaster (done)
+
+**What was built** (code in `src/js/20-blaster.js`, `20i-blastersky.js`, `20j-blasterstarfighter.js`,
+`20k-blasteroverlord.js`, `20l-blasterstage.js`; the old fighter, demon and sky stay as the fallback when the page
+is opened from disk).
+
+1. Sky and light: three deep-space panoramas, cross-fading by region, each with its own key, rims and backlight;
+   the region's sky colours the models and shows in their chrome. The sky is dimmed behind the fight.
+2. Models: the starfighter and the demon overlord in place of the built-in ones, through named anchor functions.
+3. Animation. Ship: hover, five flickering plumes, banking with wing flex, cannon recoil, fly-in, surge, knock
+   aside, break-up. Demon: fly-in and roar, a living idle, five wind-ups, hit reactions and staggers, rage, wounds,
+   the tail and a wing shot away, a critical state, death in parts.
+4. Combat, all on the show clock (the rules' frames are untouched): volleys with star muzzle flashes, spent cells
+   and barrel heat; a lance through the drone into the demon on a right answer, a red fizzle on a wrong one; five
+   telegraphed strikes (plasma volley, claw swipe, roared wave, swept beam, seekers), each with its own marker,
+   colour and landing, each landing before the explanation sheet rises; the shield seen to go with the blow; HUD
+   crack and heart loss; low health (a red frame pulsing with the alarm, the hurt engine burning); a staged death
+   (slow motion, a chain of shaped blasts, the last blast, rewards flying round the question to the score) that is
+   over before the next question's drones appear; game over.
+5. Sound: every cue fired from the same code as its picture (`docs/combat-pass/blaster/sound-cues.md` lists cue and
+   frame for every moment); a charge loop cut at release; the alarm in step with the red frame; the engine loop
+   following streak and warp; the music loop with its intensity filter. Pause and game over silence the loops.
+
+**The one independent review** (`docs/combat-pass/blaster/review-r1.md`, made under the earlier 4.5 rule) scored
+detail 3.5, lighting 3.5, materials 3.5, depth 4.0, motion 4.0, cohesion 4.0, legibility 3.5, with twelve defects.
+What was done about them:
+
+- Legibility: additive white is capped, rings are thin and hard-edged, the four drone letter discs are exempt from
+  flash, colour split, glitch and shake, score popups sit above the burst with a dark outline.
+- The death no longer collides with the next question; "WAVE n" is announced after the last blast.
+- Blasts are built from a hot core, a lobed fireball, a ring, streaked sparks and smoke; smoke and debris are in
+  the palette.
+- The beam is a thick core with a halo and its own sweep-arc marker; the plasma volley is orbs; the fighter keeps
+  its hull colours under a cyan shield shell.
+- The tail is thrown off on the hit frame; a drone's housing cracks and shatters over several frames.
+- A new demon (`assets/models/demon.glb`, second version): the reviewer found the first one's round chest core too
+  close to a known film armour, its face unreadable and its wings noisy. The new one has a chrome skull face with
+  eye slits, matte ram horns, a glowing rift in the chest and clean violet wing membranes.
+- The fighter re-processed: 4K base colour, a mirror-glass canopy, heat-tinted nozzles, gunmetal cannons.
+- The shared "correct" colour is a neon mint instead of lime (explanation sheet, NEXT button, hub).
+- Mid-ground props are dark hulls with running lights instead of tan boxes.
+
+By the owner's change of process there was no second review; the final captures were checked by hand
+(`docs/combat-pass/blaster/`, 24 files with a list in its README).
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Nobody has heard the sound: it was checked by cue log and by measured loudness (`tools/audio-levels.py`) only.
+- When the demon is at its closest its tail crosses the fighter's canopy.
+- The five strikes land differently but all end in the same shield shell.
+- Silhouette edges are not anti-aliased beyond the capture's 2x scale; the rim light makes the steps visible up close.
+- The reduced-effects path is coded but was not captured.
+- Background traffic and rocks are still the procedural ones, restyled, not generated models.
+
+## Phase 2: Nest Egg Run (done)
+
+**What was built** (code in `src/js/21-racer.js`, `21d-racersky.js`, `21e-racerrig.js`, `21f-racerstage.js`, with
+`21b-racercar.js` and `21c-racerworld.js`; the old car and sky stay as the fallback when the page is opened from
+disk).
+
+1. Sky and light: five panoramas across the career (dawn at 25, day, golden hour, dusk, stars at 65), cross-fading
+   as the landscapes change, as the sky, the scene's light and what the wet road and the lacquer mirror. The game's
+   own golden-egg sun stays, now gold to magenta with a halo and a glint.
+2. The war rig in place of the car: an armoured hauler carrying the nest egg, remade to the owner's rules (one
+   straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights; checked in
+   flat top, side, front and rear views: `docs/combat-pass/racer/warrig-check-flat.jpg`).
+3. Animation: the body on springs (heave, roll in a lane change, squat under boost, dive under braking), wheels
+   that spin and steer, stacks that shudder, the egg rocking in its claws, a drive-in at the start, a half-spin on
+   locked wheels in a crash, a victory turn at retirement.
+4. Impact and feel, on the show clock (the rules' frames are untouched): a right gate (a clean burst in the
+   answer's colour, rings on the road, coins to the nest egg, a surge), a wrong gate (the pane breaks red, splinters,
+   red sparks, a dark blast, skid marks, tyre smoke), taking damage (flash, colour split, shake, the HUD cracks, the
+   life breaks), an insured crash (a shell of mint light takes it), near misses (streaks of air, the rig rocks
+   away), boost (a tongue of fire from each stack, heat haze, light on the road), the last life (a red frame in step
+   with the alarm, a burning stack with smoke streaming back), early retirement and retirement at 65 each staged.
+5. Sound on the frame of its picture (`docs/combat-pass/racer/sound-cues.md`): the engine loop following speed and
+   boost, skids, crashes, near misses, boost, gates, the alarm, the announcer, the music loop.
+
+**The one independent review** (`docs/combat-pass/racer/review.md`): reads at a glance, the rig is good and original
+and keeps the owner's rules, right and wrong cannot be confused; about 4.0 on every axis, cohesion 3.5; eight major
+defects. All eight were fixed in one round:
+
+- A black sky after the tunnel: the tunnel now has arches of light and lamps, its mouth shows the sky beyond, and
+  the open road is under a whole sky from its first frame.
+- Boost flames that read as flat orange wings: narrow tongues trailing back from each stack, gold heart to red tip.
+- The rig going black after a crash and at night: smoke leaves to the side, the blink is a brightening, a warm rim
+  holds its shape at night. (The kit's heavy smoke is not thrown on a reject here.)
+- Shapeless fire and smoke: the same tongues of fire, dark smoke that streams back, embers.
+- Announcer lines colliding: `Sound.say` now speaks one line at a time (a shared change: a late line waits its
+  turn, a stale one is dropped).
+- A flat beige egg sun: gold to magenta, a halo, a glint.
+- Brass gears downtown: dark bodies with rims of neon, the middle of the street open to the egg sun.
+- Placeholder traffic: dark gloss bodies with light bars, lit windows and a line of neon.
+
+**Tests on the final build**: regression from disk IDENTICAL, regression over HTTP with every asset loaded
+IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Traffic is restyled, not remodelled: the cars are still simple shapes beside the rig.
+- The tunnel's mouth is a flat pale rectangle of sky colour until the road opens.
+- The world's buildings and scenery are one matte material; only the rig, the road and the traffic are glossy.
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
+- The skid marks and the wreck's fire are simple; the reduced-effects path was not captured.
+
+## Phase 3: Boss Rush (done)
+
+**What was built** (code in `src/js/22-boss.js`, `22c-bossarena.js`, `22d-bossactor.js`, `22e-bosstollgate.js`,
+`22f-bossstage.js`, `22g-bossflavor.js`; the old procedural boss and sky stay as the fallback when the page is opened
+from disk).
+
+1. Twelve generated bosses (`assets/models/boss-1` to `boss-11`, `boss-all`), each a Tripo model with a part
+   split. Eleven are bipeds rigged by Tripo with eight to ten retargeted motion-capture clips, rebuilt as rigid parts
+   on the skeleton (`tools/gen/process-rigged.mjs`: armour does not stretch, a robe hangs in bands, any part can be
+   torn off). The Probate Tollgate is a toll booth on tracks, split into hinged parts and animated by code, its round
+   lamp made a hooded lane signal so it does not read as an eye.
+2. Four bosses were remade for originality: the Inflation Titan and the Patrimony Phantom in the look-and-fix pass,
+   the Product Pusher and the Longevity Lich after the review (see "Models" in `ASSETS.md`).
+3. Arena: three storm and void panoramas seen through a long lens as the backdrop, the scene's light and what the
+   chrome reflects, with lightning; the stands and the gate pillars restyled; one row of settings per boss
+   (`BOSS_ROW`: sky, framing, glow, attacks).
+4. The fight, on the show clock (the rules' frames are untouched): an entrance; a living idle; five telegraphed
+   attack kinds (volley, slam, wave, beam, seekers), each boss with its own projectile, trail and impact (contract
+   cards, toll tickets, exam papers, molten cracks, drawers, a gavel ring, coins and keys, steam, sand, strings of
+   light, a beam of script, a bone arc); strikes that reach the player (a floor shock to the bottom edge, waves that
+   fill the band, a hit flash, the HUD crack); hit reactions, rage, wounds that glow and smoke, parts torn off; a
+   staged death in slow motion with burning debris, BOSS DEFEATED! with its stars, coins that count the score up; the
+   player's defeat (GAME OVER, DEFEATED) held until the results arrive on the rule's frame; the last heart as a
+   saturated red frame beating with the alarm.
+5. Sound on the frame of its picture (`docs/combat-pass/boss/sound-cues.md`): each boss's roar and hits, the
+   strikes, the alarm, the announcer, the boss music and the Proctor's own track.
+
+**The one independent review** (`docs/combat-pass/boss/review.md`): detail 4, lighting 4, materials 4, depth 4,
+motion 3.5, cohesion 4, legibility 3, with ten major defects. What was done about them, in one round:
+
+- The boss's words are a one- or two-line caption on a dark plate at the band's top edge, hidden while the
+  explanation sheet is up and from the start of a death or a defeat.
+- BOSS DEFEATED!, GAME OVER and DEFEATED stand on the top layer until the results arrive (same words, same timers).
+- Strikes reach the player: a slam's shock runs along the floor to the band's bottom edge, a wave grows to fill
+  the band, volleys, seekers and beams land in the band with a flash.
+- Each boss has its own projectile, trail and impact (`22g-bossflavor.js`); the markers stay per attack kind.
+- The last heart: a saturated red frame that beats about once a second with the alarm.
+- Lookalikes: the Pusher (a chrome face in dark glasses) and the Lich (a crowned skeleton, like the other undead)
+  remade with Tripo; the Specter, the Lich and the Phantom now have three different skies.
+- Lasting damage reads: a shallower recoil keeps the boss above the front row, wounds glow at their edges and
+  smoke, rage turns the rims red with steam.
+- Capes, robes, torsos and the Tollgate's booth burn away where they fall instead of standing upright.
+- The "blocky sky" was a downscaled strip: a full-size still is smooth, so it was left.
+- Minor ones done: the stale "Nooo!" line, the floor's warning easing off, coins that count the score up, the front
+  row lit enough to read as heads. Left as minor: the shared entrance drop and death template.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. 47 captures in `docs/combat-pass/boss/`
+with a list in its README.
+
+**Still weak, plainly**
+
+- Eleven entrances are the same drop and the deaths follow one template (the review called it minor).
+- At band size the Fine Print's script and the Lich's falling sand are subtle, and the Specter's coins read as a
+  gold clump before they spread.
+- The Phantom's and Lord Intestate's faces are dark at band size.
+- The remade Lich's robe can show a tiny sliver for a frame in a few clips.
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
+
+## Phase 4: Hub, title, menus and the quieter rooms (done)
+
+**What was built** (code in `src/js/11c-hubgen.js`, `05c-genicons.js`, `23c-memorygen.js`, `24d-examgen.js`,
+`31c-librarygen.js` and small changes to the screens' own files; from disk every screen is as it was).
+
+1. The hub: six real cabinets from one generated model (`prop-cabinet`), each with the game's live screen, its name
+   lit on the marquee, neon edges and stripes in its colour, and its topper turning on a lit turntable (the
+   starfighter, the war rig, the Proctor, the deck, the lectern, the book). The cabinet in focus lifts and spins its
+   topper and gets a lamp of its own. A trophy stand (`prop-stand`, made on request) is a seventh stop, with all
+   sixteen trophies as cups, medals and coins, bright when earned. The vault door (`prop-vault`) stands in the bay
+   beside Memory Bank. The two generated halls light and mirror the hall and are never shown. Recorded clicks, the
+   hall's hum, the announcer, and the boss posters drawn from the portraits.
+2. The title: the two generated dusks fade in behind the city as they arrive and cross-fade slowly; the title's music
+   and INSERT COIN on the first tap; the hub's set loads while the title is up, and nothing delays the first frame.
+3. The menus: stars, coins, lives, shields, streaks, medals and trophies drawn from the 3D models; the bosses as the
+   same 3D busts in chapter select and results; a reward moment on the results screen (stars, coins, a medal, a cup,
+   new trophies landing one by one with sound).
+4. Memory Bank: the vault lit and mirrored by the gold vault panorama, the deck the cards are dealt from, the banked
+   card seen rising into the vault's slot, the generated coin. Final Exam: the moonlit night in the arches and on the
+   examiner's armour, the lectern, the exam's music. Strategy Guide: the archive's panorama as its light and
+   backdrop, the open tome lit under the rose window.
+
+**The one independent review** (`docs/combat-pass/menus/review.md`): detail 3.5, lighting 3.5, materials 4, depth 4,
+motion 3.5, cohesion 3.5, legibility 4; nothing resembles a known cabinet, game, character or logo; nine major
+defects, all fixed in one round:
+
+- RANK UP! no longer prints over the reward: it waits for the last reward and sits on its own plate.
+- A banked card rises into the vault and the next is dealt off the deck (pictures over the page; the rule's timer is
+  untouched).
+- The deck, the lectern and the book were black on the hall's black, and the Guide's book an unlit slab: all three
+  remade brighter with Tripo (white-faced cards, an open lit book on the lectern, an open gold-cornered tome), each
+  with a key light; the tome now sits lit under the rose window.
+- One face per boss and one set of icons: chapter select uses the 3D busts too, earned stars are gold, each results
+  tile shows a model icon at 24 px or none.
+- Earned trophies are bright and lit, locked ones dark silhouettes.
+- The untextured block beside Memory Bank (an old cleaning robot) gave way to the generated vault door.
+- The examiner's smeared chest is smooth gunmetal with a faint reactor glow (a material change in code; the owner's
+  model files are untouched and both frame-exact hit-stops are byte-identical).
+- Also from the checklist: the moon and the night in the exam's arches, THE VAULT on a dark plate, the pass burst
+  capped below white, and the second hall panorama put to use at the trophy stand.
+
+The Final Exam keeps the owner's own examiner model: the brief's idea of putting the generated Proctor in its place
+was dropped, since the present examiner is a real model and its finale is frame-exact.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. Captures in `docs/combat-pass/menus/` with a
+list in its README.
+
+**Still weak, plainly**
+
+- The hub's set is about 6 MB, over the 4 MB aimed at (Phase 5 trims it).
+- The exam's lectern topper is small and dark on its cabinet.
+- The moon shows only when the exam's camera draws back at the end; the library's panorama barely shows.
+- The Memory Bank coin is small in flight.
+- Nobody has heard the sound; the reduced-effects path was not captured.
+
+## Phase 5: the cohesion pass (done)
+
+**What was done** (shared edits in `02-sound.js`, `03b-assets.js`, `04-gfx.js`, `08-fx.js`, `08d-panosky.js`,
+`12-select.js`, `19-quizgame.js`; the games' own files for the traffic, the ships and the look; from disk every screen
+is as it was).
+
+1. The last generated models put to use: Nest Egg Run's traffic is the generated car, van and bus (one model drawn
+   many times, each copy its own paint and neon, working lamps, the rig's lighting); Risk Blaster's passing freighters,
+   cruisers, fighters and drones are the three generated ships, its near asteroids the two generated rocks.
+2. One look: every screen measured against Risk Blaster; the grade brought into line on the four that were out (the
+   hall, Memory Bank, Final Exam, Strategy Guide).
+3. One sound, by measurement: a mix table (`Sound.MIX`); all nine music tracks within 0.1 dB of each other (-21.5
+   LUFS), the effects 6 to 7 dB over the music, the announcer about 12 dB over it, nothing clipping at the worst moment
+   (-1.5 dBFS out of the limiter). The cut-off "Boss Rush!" call-out was retaken.
+4. For phones: the hall's set cut from 6.9 to 3.6 MB (its toppers and props at 512 px maps, its light-only panoramas at
+   1024 x 512); the traffic, ships and rocks at 512 px maps; a game's files start downloading at its stage select; the
+   hall lets its textures go while a game runs (182 MB to 7.7 MB); Boss Rush's boss no longer leaves 60 MB on the
+   graphics chip at every visit; on phones every texture is capped at 2048 px (Risk Blaster 435 to 235 MB, Boss Rush
+   204 to 116 MB; desktop unchanged). Every screen's download is listed in `docs/combat-pass/cohesion/README.md`.
+5. The reduced-effects path captured on every game and the hall: finished and readable, at most two flashes a second.
+6. From earlier "still weak" lists: the demon's tail no longer crosses the fighter's canopy; the tunnel's way out shows
+   the road and the next sky.
+
+**The one independent review** (`docs/combat-pass/cohesion/review.md`): detail 3.5, lighting 3.5, materials 4,
+depth 3.5, motion 3.5, cohesion 3.5, legibility 4; no lookalikes; seven major defects, all dealt with in one round:
+
+- Open space was muddy: ships and rocks now lit by the region's rims and a cool fill, the rocks' crystals glowing,
+  their stone and size varied, the belt's sky brighter (still a dark scene, as space is, but the ships read).
+- The tunnel exit flashed in one frame: the glare now builds over 0.7 s and clears over 0.9 s (largest step between
+  frames 24 of 255, where it was 60), and the road, rails and lamps show through the mouth.
+- The answer badges hid the traffic: a car that comes under a badge while a question is up slips away (look only).
+- The passing fighters read as enemy fire: shorter cyan-white trails and running lights.
+- The city's buildings showed static: a window-grid texture made in code, lit at night.
+- Boss Rush's crowd was blockout: backlit cut-out figures that still cheer.
+- Minor ones: the Strategy Guide shows the 3D boss busts too, the examiner's chest is clean, the cars' tail bars end
+  in amber.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Open space is still mostly black between the lit ships (mean brightness about 16 of 255 as a run begins).
+- Risk Blaster is the heaviest screen: a 15 MB download, 235 MB of textures on a phone.
+- The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback assets for opening it from disk.
+- Nobody has heard the mix: it is measured, not heard.
+
+## Phase 6: final captures, the final review, the last fixes (done)
+
+**Final captures.** Every mode was captured again on the finished build, one capture at a time, over the docs
+folders: Risk Blaster (24 files), Nest Egg Run (24), the title, hub, menus and three rooms (22), Boss Rush's Product
+Pusher in full and the other eleven bosses' idle, fight and death (47), and the cohesion pass's sheets (18).
+
+**The final independent review** (`docs/combat-pass/final/review.md`, against an 18-item checklist drawn from the
+owner's original brief, `docs/combat-pass/final/REQUIREMENTS.md`, on 49 captures): detail 4, lighting 4.5, materials 4,
+depth 4.5, motion 4, cohesion 4.5, legibility 4; ten requirements met, eight weak, none missing. Seven major defects,
+all fixed in one round:
+
+- The traffic copied real makes (a bus read as a famous German microbus, a coupe as a famous Italian one): the bus
+  and the car remade with Tripo; the remade car then read as a famous British compact SUV, so it was made a third
+  time as an armoured runabout from the game's own road-combat world, painted so it is never taken for the rig.
+- Boss Rush printed text over text on every hit: the damage figures have a lane of their own under the caption.
+- Risk Blaster's low-health state could not be seen: Boss Rush's beating red frame round the band in both, fire and
+  smoke on the fighter's visible hull, Nest Egg Run's last-life frame strengthened.
+- The examiner's chest was a black smear: a bevelled octagonal housing with vents and a magenta core sits on its chest
+  joint, and the examiner is lit by the arcade's cool key and magenta rim (its model files untouched, its two
+  frame-exact hit-stops byte-identical).
+- Risk Blaster's ambient ships read as lumps: crisp navigation lights and lit ports, less tint and bloom, smaller.
+- RANK UP! could not be read: an opaque plate with a border over a dark scrim.
+- The exam-passed screen piled up: the question and NEXT go before the banner and SKIP; trophy cards wait for the
+  results.
+- Also: the crash's bloom held down so its glass and sparks read, wash-outs capped, the wave banner kept inside the
+  screen, the explanation sheet's title kept clear of the cracks, the untextured road works removed, the deck lit.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. Study logic, questions, answers, scoring and
+content unchanged.
+
+**Still weak, plainly** (the owner's final report lists the whole game's)
+
+- Every boss's hit reaction is the same move, and the recoil is shallow.
+- Risk Blaster's far cruiser is still a soft silhouette; open space is mostly black.
+- From disk (no assets) the examiner keeps its old chest; its new look is served-only, like every generated asset.
+- The deck holder is dark apart from its edges. (The rose window's glass was brought onto the palette on 2026-11-17.)
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
+
+## After the owner's iPhone test (2026-11-17)
+
+The owner played on an iPhone 17 Pro Max: laggy on every screen, menus included; the sound annoying and boring;
+quality uneven. Worked in their order, one game at a time, a commit after each; study logic unchanged. The leftover
+generated assets were also placed (two workers: the three games, the rooms; their records are in
+`docs/combat-pass/unused/`). Measurements: `docs/perf/README.md`; the quality audit: `docs/quality/README.md`.
+
+**Lag.** The shared cause first (step 1): the picture was drawn at the phone's full 3x density with 4x multisampling,
+the three games asked to be drawn twice as large again (about 9 million pixels, every frame), the whole
+post-processing chain ran at that size, and frosted-glass panels blurred the live picture. Now: at most 2x, no
+supersampling on a dense screen, four quality tiers chosen by the frame rate (Setup > Graphics: AUTO by default),
+no glass blur below HIGH: the pixels shaded per frame fell from 30-72 million to 8-13 million at MEDIUM (where a phone
+starts). Then per game: the stalls, which a fast phone feels most. A screen's warm-up now readies every shader and
+picture it will use, including models that appear later, every sky region and every post-processing pass, and
+shaders are no longer checked for errors outside tests (each check made the page wait for the graphics chip): a
+minute of Risk Blaster went from 11 shader compiles and 16 pictures sent mid-fight to 0 or 1; Nest Egg Run and Boss
+Rush to none. One blast light instead of three in each game; textures filtered 4x at a slant on a phone, not 16x;
+the heroes at about 55K triangles (were 100K-142K), the exam's statues and other background figures at about 7K-10K.
+Decoded music is let go when its screen's visit ends (about 30 MB a track). The FPS counter (Setup) shows the frame
+rate, the slowest frame, the main thread's time, triangles, draw calls, the size drawn, the tier and the lights.
+
+**Sound.** Eighteen new music tracks, calmer and slower (70-112 BPM, soft, two contrasting sections each, about
+85 s before a track repeats, its energy above 4 kHz a fraction of the old); Setup has OFF/LOW/MID/HIGH for the music,
+the effects and the announcer, the music LOW to begin with; the engines at half, the alarm at under half and then a
+faint beat after three; the hall's hum settles away after 14 s. The sound test page (Setup > Sound test) plays every
+sound with its label.
+
+**Quality.** One bar (hero 2048/1024 px and about 55K triangles; near props 1024/512; small props and figures
+512 px and up to about 10K; specks 256 px), every model audited against it: 70 of 71 at the bar (39 lowered), one a
+little over (the mirrored menu copy of the war rig). One colour grade (the same saturation and contrast everywhere).
+No Tripo remake was needed: nothing generated is below the bar in play.
+
+**Spend.** ElevenLabs 18,480 credits for the calmer music (44,302 of 131,000 used). No Tripo, fal.ai or Blockade
+spend.
+
+**Waiting on the owner.** Real frame rates from the phone (Setup > FPS counter): this machine draws in software.
+
+## The owner's budget order (2026-11-17, second message)
+
+The owner wants the leftover models and sounds in the game, in this order and inside a performance budget: the
+shared render cost first, then the additions within a stated budget per scene (models, draw calls, lights), one
+look, quiet sound by default. Pass: a steady 60 fps on an iPhone 17 Pro Max. This machine cannot measure that, so
+each scene has a budget of work per frame measured here (`tools/perf-report.js`, which marks a scene over its
+budget), and AUTO takes what does not hold 60 on the phone to LOW, where every addition is off.
+
+1. **Shared render cost, on a phone**: no floor mirror at any tier; multisampling at most 2x (none at MEDIUM, FXAA
+   instead); MEDIUM with four bloom levels, no god rays, no contact shadows; HIGH with no lens streaks; the full-size
+   lit pass skipped when it adds nothing; AUTO stops at MEDIUM; a light budget per screen (3 to 5 lights; the
+   strongest of a screen's own lights drawn, a key always kept). At MEDIUM: 8.3-10 million pixels a frame to 4.9 on
+   every screen, 15-20 passes to 10, 3-11 lights to 3-5. Commit e7b5f4f.
+2. **The additions inside each budget**: lower-detail builds for the brood (about 2.2K triangles) and the effect
+   props that fly in numbers; the allies and the brood culled out of the picture; no empty traffic draws; none adds
+   a light; all off at LOW. At their fullest moment every scene stays inside its budget (Risk Blaster 63 of 80 draw
+   calls, 236K of 260K triangles). Commit df04e02.
+3. **One look**: every added model at the bar's texture tier, the game's one grade, its scene's own lights.
+4. **Sound**: the music and the effects start LOW, the announcer HIGH; every take still played in turn; levels in
+   Setup; the sound test page.
+
+What a phone gives up: the floor and road reflections, and at MEDIUM the god rays and contact shadows.
+
+## The static hiss and the title hall (2026-11-17, third message)
+
+The owner: remove the constant "shhhh" heard on opening the game (find the exact source first), then rebuild the title
+screen as a dark containment hall where the captured bosses stand in glowing pods, each world in its own mood, the
+vault door, the trophy stand and the cabinets in view, a slow glide ending on the logo and INSERT COIN. Study logic
+unchanged, one independent review at the end, a steady 60 fps on an iPhone 17 Pro Max the pass.
+
+**The hiss** (commit 0c1abed, pushed first): the arcade hall's fallback ambience was a looped white-noise buffer
+through a wide band-pass, started whenever the hall's recorded hum had not loaded yet (usual on a phone) and never
+stopped: a steady -57 dBFS of broadband noise. Gone; the hum is low-passed; the exam drone breathes in tone. Every
+music track and loop measured clean, no clicks at any loop point. See ASSETS.md (Sound).
+
+**The title hall** (`src/js/10d-titlehall.js`; served only: from disk the old avenue stays the offline title). A long
+dark gallery: six worlds down its aisle, two pods each (the bosses in chapter order, the Proctor last by the vault),
+each world with its lamp, its glass, its pillar strips, two windows and a skylight onto its own sky (Risk Blaster's
+nebula, Nest Egg Run's dusk, Boss Rush's storm, Memory Bank's vault, Strategy Guide's archive, Final Exam's moonlit
+hall); at the end the vault door in a gold frame, two cabinets showing worlds on their screens, the trophy stand with
+its cup in a shaft of light. The bosses idle (their own clips), turn their heads after the lens, and now and then
+rattle their pods (a clip, their lights flare, glass and lamp flicker, a growl far off). The lens glides from the door
+in 34 s and stops where the end of the hall fills the picture (further back on a phone held upright, short of the
+last pods on a wide screen); the logo and INSERT COIN come up as it arrives; a tap hurries it; INSERT COIN rushes the
+vault and opens onto the arcade floor. The glide is the first title of a visit; reduced effects: a still view of the
+end, the logo up at once. Nothing of the old title is drawn when served.
+
+New assets: the stasis pod (Tripo, 5.2K triangles), the hall's painted vault (Blockade; reflections and light only),
+the twelve bosses rebuilt lighter from their own sources (no cost), six small copies of the worlds' skies (no cost),
+the title music (two takes of a dark ambient prompt) and a soft coin (ElevenLabs). Each checked for lookalikes:
+none.
+
+**Budget** (perf-report, the title measured with the whole hall in, at four places down the glide, phone screen):
+at MEDIUM 4.9 million pixels a frame, 10 passes, 31-39 draws, 167-223K triangles, 4 lights (key + 3 of the seven
+lamps), under 1 ms of main-thread time, nothing uploaded or compiled per frame; at HIGH 39-47 draws, 18 passes. The
+old avenue at MEDIUM: 77 draws, 33K triangles, no lights. Instanced pods, glass, struts and floor glows; each boss two
+draws; far bosses lose their joint caps (22 m) and move ten times a second; past 50 m or out of the picture neither
+drawn nor moved; the end of the hall not drawn while the haze hides it. LOW: fewer bosses drawn, only near ones move,
+no rattles.
+
+**A finding on the way**: the seeded regression dealt Memory Bank and the exam differently with the hall as the
+title. Not a logic change: each new three.js picture draws a random identity, and the old title had made three shared
+pictures (glow, lit windows, billboards) as the page started; without them the first game made them in the middle of
+its own dealing. The hall makes them at the same moment; the served regression is IDENTICAL again.
+
+**The independent review** (a fresh reviewer, the code and the owner's brief, no conclusions handed over) found no
+crash and no logic change, and ten things to fix, all fixed:
+1. INSERT COIN early on a slow line waited behind the hall's whole 13 MB (20.5 s to the floor at 10 Mbps, against
+   10.4 s with the old title), and the hall's pieces still landing were kept unused (about 130 MB decoded). Now the
+   hall's pieces are asked for four at a time and INSERT COIN stops the rest; what lands after is let go of; the
+   floor's bytes come alongside from the start. Measured: 10.4 s at 10 Mbps, 9.3 MB fetched, nothing left unused.
+2. The closed hall's materials, parked for their shaders, held 158 MB of decoded pictures for the rest of the visit.
+   Now the hall lets go of its models' pictures when it closes: 0.3 MB parked.
+3. Two of the soft coin's three takes were piercing tones (8.9 and 12.6 kHz); the first coin of a visit was always
+   one of them. Only the soft take is kept.
+4. The windows' bars were the wrong way round (the panes drawn at a fifth of their light, the bars bright), and a
+   view across a panorama's join showed a seam. Fixed (and every smoothstep's edges put in order).
+5. A piece arriving cost a long frame (a boss's skin, the whole hall drawn again: up to 296 ms here). Now a piece
+   comes in a step a frame (a skin a material at a time, a picture a frame, only the new piece drawn once
+   off-screen), and the hall carries a stand-in reflection from the start, so its painted vault's arrival remakes
+   no shader. Measured here, the glide's first 30 s: worst frame 16.5 ms (was 296); the first boss's arrival still
+   makes the bosses' one shader, once a visit.
+6. Tapping again slowed the hurried glide: the fastest asked for now holds.
+7. Reduced effects: INSERT COIN's push is a short step, not a 9 m rush.
+8. The painted sky dome was drawn every frame behind a closed hall: not drawn now (its light and reflections kept).
+9. Coming back to the title re-made the floor's models though the floor was still built: not any more.
+10. The Inflation Titan has no head bone and never turned: it turns at the top of its spine, half as far.
+
+Captures: `docs/title-hall/` (phone stills of the glide and the end, landscape stills, a 38 s film of the glide).
+
+## Playing the served game on a phone (2026-11-18)
+
+The owner opened the game on an iPhone as a plain file and saw the old title: from a file the page fetches nothing
+and shows its offline fallback. The title now says which version is showing, in small print under its top row:
+SERVED (cyan) or OFFLINE FALLBACK · OPENED AS A FILE (amber).
+
+Hosting: the repository is public and already carries a `.nojekyll` file at its root, so GitHub Pages can serve this
+branch exactly as it is (214 MB of tracked files, under Pages' 1 GB). Pages is switched on in the repository's
+Settings (Pages > Deploy from a branch > `claude/quirky-ride-9frte0`, `/ (root)`), which only the owner can do; the
+game is then at https://noahgaudette77-art.github.io/Noah/arcade/. Until then raw.githack.com serves the branch (it
+shows a one-time notice page with an "Open the page" link first). Checked over the internet through it: SERVED, the
+containment hall with every piece arriving (12 bosses, vault, cabinets, cup), the title's recorded music after a tap
+(the mix recorded for 8 s: nothing above 4 kHz, -108.6 dB; flatness 0.00), and Setup > FPS counter switching on the
+readout. No errors, no failed requests.
+
+Hosting, as it was then set up: GitHub Pages did not offer the branch to the owner, so the game is on Cloudflare
+Pages, connected to this repository (project `noah`, production branch `claude/quirky-ride-9frte0`, build command
+`sh arcade/tools/pages-site.sh`, output folder `arcade/site`). The build copies only what the page loads (the page,
+the sound test, `vendor/`, `assets/`: no course sources) and adds a header asking search engines not to index it.
+Every push to the branch is live a minute or two later at https://noah-2ci.pages.dev: anyone with the link can open
+it, nothing lists it. The repository itself is public: the owner was told how to make it private, and Cloudflare
+Pages builds a private repository just the same.
+
+## Memory Bank's card on iPhone Safari (2026-11-18)
+
+On an iPhone 17 Pro Max in Safari the owner saw the question drawn mirrored over the answer once a card was turned.
+
+Cause: the card turns in 3D (`.card3d`, `transform-style: preserve-3d`) and each face hid its back by backface
+culling alone (`backface-visibility: hidden`, both spellings, was in place). WebKit culls each drawing layer on its
+own, and a face holds boxes the browser draws on layers of their own: the answer's scrolling box, and since
+2026-11-14 (`20c5f4e`) the question face's masked dial ring with the question raised over it. Those kept being drawn
+when their face turned away. Not the performance work: the build just before it (`9e6be7d^`) shows the same in
+WebKit, and the build before `20c5f4e` had a clean answer side (though WebKit drew its answer over the question).
+
+Fix (the end of `src/style.css`): the face turned away is hidden outright (`visibility: hidden`), switched when the
+card stands edge-on (90 ms into its 0.68 s turn, by its curve), so nothing pops; culling stays as a second guard. With
+reduced motion the card and its faces switch at once. Each deal builds the next card's faces new, so they start in the
+right state. The answer's face has a plain opaque ground (the front's faint rings are not on it). Nothing inside a
+face sets `visibility: visible`, so a hidden face hides all of it.
+
+Other flips: none. The Final Exam, the Strategy Guide, the results and the menu cards have no two-faced turn; the only
+other 3D tilts (the boot screen's and the menus' floor grids) are single flat layers.
+
+Check: `tools/card-faces.js`, in WebKit (as Safari; installed into a folder of its own, see the file's head) and in
+Chromium. For each of several cards, question up and then answer up, the face turned away must be hidden, and a
+picture of the card must match a picture of it with that face taken out. On the page without the fix, in WebKit, 8 of
+8 checks failed (with the question up, 5.4 to 8.8 % of the card drawn from the answer's face; with the answer up, 1.0
+to 3.1 % from the question's, mirrored). With the fix: 12 of 12 pass in WebKit and 6 of 6 in Chromium, 0.00 % on
+every card. `--url https://noah-2ci.pages.dev/` runs the same check on the live site (before this deploy, in WebKit:
+4 of 4 failed). The study logic is unchanged: the regression is IDENTICAL from disk and served, and the sequence test
+runs ALL 13 STEPS OK.
+
+## The detail polish pass (2026-11-22)
+
+The owner's order, from their iPhone 17 Pro Max pictures of the served title: a polish pass only, every screen, the
+title first; no change to the study logic, the questions and answers, the scoring, the rules, the flow or anything in
+`content/` or `scripts/`; no feature added or taken away; inside each scene's budget; small commits; WebKit as well as
+Chromium; the served link kept working.
+
+**Audit** (before any change: a still of every screen on a phone's screen, 440 x 956 with its safe areas, in both
+engines: `tools/scenarios/polish.js`). Nearly every visible fault was on the title:
+1. The logo and its line washed out against the moonlit skylight; the owner's picture caught the 1.1 s fade-in, when the
+   logo and the dock were half see-through and the floor's lines crossed their words.
+2. The pods were glass tubes with jagged shards on top (the generated pod model) and dark bosses: not a prison.
+3. Streaky ceiling panels: the skylights read their panoramas' stretched top rows, and rows past the edge.
+4. TAP TO ENTER lingering faint behind the tip; the tip's panel 84 % opaque; INSERT COIN dim while it faded in.
+5. At the glide's end the last two pods half cut off by the screen's edges; the cabinets small and dim; the vault flat.
+6. The ring lamps cut off behind the top row as the lens passed under them.
+7. SERVED on the player's screen.
+Elsewhere the screens had been through several reviews; their weakest details: the game's map of the core sound sprite
+(stale since 2026-11-17: the power-up, the win fanfare, game over, the cheer, the alarm and the charge hum played from
+the wrong places in their file), a stage's long title in five short lines in the Strategy Guide, a flawless run's line
+dim on the results screen, the lives drawn from their models dark at their size, Setup's switches without a press.
+
+**Done** (a commit each, in this order): the sound map (`a59fc35`); the logo, its line, the dock and INSERT COIN, SERVED
+moved to Setup (`1f12dcb`); the skylights (`ff58bbd`); the containment cells (`58f2adf`); the end framed for a phone,
+the vault and cabinets, the rings' fade (`afa54fb`); the Strategy Guide's stage title (`c813103`); the results' flawless
+line (`740a867`); the lives (`1290343`); the tools (`aa96d5c`); Setup's switches (`4ef14bb`); then the independent
+review's fixes (`547fcdf`, `6bd7030`) and the cameras' pan sent by the frame (`ea60275`).
+
+The cells (`10e-titlecells.js`, built in code, nothing to load): a heavy steel plinth and cap in hazard paint, vent
+grilles, bars clamped round the glass, two containment bands in the boss's own light, hazard lamps on the lid, pipes and
+cables into the ceiling, a caution ring on the floor, a status screen on the plinth and a prisoner's plate on the cap
+(its number and name, as Boss Rush names it). Each boss lit from inside in Boss Rush's colour for it (a rim and an
+under-light in its own shading: no light added), breathing with its cell's pulse, wisps of energy up the glass; slow
+turns and twitches, now and then an arc; a few cells worse off (cracked glass, steam, a red BREACH ALERT); a beaten
+boss's cell calm and green, its screen DEFEATED (read from the saved progress; the Proctor's when an exam is passed).
+The hall watched: laser tripwires across the aisle between the worlds, hazard strips and floor lights along it, cameras
+on the pillars, rails overhead. The cells are one cell made once and copied (20-80 ms to build here).
+
+**Measured** (`tools/perf-report.js`, a phone's screen, every asset loaded), at MEDIUM, where a phone draws (this machine draws in
+software: its own frame rates mean nothing; the counts are what to compare, and the phone's Setup > FPS counter gives
+its real frame rate):
+
+| screen | draws (budget) | triangles (budget) | lights | main thread, ms a frame | uploads a frame |
+|---|---|---|---|---|---|
+| title, before | 30-38 (60) | 165-221K (300K) | 4 | 0.8-1.2 | 0 |
+| title, after | 34-40 (60) | 146-221K (300K) | 4 | 0.9-1.3 | 0.3 (1.8 KB: the cameras' pan) |
+| hub, before / after | 45 / 45 (70) | 100K / 100K | 4 | 1.5 / 1.4 | the same |
+| Memory Bank, before / after | 54 / 54 (70) | 98K / 98K | 4 | 1.1 / 1.1 | the same |
+| Strategy Guide, before / after | 50 / 50 (60) | 32K / 32K | 3 | 0.9 / 0.8 | the same |
+
+No compiles during the glide. At HIGH the title is 42-48 draws (38-46 before).
+
+**Checked**: the regression IDENTICAL from disk and served (153 answers in 8 games); the sequence test ALL 13 STEPS OK;
+the card faces one at a time in WebKit and Chromium; nothing under `content/` or `scripts/` changed, nothing outside
+`arcade/`. An independent review found no crash, no logic change and nothing over budget. Its must-fix points were fixed
+(the steel's seams drawn inverted, an arc's core across its ribbons, the lasers' shimmer with reduced effects; the
+fourth, a build, was already done), and of its smaller ones: the cells built as one copied (5 to 10 times faster), the
+nameplates sent once and read in their own colours, the steam into the haze, the pipes into the ceiling, the cells'
+pictures let go of with the hall, reduced motion kept by the title's entrance and INSERT COIN, Setup's line for a page
+without 3D, the line above the logo free to wrap on a very narrow screen. Left as everywhere in the game: an instanced
+mesh's matrix buffer is let go of with its scene. The results' flawless line, brighter on its plate, still sits at the
+fold under the button bar's shade when the page is not scrolled (moving it would rearrange the page).
+
+**Left alone**: the game screens' layouts and their models (they were at the bar: the last quality audit), the music
+(already at one loudness, no clicks, fades between screens), the Strategy Guide's library (61 draws at HIGH, within its
+budget at MEDIUM where a phone draws it: see the table). **Still weak**: the windows' and skylights' pictures are small
+copies of the panoramas (1024 x 512): soft when the lens is close; WebKit on this machine draws additive glows harder
+than a phone's Safari (its pictures are for comparison, not for the look).
+
+**Spend**: nothing (no Tripo, fal.ai, ElevenLabs or Blockade call: everything was built in code or fixed in place).
+
+Captures: the before and after stills (both engines) were made with `tools/scenarios/polish.js`; the owner has them.
+
+## The performance pass (2026-11-22)
+
+The owner's order: on their iPhone 17 Pro Max the game was very laggy after the polish pass (the containment cells,
+more light and effects), and smoothness matters more than any single effect: a steady 60 FPS on the title hall and on
+every game screen. No change to study logic, content, scoring or rules; the look kept as close as it can be, cost cut
+where the eye won't notice first; a commit for each fix and its numbers; WebKit as well as Chromium; and, since this
+machine cannot measure their phone, a frame rate readout on the phone itself.
+
+**Measured first** (`tools/cost-report.js`, new: a phone's screen, 440 x 956 at 3x, every asset loaded, the game held
+still and each frame timed alone; the passes, pixels, draw calls, triangles, lights, shadow casters, memory held, the
+main thread; `--parts` hides each part of the scene and each post effect in turn). This machine draws in software, so
+its milliseconds compare builds and parts with each other: they are not a phone's. The polish pass, before (872a5d7)
+and after (6ebc399), at MEDIUM where the old AUTO put a phone:
+
+| screen | draws | triangles | lights | pictures, MB | frame ms, before → after the polish pass |
+|---|---|---|---|---|---|
+| title, mid-glide | 38 → 34 | 213K → 146K | 4 | 282 → 274 | 935 → 858 |
+| title, at the glide's end | 30 → 35 | 165K → 174K | 4 | 282 → 274 | 918 → 1070 |
+| hub | 45 | 100K | 4 | 188 | 704 → 682 |
+| Risk Blaster | 53 → 52 | 188K → 184K | 5 | 311 | 518 → 500 |
+| Nest Egg Run | 61 | 110K | 5 | 218 | 1390 → 1331 |
+| Boss Rush | 50 | 56K | 5 | 175 | 636 → 567 |
+| Memory Bank | 54 | 98K | 4 | 78 | 694 → 663 |
+| Final Exam | 83 → 84 | 36K → 37K | 5 | 108 | 1244 → 1470 |
+| Strategy Guide | 50 | 32K | 3 | 69 | 486 → 481 |
+
+The title, commit by commit (mid-glide / at the end): before 935 / 918; the logo and dock (`1f12dcb`) 942 / 967; the
+cells (`58f2adf`) 964 / 912; the end framed for a phone (`afa54fb`) 918 / **1038**; the pass's last build 858-953 /
+1070-1116. The step is `afa54fb`: there the vault, cabinets and stand went from 251 to 482 ms of the end's frame (the
+vault drawn larger and brighter). The cells cost what the pods did. (The Final Exam's code and models were not touched
+by the pass, its draws and triangles the same: its difference is this machine's, not the pass's.)
+
+Every screen's costliest part is its pixels: drawing three quarters as many across (a little over half the pixels)
+saves 25-45% of the frame everywhere; then the room's steel and the bosses on the title, the vault at the glide's end,
+the cabinets on the hub, the podium on the exam, the bloom (15-25%) and the colour fringe (5-8%) everywhere. No
+shadows anywhere on a phone; 3 to 5 lights a screen. The polish pass added no drawing cost but at the glide's end
+(the end framed for a phone: the vault drawn larger, +13-22% there), and one cost this report could not see at
+first: INSERT COIN's new breathing glow, a 40 px shadow painted again on the main thread every frame the title is up
+(with the game held still, 120 paints and 53 ms of style, paint and raster a second in Chromium; in Safari all of it
+on the main thread, which paints there).
+
+What a phone felt that this machine cannot measure: the owner's pictures show Low Power Mode on (the yellow battery),
+in which iOS holds every web page at 30 frames a second. The old AUTO read 30 as slow frames and stepped a phone down
+tier by tier to LOWEST, the softest and plainest picture, which ran at 30 all the same.
+
+**Done** (a commit each, in this order):
+1. `e1d6c3e` the cost report (the title hall's parts named for it).
+2. `9315e7e` **the governor** (with `f02b446`, `2578b2b`: see the review below). AUTO walks a ladder, sharpest first:
+   the drawing size (on a high-density screen 2x, 1.75x, 1.5x the page's pixels: the page's own text stays sharp), then
+   the effects (a tier down; no step down draws more pixels), then the lights (the screen's point lights cut to two,
+   then one). A phone starts at **SMOOTH** (MEDIUM drawn at 1.75x: 23% fewer pixels than 2x, which a 3x screen does not
+   show) and AUTO never climbs above it there (MEDIUM's 2x and HIGH are in Setup); a tablet starts at MEDIUM, a desktop
+   at HIGH. A step down when frames run under 55 a second (or a tenth of them catch) through a second of looks at the
+   last two seconds; a step up after five steady seconds, a step that fails again at once tried less often, then not
+   at all. A frame that made shaders or sent a new picture to the chip (a model arriving), and the one after it, are
+   not held against the picture, nor a new screen's, a new step's or the page's return's first seconds.
+   **Low Power Mode**: blank frames timed at the start every 33 ms hold the page at SMOOTH from the start (no step
+   taken to find it); a rate held at exactly 30 through a real cut (a tier down, 60% of the pixels or fewer) is the
+   cap too. Held at 30, frames are judged against 30's own frame (still catching: a step down; steady: back up), a
+   step down is tried after a minute (then two, four, eight) in case a load, not a cap, holds it, and frames well
+   under 30's let go of it. The readout says HELD AT 30 FPS · LOW POWER MODE? (or the main thread's time, when that
+   fills the frame). A 50 Hz screen is its own mark. `tools/governor-test.js` feeds it made-up frames: 34 checks
+   (slow, recovering, held at 30, Low Power Mode from the start, catching under the cap, the hold tested, a load a real
+   cut lifts, 10 fps, a new screen, busy frames, a relapse, Setup's fixed tiers, a desktop), all pass in both engines.
+3. `76bd780` **the readout** (Setup > FPS counter): frames a second, the average and slowest frame, hitches in the last
+   ten seconds, the main thread's time; a graph of the last two seconds (green met 60, amber missed by a frame, red
+   caught, blue a model arriving); the tier, drawing size, lights, draw calls, triangles; and what AUTO is doing.
+4. `a19b76f` **the page's endless animations by the compositor**: INSERT COIN's glow, the question under threat, the
+   threat label and the hearts at low life fade or scale a copy drawn once, nothing painted again. Measured at the
+   glide's end, the game held still: 120 paints a second → 0; style, paint and raster 53 ms a second → 11 (style).
+   Look: the threat's red ring pulses just inside the question's frame, not just outside it (the panel clips anything
+   outside); the low-life hearts beat in size over their steady glow, which no longer flares.
+5. `379bce0` the cells' glass: the crack read only on a cracked pane; the drifting wisps worked out within 32 m (fading
+   from 22 m), where a cell is large enough to show them.
+6. `bba96cd` no glow pass where it only copied the bloom (no beams, no lens: a phone's every tier): one pass fewer.
+7. `3a36f04` no resting lens fringe on a phone (less than a pixel even in the corners of a 3x screen; two more reads of
+   the picture for nearly every pixel). A hit's fringe is unchanged.
+8. `f02b446` the 30 fps cap, once found, held through a screen's loading.
+9. `910459b` `cost-report.js --paint` (the page's own animations, the game held still: a trace's paints a second).
+10. `2578b2b`, `1e4818c`, `71d983c`: the independent review's fixes (below).
+11. `b1a0c69` `tools/scenarios/perf-look.js` (the title hall's stills, before and after).
+
+**Independent review** (no crash, no logic change; nothing under `content/` or `scripts/` or outside `arcade/`; the
+exam boss's hit-stops untouched; the pipeline, fringe, glass and CSS sound). Its must-fix points were both in the
+governor: below about 11 frames a second it decided nothing (it wanted 24 frames in two seconds: now a second and a
+half of frames, four at least), and a screen held at 30 by its own load was taken for Low Power Mode, because two
+steps down on a phone hardly cut the pixels (now a real cut, and Low Power Mode caught from the start). Its smaller
+points, all fixed: held at 30 the governor moved neither down nor up; a new screen inherited the last one's timers;
+a desktop's step from HIGH at 1.5x went to MEDIUM at 2x; a step in the first eight seconds counted as a failed climb;
+Setup's choice read as the governor's; lightsReset looked for the screen where the build does not put it (harmless);
+on a screen without half-float targets a strong bloom went through brighter without the glow's copy (it keeps it
+there); INSERT COIN's glow painted over its keyline and lip, and held still the button laid its glow over the line
+below it (now beneath them, and still exactly as before).
+
+**After** (`3a36f04`: the same report, a phone at SMOOTH against the old start, MEDIUM at 2x; frame ms, software; the
+review's fixes after it change nothing a phone draws):
+
+| screen | passes | million pixels a frame | draws | Chromium, frame ms before → after | WebKit |
+|---|---|---|---|---|---|
+| title, mid-glide | 10 → 9 | 4.9 → 3.4 | 34 → 33 | 953 → 684 (−28%) | 182 → 139 (−24%) |
+| title, at the glide's end | 10 → 9 | 4.9 → 3.4 | 35 → 34 | 1116 → 857 (−23%) | 233 → 198 (−15%) |
+| hub | 10 → 9 | 4.9 → 3.4 | 45 → 44 | 673 → 597 (−11%) | 174 → 131 (−25%) |
+| Risk Blaster | 10 → 9 | 4.9 → 3.4 | 52 → 55 | 535 → 540 (its scene: 182K → 203K triangles) | 150 → 153 |
+| Nest Egg Run | 10 → 9 | 4.9 → 3.4 | 61 → 60 | 1244 → 1043 (−16%) | |
+| Boss Rush | 10 → 9 | 4.9 → 3.4 | 50 → 49 | 756 → 463 (−39%) | |
+| Memory Bank | 10 → 9 | 4.9 → 3.4 | 54 → 53 | 736 → 512 (−30%) | |
+| Final Exam | 10 → 9 | 4.9 → 3.4 | 84 → 83 | 1544 → 1173 (−24%) | |
+| Strategy Guide | 10 → 9 | 4.9 → 3.4 | 50 → 49 | 593 → 357 (−40%) | |
+
+The title's main thread at its end, the game held still (Chromium trace): 120 paints and 53 ms of style, paint and
+raster a second before; none and 11 ms (style) after. Lights and shadows (none) as they were; 11 MB less held (the
+smaller targets the scene is drawn into).
+
+Each fix in turn (Chromium, the title mid-glide / at its end / the hub / Risk Blaster; this machine's spread from run
+to run is about 7%, Risk Blaster's more, its scene never the same twice: 182-234K triangles in these runs):
+
+| build | title, mid-glide | title, at the end | hub | Risk Blaster |
+|---|---|---|---|---|
+| before (`6ebc399`, MEDIUM at 2x) | 953 | 1116 | 673 | 535 |
+| SMOOTH (`9315e7e`) | 747 | 917 | 601 | 458 |
+| the glass (`379bce0`) | 752 | 978 | 546 | 438 |
+| no copying glow pass (`bba96cd`) | 693 | 840 | 528 | 576 |
+| no resting fringe (`3a36f04`) | 684 | 857 | 597 | 540 |
+
+(`76bd780` and `a19b76f` change no drawing: the readout, and the page's animations by the compositor, whose gain is the
+main thread's: above.)
+
+The smaller cuts are inside that spread here; they take away work a phone's chip does every frame (a pass and its
+memory traffic, two reads a pixel, the glass's sines). Expected on the phone: the drawing that limits it is down by
+about a quarter on every screen (a frame that took 20 ms takes about 15: 50 frames a second become 60), the title's
+main thread no longer paints every frame, and Low Power Mode no longer drags the picture to LOWEST.
+
+**The look** (`tools/scenarios/perf-look.js`: the title hall before, MEDIUM at 2x, and after, SMOOTH, at the phone's
+own pixels, 1320 x 2868, in both engines, on the virtual clock): the same picture, 2-4% of its pixels apart, most of
+that the glide's own motion; in a 1:1 crop of a cell close up the boss's edges are a hair softer. INSERT COIN at rest,
+at the top of its breath and held still: the same button. What did change: the threat's red ring pulses just inside
+the question's frame, the low-life hearts' glow no longer flares on the beat, the far cells' glass has no drifting
+wisps.
+
+**Checked** (on the last build): the regression IDENTICAL from disk and served (153 answers in 8 games, no console
+errors); the sequence test ALL 13 STEPS OK; the card faces one at a time in WebKit and Chromium; `governor-test.js`
+34 checks in both engines; nothing under `content/` or `scripts/` changed, nothing outside `arcade/`; the exam boss's
+two hit-stops untouched, no `GFX.hitStop`.
+
+**For the owner, on the phone** (Setup > FPS counter ON; Low Power Mode off for the test, Settings > Battery): the
+title's glide and its end, then a game twenty seconds in. Line one should read about 60 FPS, 16.7 MS, few or no
+hitches; the graph's bars green on the white line (amber: a frame missed, a visible stutter; red: a catch; blue: a
+model arriving, only in a screen's first seconds); line two MEDIUM · 1.75X; line three AUTO · STEP 1/7 SMOOTH. A
+higher step means AUTO had to give up size, effects or lights to keep 60, and says why; HELD AT 30 FPS means the phone
+itself holds the page at 30.
+
+**Left alone, and why**: the pictures held (the blaster's 300 MB at most, the title's 263 MB): a phone with this much
+memory keeps them without strain, and a phone already gets nothing over 2048 px (the title's bosses come at 1024);
+halving them would soften the big models on screen for no frame. Draw calls (33-83) and triangles (32-234K) are well
+inside what a phone draws at 60. No shadow maps or mirror on a phone already. The bosses far down the hall already
+move ten times a second and stop being drawn past 50 m; their joint caps past 22 m.
+
+**Spend**: nothing.
+
+## Boss Rush's wizard (2026-11-23)
+
+The owner's order: a cape-wearing wizard with a wand who duels the bosses, original (no known character, name, scar,
+logo or crest), made with the linked services: the character (rigged: idle, cast, big cast, hit, victory, defeat; its
+cape and robe moving), a wand of its own with a tip that glows and charges, three or four spells each with its own
+colour, trail, impact and screen feedback, the effects of a duel, its own sounds levelled with the game's, and staging
+that reads on a phone held upright without covering the answers or the boss. A visual and audio layer only, driven by
+the events the rules already decide: nothing about study logic, questions, answers, scoring, boss health, `content/` or
+`scripts/` changed, nor how any event is decided. Inside the performance budget (if it costs frames, simplify the
+effects, not the frame rate); small commits; WebKit as well as Chromium.
+
+**The events, mapped first** (22-boss.js decides; 22f-bossstage.js stages; the wizard, `22h-wizard.js`, is told):
+
+| rule | stage | the wizard |
+|---|---|---|
+| start | `enter` | it drops in, in a column of cyan sparks and a rune circle, as the boss drops in; it lands and rises (`enter`: Tripo's jump-down, its hips' path moved so it lands where the idle stands) |
+| a question up | `ask` | it holds its wand out at the boss (a held copy of `cast`), higher as the attack bar fills; its tip gathers light; a low hum as it starts |
+| pick (right or wrong) | `fire`, then `volley` x3 (x1 when wrong) | it casts (`cast`, played from just before its release); ARC BOLTS, cyan, leave the wand's tip from 0.05 s on (its arm out by then), 0.065 s apart, a star and a rune circle at the tip; a wrong answer: one dim violet bolt, a sputter of sparks and smoke at the wand, the old red fizzle on the armour |
+| the right answer lands | `bossHit` | the NOVA LANCE, magenta, from the wand to the boss (the stage's own lance, impact, wave, debris, hit-stop and recoil, in its colour; the lance's root kept at the tip); a heavy blow (20+, enraging, tearing or finishing) is its lunging big cast (`bigcast`), with a bigger rune circle and more sparks |
+| the boss's strike lands | `playerHit` | the AEGIS WARD: a round wall of green hexagons across the foot of the picture, flaring where the blow struck, a ripple running out from it, breaking up a cell at a time nearest the blow first, as the heart goes (the rule took it); it reels (`hurt`; `stagger` on the last heart) |
+| victory | `death`, `lastBlast` | STARFALL: it points its wand at the boss (`cast`, held) as a golden sigil turns over the boss and a column of gold light comes down through it, a wave and white sparks; at the last blast it raises its wand (`win`) and its own victory sting plays in place of the old one |
+| defeat | `defeat` | it sinks a little (`defeat`), its wand's light going out and its neon dimming |
+
+Everything is on the stage's show clock (slowed in the death's slow motion), and nothing in it is read by a rule. Every
+call from the stage goes through `wizCall`: without the wizard's files (the page opened from disk) the fight is as it
+was, and should a call fail, the wizard goes and the fight goes on as it was. Each clip as made held the hips somewhere
+of its own (the big cast its root turned too): each is moved to stand where the idle stands, so going from one to
+another does not slide the body (the feet, under the answers, take the difference).
+
+**Made** (the spend is in `ASSETS.md`): the wizard (Tripo, from a Nano Banana Pro concept; a Rodin candidate from the
+same concept was made and not used: a pale face and hands, a smeared cape), rigged by Tripo (78 joints) with eight clips
+from its presets; kept soft-skinned (`tools/gen/process-skinned.mjs`, new: a coat and a cape should bend), its cape
+re-bound from the arms and legs to the trunk (a raised arm had lifted it over its head), a flutter mask baked in for
+the cape and the coat's skirts, its cloth made matte (the generator had made it half metal: dark under coloured lamps),
+32K triangles, 1.27 MB. The wand (Tripo, from a Seedream concept), 3K triangles, held along the line of the right hand,
+its tip an anchor. Three spell textures (Seedream: a rune circle of geometric marks, a hexagonal ward, a star flare;
+white on black, tinted in the game). Eleven sounds, 38 takes (ElevenLabs).
+
+**Staging.** While the answers are up it stands low on the left, seen from the hips up at their top edge (the answers
+hide the rest), 4.8 m from the lens, its back three-quarters to the lens and its right side (the wand's) toward it, so
+its arm reaches into the picture toward the boss as it casts. It holds its place in the picture as the lens moves (it is
+placed from where the lens looks from and at before its shake, so a shake moves it with the world). When the whole
+screen is the picture (before the first question, after the last) it stands on the arena's floor 6.5 m off (never more
+than half the way to the boss, nor with its hips under the foot of the screen), and moves between the two over half a
+second. It covers the boss's lower left corner (a hand, a knee) and nothing of the answers, the question or the HUD; on
+a very wide screen (over about 1730 px, where the answers stand in a 1040 px column) it keeps within their width, so its
+legs never show beside them. While it is there, the crowd's front row (the dark heads along the foot of the picture,
+22-boss.js: the arena's foreground until now) sinks out of the picture: the wizard is the foreground. As the lens comes
+in at the start of a question the wizard stands among those heads, its wand hand a metre past them, and on a wide screen
+behind them. A cold lilac rim holds its edge against every arena; checked against all twelve
+(`tools/scenarios/wizard-arenas.js`).
+
+**Effects and their limits.** Its glow is drawn (a glow sprite and a star at the tip, two pooled rune circles, three
+floating runes, one ward, one sigil, one flare: all made once with the fight); it has no light of its own (the stage's
+lights are spent) and does not take the kit's one blast light from the boss. The cape flutters in the vertex shader,
+more as it casts or is struck. Its shake (0.12, Starfall only) and lift of light (`GFX.pulse`, capped at three a second)
+are the game's own. Reduced effects (or reduced motion): no flutter, no floating runes, fewer sparks, no turning sigils,
+a dimmer ward. Below MEDIUM (no extras): no floating runes. It is never in the floor's mirror (it stands by the lens:
+its reflection would be off the picture, and it would be a second skinned draw).
+
+**Sound.** `sfx-wizard.mp3` (11 cues, 38 takes, 0.6 MB), a set of its own in the boss set, played through the effects
+bus (the effects volume). Levelled by `audio-build.js` and checked with `tools/audio-levels.py`: its cues' loudest 400 ms
+at the mix sit at -28 to -22 dB (median -25.4; the other sets' medians -25 to -22); the bolt 2.7 dB under the laser it
+replaces, the victory sting within 1.2 dB of the old one; nothing clips. No hiss: the file's floor (its quietest tenth) is -87 dBFS, -98 dB above 4 kHz, flatness 0.20 (`tools/noise-floor.py` flags a floor flatter than 0.3 above 4 kHz and louder than -60 dBFS). Where its set has not loaded, each cue
+falls back to one of the game's own (the laser, the old sting) or to nothing. A blow's strike is one sound: the
+wizard's for an ordinary blow (in place of the stage's), the stage's own big one for a heavy blow. The sound test names
+them.
+
+**Performance** (measured before the review's fixes, which add no draw: a held pose and a placement). Measured with `tools/cost-report.js` (the fight held still, a phone's screen, MEDIUM at
+1.75x: the phone's SMOOTH) on the live build (e0ebaa8) and this one. This machine draws in software: compare, do not
+read as a phone's milliseconds. WebKit (Safari's engine), whose numbers hold steady run to run: a fight's frame 144 ms
+before, 150 after (+4%); 68 → 74 draws, 74K → 109K triangles, the same 5 lights (3 point, 2 directional), pictures
+164 → 203 MB. Chromium's whole frames swing too much between runs to compare (463 → 504 ms in one pair, 621 → 528 in
+another, the frames' content differing), so the wizard's own cost was measured directly: one held frame drawn nine times
+each way, shown and hidden, interleaved. First as made: 177-229 ms of a frame in Chromium and 26.5 ms in WebKit, nearly
+none of it its geometry or skinning (drawn with a flat material it cost 3 ms) and nothing measurable for the rim or the
+flutter: its pixels. Each surface was drawn on both sides (the generator's default; the mesh is closed, so the back
+faces are hidden, but each was still shaded) and read a normal map. Drawn one-sided and without its normal map (compared
+close up at 3x: the same picture), it costs 91 ms in Chromium (12% of that frame) and 11 ms in WebKit (7%): half.
+
+What was simplified for the frame rate: one-sided and no normal map (above); 32K triangles (a hero's bar is 55K: it is
+seen from behind and half of it is under the answers); its glow map at 1024 px; no light of its own; never in the
+floor's mirror; its effects drawn, pooled and made once with the fight (two rune circles, three runes, one ward, one
+sigil, one flare, the tip's glow and star) on top of the kit's own pools; its floating runes only where the tier keeps
+extras and never with reduced effects; the cape's flutter in the vertex shader (no cloth to simulate), off with reduced
+effects. Not simplified: its 2048 px colour map (it is the only thing on screen that close to the lens). The quality
+governor (the performance pass) keeps 60 by drawing fewer pixels first, should a phone need it.
+
+**Checked** (on the last build): the regression IDENTICAL from disk and served (153 answers in 8 games, no
+console errors); the sequence test ALL 13 STEPS OK; and on the build before the review's fixes (which touched only Boss
+Rush's stage and wizard), the card faces one at a time in WebKit and Chromium and `governor-test.js` in both engines; nothing under `content/` or `scripts/` changed since the live build, nor `22-boss.js` or
+`19-quizgame.js` (the rules), nothing outside `arcade/`; no `GFX.hitStop` added, the exam boss's two untouched. Every
+part of the fight captured on a phone held upright in Chromium and WebKit, at 1440 x 900 in Chromium, and against all
+twelve arenas (`docs/wizard/`).
+
+**The independent review** (Opus: it read all of it, ran the class on the real model in Node, and probed the fight in
+both engines on a phone's screen, at 1440 x 900 and 1024 x 768, served and from disk). No blocker: no wizard code
+writes a rule's state (HP, hearts, score, charge, state, the rules' own timers) and the rules' timers are unchanged;
+the protected files untouched; no shader compiled late (72 programs from the mount to the end); nothing leaked over
+three visits; no allocation in a frame (0.03 ms a frame); reduced effects and the tiers respected; every missing piece
+(the wand, the textures, the sound set, WebP) falls back; from disk, no wizard and no error. What it found, and what
+was done:
+- each clip as made held the hips at an offset of its own (and the big cast its root turned 10 degrees), so going
+  from one to another slid the body sideways, up to 36 cm (31-34 px on a phone in four frames): every clip now stands
+  where the idle stands (the feet, under the answers, take the difference);
+- the first bolt and the cast's rune circle left from the pose of the frame before (the circle from the wand at rest,
+  under the answers): the wizard's pose is now set before the stage's shots leave, and the circle (or a wrong answer's
+  sputter) goes with the first bolt, from the tip;
+- the entrance faded in over the idle, so it rose before it dropped: its jump starts at once;
+- on a wide screen (a desktop, a tablet) it stood behind the crowd's front row during a question, and at the end of the
+  fight level with the boss, off the picture: on the floor it now stands at most half the way to the boss and never
+  with its hips under the foot of the screen, and the front row sinks out of the picture while it is there (it was the
+  arena's only foreground: the wizard is now);
+- the wand's charge was behind the answers for the whole question: while a question is read it now holds its wand out
+  at the boss (a held copy of its cast, more as the attack bar fills), its glowing tip in the picture;
+- and the smaller points: the cape's wave read the packed vertex (now the skinned one, in metres); the casts' key
+  moments are found as the fight is built, from a fresh matrix (a few milliseconds at the first answer before); the
+  volley's lead and spacing (0.05 s, 0.065 s) land the last bolt a frame or more before the lance, at 30 frames a
+  second too; every call from the stage to the wizard goes through a guard (should one fail, the wizard goes and the
+  fight goes on as before); the lance's root stays at the wand's tip while it is drawn; one strike sound for a blow
+  (the wizard's for an ordinary one, the stage's own big one for a heavy one, never both); the old sting at its old
+  level where the wizard's sounds have not loaded; the asset log's wand maps; the temporary build removed.
+
+A re-check of those fixes (the same reviewer) confirmed each one, measured: the hips move at most 1 cm as a clip comes in
+(24-36 cm before), the entrance's first frame is already in the air, the first bolt leaves within 1 mm of the tip, the
+last lands by 0.267 s (the lance comes at 0.3), the held wand crosses the answers' edge at half the bar, the wave's
+height is the true height, and on a 1440 x 900 screen the wizard is in the picture at a victory and a defeat. Nothing
+blocking; its four small points, fixed: on a phone the front row had sunk and risen again once a question (the lens comes
+in and draws back with the bar), and at the start of a question a head could hide the wand hand (now the row stays down
+while the wizard is there); over about 1730 px wide the wizard stood beside the answers' column, its legs showing (now it
+keeps within their width); a wizard dropped after a failure now puts the row back and frees its pictures; and the
+lance's root follows the wand only for the lance's own life (the kit's beams are pooled).
+
+**For the owner, on the phone**: Setup > FPS counter ON (Low Power Mode off for the test), a Boss Rush fight twenty
+seconds in, then a right answer, a wrong one and a finishing blow. Line one should still read about 60 FPS and the
+graph's bars sit green on the white line; line three AUTO · STEP 1/7 SMOOTH. If it reads a higher step during a fight,
+AUTO gave up drawing size to keep 60: send that screenshot.
+
+**Spend**: Tripo 195 credits (the wizard 60, the wand 30, the rig 25, eight clips 80); fal.ai $2.30 by the balance
+($1.94 by the ledger: three Nano Banana Pro concepts, two Seedream wand concepts, one Rodin candidate $1.20, three
+textures, and $0.14 lost to a generator script run by mistake: see `ASSETS.md`); ElevenLabs 472 credits (38 takes).
+
+## Sharp and smooth: the iPhone and the MacBook (2026-11-23)
+
+The owner's order: the wizard could barely be seen (make him come out, change the colours, he need not match); then
+the game as crisp and detailed as it can be, no visible blur, and a steady 60 FPS on their iPhone 17 Pro Max (upright,
+touch) and their MacBook Air (Apple silicon, 13-inch, Safari and Chrome, landscape, mouse and keyboard, Retina), the Mac
+excellent through long sessions. Device tiers chosen automatically with Setup's override (a phone tier, a Mac tier, a
+safe one); an adaptive governor on all of them (resolution first, then effects, then lights; back up slowly; easing
+for heat; iOS Low Power Mode met with a lighter tier, not fought); MSAA, not FXAA; no TAA; text and HUD as crisp HTML;
+the renderer and the post-processing at matching sizes; anisotropy and mipmaps right; nothing stretched; the soft
+textures fixed (the ceiling panels); draw calls near 100 on the phone; assets compressed; few real lights; passes that
+earn their cost; only what is seen animated; paused when hidden; WebGL. The Mac: the wide screen used, keyboard
+shortcuts and hover, resizing without leaks or blur, Retina and external monitors. No change to study logic, content,
+scoring, rules, `content/` or `scripts/`; no feature removed (look and performance only); small commits, each with its
+frame time before and after; WebKit and Chromium.
+
+**What was soft, found first** (the final pass's shader, the tiers, the stills at each device's own pixels):
+- FXAA ran on every frame, even over a picture 4x or 2x multisampling had already smoothed: every edge softened twice.
+- The CRT glass bent the picture (its curve resampled every pixel), softest toward the edges, where the wizard stands.
+- The phone started at 1.75x with FXAA, stretched by the browser to its 3x screen.
+- The Mac drew depth of field (the crowd and the arena behind the boss softened on purpose) and the lens's resting
+  colour fringe toward the corners.
+- The title hall's ceiling skylights showed about 300 x 110 pixels of a 1024 x 512 picture over a 9 m pane.
+- On a computer, models' pictures were filtered 8x (roads and floors already 16x); the cells' plates drawn at 3/4.
+Already right, and kept: the text, menus and HUD are the page's own HTML over the picture; the renderer and every pass
+are sized from the same drawing size (the bloom, ambient shade and depth of field at half size by design: their
+output is blurred anyway); on the Mac the drawing size is the screen's own pixels (2x), nothing stretched; textures
+have mipmaps; draw calls are 33 to 83 a screen on the phone and lights 3 to 5 (each screen's budget, LightPool);
+the models were already simplified, deduplicated, pruned and meshopt-compressed with glTF-Transform, their pictures
+WebP; rAF stops when the page is hidden and the game pauses.
+
+**Done** (a commit each, in this order):
+1. `fda0cfe` **the wizard stands out**: its violet cloth repainted in the shader, folds kept, never brighter than the
+   colour itself: a gold coat, a vermilion cape, coat-tails and hat, a deeper red lining (the arenas' violet and blue's
+   opposites; tried and set aside: ivory, washed out under the arena's lights; crimson, lost in a red arena; emerald).
+   The whole cape takes its colour (a clean edge on the flutter mask, no fade across the back); a little light of its
+   own for the darkest arena. On a landscape screen it stands a metre nearer the lens, about a third larger.
+2. `20c1963` **no blur**: FXAA only where there is no multisampling; the glass's bend a Setup > Effects switch, SCREEN
+   CURVE, off to begin with (the glass's scanlines, bezel and glare stay); depth of field off to begin with (once, for
+   a save made before; still a switch).
+3. `d504ed8` **the tiers**: MAC (2x, 4x MSAA, every effect), PHONE (at most 2x, 2x MSAA, half-size bloom, no ambient
+   shade, depth of field, motion blur, lens streaks, mirror, god rays or contact shadows, fewer particles), SAFE (1.5x,
+   2x MSAA, the fewest passes), LIGHTEST (the governor's last step: 1.25x, FXAA). No tier draws the resting colour
+   fringe (a hit still parts the colours). Setup > Graphics: AUTO, MAC, PHONE, SAFE (saved under their old names).
+4. `0e53577`, with the review's fixes `1d51db5`, `707903b`, `9a2fb98`, `a73b982` **the governor**: a phone starts at
+   PHONE 2x, a computer at MAC 2x. Under ~55 fps for a couple of seconds: the drawing size first, in tenths (2x, 1.9x
+   ... 1.5x), then the effects, then the lights; still slow at the next look, two sizes at once, then three (within a
+   tier). Back up after 8 steady seconds (a step that fails again at once: 24 s, then 40 s, then never). Heat: one frame in fifty late
+   through ten seconds, not the main thread's doing, eases the size one step before it stutters, only within the tier;
+   each ease is judged from its own first full ten seconds and taken back if the late frames did not fall by three in
+   ten (not tried from there for 5, then 10, then 20 minutes); a step eased from is climbed back after 30 s (then 60 s,
+   never after a third) only with under one late frame in a hundred. Low Power Mode (held at 30): a phone goes to SAFE
+   at once and back to its step when the cap lifts; a computer at a steady 30 (a 30 Hz screen) keeps its step. The
+   window moved to a screen of another density, or zoomed: the ladder made again at once (the device pixel ratio is
+   read every frame: the media-query event does not reach every browser). `tools/governor-test.js`: 56 checks.
+5. `2564ab5` **the ceiling's skylights**: each world's skylight its own picture, cropped from the full 4096 x 2048
+   panorama by `tools/skylights.py` (about three times the detail; 2.8 MB more on the graphics chip a world; loaded
+   last); the window pictures filtered as finely as the tier allows.
+6. `37c01ef` models' pictures filtered 16x on a computer (4x on a phone); the cells' plates at full size there.
+7. `83a41a3` **the Mac**: every hover style kept to devices that hover (a phone's tap left it lit); with a mouse a
+   Setup switch's choices light their edge, cards, chips, tiles and trophy rows brighten, the pointer shows on all that
+   can be clicked; the pause menu lists the game's keys (answers 1-4 or A-D, Enter next, P or Esc pause; the racer's
+   lanes and boost; the flashcards' flip and grades; the exam's arrows). The landscape layout was already the wide
+   screen's (the question across the top, the answers two by two, the picture between); the wizard now fills it better.
+8. `e7ad950` the FPS counter's second line names the edge smoothing: MSAA 4X, MSAA 2X or FXAA.
+9. `6db0112` **a leak in Risk Blaster**, found by a long session on one page (every screen visited in turn, three
+   times over): each visit left a model's worth on the graphics chip (three 512 x 512 pictures, ~600 KB of geometry:
+   the escort ships' kits the scene's sweep never saw). Now let go of. Measured again over three full cycles: the
+   shaders (239) and the script's heap flat; what still grows is 2 small geometries and 1 picture a cycle.
+10. `022ccba`, `75236cc`, `8fb5cde` tools: `cost-report.js --device mac` (loaded at 1x, measured at 2x), Boss Rush
+    measured at its question; `perf-report.js` gives MAC its budget; `capture.js` waits longer for a Retina still.
+
+**Each change's frame time** (WebKit, Boss Rush with a question up, one loaded page, each change switched in place and
+the configurations timed in turn, three rounds; this machine draws in software: compare, do not read as a device's):
+
+| change | Mac (1470 x 830, 2x) | phone (440 x 956, 3x) |
+|---|---|---|
+| before | 877 ms (HIGH: FXAA over 4x MSAA, bend, depth of field, fringe, 8x) | 145 ms (MEDIUM 1.75x, FXAA, bend) |
+| 1 the wizard nearer (the Mac) | 872 (-0.6%) | |
+| 2 no FXAA over MSAA, no bend, no depth of field | 650 (-25.5%) | 141 (-2.8%: no bend) |
+| 3 MAC: no resting fringe / PHONE: 2x MSAA instead of FXAA | 634 (-2.5%) | 331 (+135%) |
+| 4 PHONE's start at 2x instead of 1.75x | | 410 (+24%) |
+| 6 models filtered 16x | 644 (+1.6%) | |
+| after | **644 ms (-27%)** | **410 ms (+183%)** |
+
+The skylights (5), on the title mid-glide: 326 → 329 ms (+0.9%). The governor, the hover and the readout draw nothing.
+The phone's frame is heavier in software, as the order asked: 2x MSAA where it had none, and 2x where it drew 1.75x
+(31% more pixels). Software multisamples the slow way; the iPhone's GPU, tile-based, resolves multisampling largely on
+the chip, so this machine cannot say what it costs there: the FPS counter on the phone is the measure (see below), and
+if 2x MSAA at 2x does not hold 60, AUTO takes the size down in tenths within seconds (the effects only after 1.5x).
+
+**Every screen** (`tools/cost-report.js`, Chromium; frames held still; the phone at AUTO's first step, the Mac at its
+tier). The phone, before (MEDIUM 1.75x, 770 x 1673, FXAA) → after (PHONE 2x, 880 x 1912, 2x MSAA):
+
+| screen | draws | triangles | lights | pictures, MB | render targets, MB |
+|---|---|---|---|---|---|
+| title, mid-glide | 33 | 146K | 4 | 262 → 285 | 0 → 38 |
+| title, the glide's end | 34 → 35 | 174K → 185K | 4 | 262 → 285 | 0 → 38 |
+| hub | 39 → 44 | 97K → 100K | 4 | 177 → 183 | 2 → 41 |
+| Risk Blaster | 49 | 154K | 5 | 300 → 306 | 18 → 56 |
+| Nest Egg Run | 58 → 57 | 100K → 102K | 5 | 239 → 245 | 14 → 52 |
+| Boss Rush | 61 (\*) | 108K (\*) | 5 | 203 → 209 | 2 → 41 |
+| Memory Bank | 53 | 98K | 4 | 67 → 74 | 2 → 41 |
+| Final Exam | 79 → 83 | 35K → 37K | 5 | 97 → 104 | 4 → 43 |
+| Strategy Guide | 49 | 32K | 3 | 58 → 65 | 0 → 38 |
+
+(\*) Boss Rush at its first question on the capture tool's clock, the same moment in both builds: 61 draws and 107,809
+triangles before and after, exactly. The cost report plays in real time and caught the fight's camera at different
+moments (57 draws and 91K before, 44 and 52K after). The hub, the title's end and the exam vary a little run to run the
+same way (their scenes are never quite the same twice).
+
+The Mac, before (HIGH) → after (MAC), both 2x (2940 x 1660) with 4x MSAA:
+
+| screen | draws | triangles | lights | pictures, MB | render targets, MB |
+|---|---|---|---|---|---|
+| title, mid-glide | 63 | 293K | 4 | 412 → 421 | 223 |
+| title, the glide's end | 48 | 185K | 4 | 412 → 424 | 223 |
+| hub | 89 → 87 | 313K | 4 | 358 → 340 | 232 |
+| Risk Blaster | 68 → 66 | 160K → 160K | 5 | 564 → 546 | 241 |
+| Nest Egg Run | 96 → 95 | 184K → 189K | 5 | 551 → 532 | 244 |
+| Boss Rush | 63 → 59 | 50K → 50K | 5 | 480 → 462 | 232 |
+| Memory Bank | 90 | 183K | 4 | 262 | 232 |
+| Final Exam | 89 → 87 | 32K | 5 | 298 → 279 | 228 |
+| Strategy Guide | 65 → 63 | 32K | 3 | 261 → 242 | 223 |
+
+(The title's pieces had not all come in within the report's 15 minutes in either build, here in software at the Mac's
+size: the same pieces both times. The Mac's render targets, 223 to 244 MB, are its 4x multisampled scene at 2940 x 1660
+and its passes, as before; depth of field's buffers are no longer made where it is off: 18 MB fewer pictures there.)
+
+Pictures (MB): what is held on the graphics chip as textures; render targets: the multisampled scene and its passes.
+The phone holds about 45 MB more a screen: the multisampled scene (about 38 MB) and the passes at 2x. Its largest
+screen (Risk Blaster) holds about 370 MB in all, well inside what an iPhone 17 Pro Max gives a page. Every screen's frame, before and after, the two builds' frames timed in turn in one WebKit (software: compare only):
+
+| screen | phone, MEDIUM 1.75x → PHONE 2x | Mac, HIGH → MAC (both 2x) |
+|---|---|---|
+| title | 531 → 979 ms (+84%) | 2098 → 1761 ms (-16%) |
+| hub | 276 → 585 ms (+112%) | 2204 → 1911 ms (-13%) |
+| Risk Blaster | 228 → 371 ms (+63%) | 1941 → 1006 ms (-48%) |
+| Nest Egg Run | 462 → 403 ms (-13%, its scene differs run to run) | 2604 → 1744 ms (-33%) |
+| Boss Rush | 213 → 297 ms (+39%) | 2715 → 2405 ms (-11%) |
+| Memory Bank | 276 → 666 ms (+141%) | 1862 → 1843 ms (-1%) |
+| Final Exam | 576 → 972 ms (+69%) | 3003 → 2254 ms (-25%) |
+| Strategy Guide | 178 → 343 ms (+93%) | 1882 → 1494 ms (-21%) |
+
+The Mac is faster on every screen (no FXAA pass over its multisampled picture, no depth of field, no bend). The
+phone's frame is heavier on every screen in software: the multisampling it asked for, which software does the slow way
+(+135% in the change-by-change table), and 2x where it drew 1.75x (+24%). (The Chromium reports' own frame times are
+left out: other jobs ran beside them.)
+
+**Not done, and why:**
+- KTX2/Basis textures (toktx): the pictures are WebP now, small to download. Basis would need its transcoder (WASM, a
+  worker) in the page and would trade either detail (ETC1S) or download size (UASTC, several times WebP) for graphics
+  memory, which is not short (above). The owner asked for crisp: not traded.
+- Blender (decimation, LODs, light bakes): the models were simplified when processed; the triangles are 30K to 185K a
+  screen; lights are 3 to 5 a screen and no screen casts real-time shadows on a phone. Nothing to gain that the eye
+  would not pay for.
+- Spector.js: the counts it gives (draws, triangles, textures, programs, memory) come from `cost-report.js`'s own
+  WebGL counters and `renderer.info`, headless, per screen.
+- The generative services: no asset needed making again (the skylights came from the panoramas already paid for).
+- WebGPU: stayed on WebGL, as asked.
+- The racer, the exam and the guide's look, the menus' layout: unchanged beyond what the tiers and the AA change.
+
+**Reviewed** (an independent reviewer, then two re-checks with a harness of its own): resizing had been put off to the
+next frame and blanked the canvas while a window was dragged (back to at once); heat easing could cycle between tiers
+or slide to the last step (now the size only, judged, bounded); a density change during a 30 fps hold landed on the
+wrong step (remapped); a computer at a steady 30 Hz fell to SAFE (keeps its step); the depth-of-field switch-off could
+be undone by a sync (its mark goes with the switches; no save at boot); a tool's old tier name. Re-checked on 8 seeds
+a case: every heat case settles, nothing newly wrong.
+
+**Tests on the final build:** the regression from disk IDENTICAL (153 answers in 8 games), served IDENTICAL too; the
+sequence ALL 13 STEPS OK; the card faces (WebKit, Chromium) one face at a time; the governor 56 checks in both
+engines; `git diff c94c926..HEAD -- arcade/content scripts` empty.
+
+**For the owner** (Setup > FPS counter ON; Low Power Mode off unless testing it):
+- The iPhone, Safari upright: the title hall's glide and a Boss Rush fight. Line one about 60 FPS, the bars green on
+  the white line; line two PHONE · 2.00X 880×1912 · MSAA 2X; line three AUTO · STEP 1/11. A higher step during a fight
+  means AUTO gave up drawing size to keep 60: send that screenshot. Then Low Power Mode on: within seconds HELD AT 30
+  FPS · LOW POWER MODE? SAFE TIER; off again, back to STEP 1.
+- The MacBook, Safari and Chrome (the window full size): line two MAC · 2.00X · MSAA 4X; 60 FPS; line three AUTO ·
+  STEP 1/12. A long session (half an hour): line three should stay at step 1 or 2; EASING: FRAMES CREEPING UP (HEAT?)
+  means the Air warmed and AUTO took a tenth off the size. Drag the window to another screen and back, resize it: the
+  picture stays sharp, line two's size follows. P or Esc in a game: the keys are listed. Hover the buttons and Setup.
+- Setup > Effects: SCREEN CURVE and DEPTH OF FIELD start off now; either can be switched back on.
+
+## The animation pass (2026-11-23)
+
+The owner's order: every character and boss to move fluidly, not robotically (stiff poses, hard cuts, constant
+speeds, no weight, no follow-through): alive and weighty within the performance budget. Better base animations (an
+audit of every rig; full clip sets: idle with breath and weight shifts, attack variations, hit reactions varied by
+direction, victory and defeat; sources in order: Tripo or Rodin, retargeted libraries, clips authored by hand);
+blending and state (crossfades of 0.1 to 0.25 s, layers, additive reactions that can interrupt and recover, no snap,
+slide or jitter); the twelve principles (anticipation, follow-through, overlap, subtle squash and stretch, arcs,
+slow-in and slow-out, secondary motion, timing; fast strikes held on impact, heavy wind-ups; slight randomness);
+procedural life (springs on loose parts and the wand tip, cloth only near, noise sway, breathing, head tracking,
+lean, foot placement where it helps, everything damped); a personality for each of the twelve bosses and a
+dramatic phase change; the same speed at 60, 90 and 120 Hz; captures and frame times before and after. No change to
+study logic, content, scoring or boss rules: everything is driven by the events the game already sends.
+
+**What was robotic, found first** (the audit):
+- Every boss played the same eight Tripo clips (idle, an entrance, two attacks, hurt, stagger, rage, a fall) the same
+  way, its idle at one pace; between clips only the clip moved. Its head turned to the pointer, not the wizard. A
+  blow's recoil was a spring stepped once a frame; raging, it shook to a new random place every frame; its eases
+  closed a fixed share of the gap each frame (more at 60 Hz than at 120).
+- The rigs: each boss is rigid armour on a Tripo biped of 22 to 25 bones (rig v1.0): no skinning, so no collapsing
+  joints or stretching (the joints are plates meeting, capped); a unit tall, scaled to 7.4 m. The Inflation Titan has
+  no head bone, the Fine Print and Lord Intestate no foot bones (handled). The wizard is soft-skinned on 78 joints
+  with twist bones (no candy-wrap at the forearms), its cape bound to the trunk; 2.05 m. Nothing to re-rig.
+- The wizard: its clips cut in and out over straight ramps; between them it held its pose; its cape fluttered on a
+  clock, not with its moves; its wand was rigid in its hand.
+- The Probate Tollgate (animated by code): a new random shake every frame, fixed-share eases.
+- Elsewhere (Risk Blaster's overlord, demon and starfighter, the racer's rig, the Final Exam's Proctor and hall):
+  already moved by rich code of their own; 44 of their eases were frame-rate dependent.
+
+**Done** (a commit each, in this order):
+1. `9a0f6ee` **new clips from Tripo** on the rigs the models were made from (390 credits, `tools/gen/merge-clips.mjs`,
+   meshes and old clips checked unchanged): a side and a gut reaction for every boss and the wizard, a victory for the
+   ten bosses that had none, a second idle of its own for five (the Pusher and the Influencer swagger, the Fine Print
+   looks around, Lord Intestate folds its arms, the Proctor waits).
+2. `48da92c` **the motion core** (`src/js/07b-motion.js`): exact easing (`damp`, `dampTo` for a target that moves every
+   frame), springs and trailing points stepped at a fixed 240 Hz whatever the frame rate, smooth noise, variation fixed
+   per character and per event (the same every run and at every rate), bone turns over a mixer (`Turns`: each bone
+   about its own axes, never turned twice on a still frame), reactions as additive upper-body layers (`overlay`).
+3. `f9fe2a1` **the twelve bosses**: each its own way of moving (below), alive between its moves, its gaze on the wizard,
+   a wind-up that coils and strains, a strike thrown and held, a blow's give from where it came (one of three
+   reactions, a layer over whatever it is doing), a dramatic turn to rage (it rears up and swells, a beat of slow
+   motion), its own fall; every clip eased in and out.
+4. `518ce6b` **the wizard**: breathing, braced as the bar fills, its gaze up at the boss, a cast thrown with its weight
+   (each its own), a wand that trails and whips, a cape that trails its moves (a sprung hem, in the vertex shader),
+   flinches that do not stop a cast, a hop when it wins, a slump when it loses.
+5. `3b03c70` **the Probate Tollgate** on servos that overshoot and settle, its booth turned to the wizard, a blow's push
+   from where it came, its shudder smooth.
+6. `3a5e90e` **the title hall**: each caged boss idles at its own pace; the Specter and the Lich hover in their cells.
+7. `dc3d340` **every other character eased exactly**: 44 eases in Risk Blaster's overlord, demon and starfighter, the
+   racer's rig, the Final Exam's Proctor and hall (the Proctor's two hit-stops untouched).
+8. `27771c2`, `e3308ca` **tools**: `motion-hz.js` (the same performance at 30, 60, 90 and 120 Hz against 240; `--pops`),
+   `scenarios/motion.js` (the strips below).
+9. `4d500b4`, `cff0fe9`, `4241c4d`, `5ee5544`, `46e3720` **the review's fixes** (below).
+
+**The twelve** (BOSS_MOVE in 22d; each also strains, lunges, gives and holds by its own figures):
+
+| boss | moves like | its own |
+|---|---|---|
+| Product Pusher | a salesman, slick | quick idle, a bounce in its stance, a swagger idle (new clip), quick to recover |
+| Perilmonger | a brute | slow, heaving breath, stooped, its blows from far back, held long |
+| Solvency Specter | a ghost | hovering, legs hanging, drifting; a blow sends it swaying away; it sinks as it dies, turning |
+| The Fine Print | a fussy clerk | quick, tics (its head cocks, a shoulder jerks), snap glances, looks around (new idle), jerks as it falls |
+| Group Golem | a weight | the slowest, every blow landing heavily, held longest; barely moved by a hit |
+| Inflation Titan | a machine | piston breaths, servo pulses, a machine's shudder; its power fails as it falls, in stutters |
+| Longevity Lich | regal | hovering, slow, barely deigning to move; sinks as it dies |
+| Lord Intestate | a judge | upright, stately, folded arms (new idle), its gavel with all its weight |
+| Undue Influencer | a showman on strings | big sways, sudden jerks, swagger (new idle), jerks as it falls |
+| Probate Tollgate | a machine on tracks | servos that overshoot and settle, its booth turned to the wizard |
+| Patrimony Phantom | a predator | low, weaving, eyes never off the wizard, the longest lunge; folds forward as it falls |
+| The Proctor | an invigilator | few moves, each exact; waits (new idle) |
+
+**The same at any frame rate** (`tools/motion-hz.js`: a boss and the wizard put through one performance at each rate,
+every event on a 30th of a second; their heads, hands, chests, feet, the wand's tip and the body against a 240 Hz run;
+Group Golem):
+
+| frame rate | before the pass: mean / largest (cm) | after: mean / largest (cm) |
+|---|---|---|
+| 30 Hz | 1.43 / 35.1 | 0.55 / 17.3 |
+| 60 Hz | 0.60 / 15.1 | 0.33 / 9.5 |
+| 90 Hz | 0.34 / 8.4 | 0.09 / 3.4 |
+| 120 Hz | 0.23 / 5.0 | 0.09 / 3.1 |
+
+Twice to four times closer, with far more moving (every spring and layer above). The largest gaps left are an event's
+own frame (a blow lands on the first frame after its moment: at 60 Hz up to 1/60 s late, at 120 Hz 1/120), not
+the movement. The Probate Tollgate: 0.16 cm mean at 60 Hz. `--pops` (each place's largest move in one frame against
+the frames round it, at 60 Hz): before, a blow's reaction cut in (the Golem's hand 1.4 m in one frame, 23 times its
+neighbours'); after, the largest are the strike itself and the roar coming on, under 3 times their neighbours' (fast,
+not cut).
+
+**What it costs a frame** (scratch benches; this machine runs script slowly and draws in software: compare the two
+builds, do not read the figures as a device's):
+
+- **The animation itself** (the boss and the wizard alone: their updates and their skeletons' matrices, the same 4.4 s
+  performance at 60 Hz as the frame-rate test, the two builds alternated, median of five): Chromium 0.11 → 0.19 ms a
+  frame, WebKit 0.14 → 0.19 ms: **+0.05 to +0.08 ms a frame**, under half a percent of a 60 Hz frame here (the phone
+  and the Mac run script several times faster than this machine).
+- **The whole game** (the screen's own update a frame with drawing stubbed, and one whole frame drawn and synced; the
+  two builds side by side in one browser, alternated, three rounds; this machine's script timings vary by 20-40% round
+  to round and its software frames by about 7%):
+
+| screen | WebKit, PHONE tier: script ms / whole frame ms | WebKit, MAC tier | Chromium, PHONE tier |
+|---|---|---|---|
+| Boss Rush, Group Golem | 0.68 → 1.06 / 977 → 1001 | 0.83 → 0.85 / 2793 → 2786 | 0.56 → 0.68 / 4065 → 4088 |
+| Boss Rush, Solvency Specter | 0.69 → 0.95 / 1028 → 1098 | 1.24 → 1.02 / 2346 → 2433 | 0.52 → 0.87 / 3764 → 4096 |
+| the title hall | 0.52 → 0.55 / 884 → 950 | 0.73 → 0.72 / 2725 → 2548 | 0.36 → 0.55 / 3746 → 3761 |
+| Risk Blaster | 1.75 → 1.80 / 1370 → 1379 | 2.46 → 1.94 / 2658 → 2465 | (the run's time ran out) |
+| the Final Exam | 0.82 → 0.94 / 1172 → 1070 | 1.17 → 0.74 / 2150 → 2164 | |
+
+  Nothing drawn was added (no mesh, light or pass: the cape's swing is a few lines of its vertex shader), so draw
+  calls, triangles, lights and graphics memory are as they were; the frames move within this machine's noise. The
+  download: a fight's two models 0.13 to 0.34 MB larger (the new clips).
+
+**Pictures** (`docs/animation/`, before above after, the same moments on the capture tool's clock: Group Golem and the
+Solvency Specter, with the wizard): ten pictures (`05-golem-*`, `03-specter-*`: idle, strike, cast and hit, fall, defeat);
+the other games' characters changed only in how exactly they ease (no picture would show it).
+
+**Not done, and why:**
+- Foot placement by IK: while a fight is played the boss is framed head to knees and the wizard from the hips up
+  (their feet are under the answers); the reactions are upper-body layers, so a blow never slides a foot. The feet
+  show only in the wide shots (an entrance, a fall), where the clips' own feet are used.
+- Cloth simulation: the wizard's cape is part of its one skinned mesh; it swings by a sprung hem and flutters in the
+  vertex shader (no bones or particles to simulate). The bosses' armour is rigid plates (loose plates swinging on their
+  own would open gaps at the joints): their follow-through is in the spine and head.
+- Eye tracking: the wizard's eye bones face away from the lens (it is seen from behind); the bosses have no eyes to
+  turn. Their heads track.
+- Fixed-timestep rules with interpolated drawing: the rules run on each frame's own time step, as the regression tests
+  play them (changing that would move when rules fire). The look is made rate-independent instead: exact easing,
+  springs on a fixed 240 Hz step read a step behind, every event timed in seconds.
+- Walk, run and dodge: the fights stand in place, and a wrong answer's blow always lands (the rule took the heart: the
+  ward takes it, the wizard flinches); no step is ever taken.
+- New attack clips: the two attacks are timed to the rule's frames by their key moments (wind-up, top, blow, hold);
+  each strike's lunge, give, hold and pace vary instead.
+- Mixamo or other libraries: they need an account and a manual download; Tripo's presets on the same rigs gave what
+  was missing (no download needed from the owner). Rodin: no rigging needed.
+- The far bosses in the title hall still step at ten frames a second (and hold their pose at LOW), as the
+  performance pass left them.
+
+**Independent review** (Opus; it built and ran its own scripted fights on all twelve bosses and the wizard): no
+crash, no NaN, the rules unchanged (it ran both regressions), the bone turns steady through hit-stops, the additive
+layers right in three.js r128, the twelve models' every node, picture, skin and old clip unchanged by the merge. Its
+points, all fixed: the wizard's cape had stopped fluttering (a lost three lines, `518ce6b`); every strike ended with a
+one-frame pop (the attack clip dropped while it still counted a quarter: a hand moved up to 1.6 m in that frame; now
+held until it has faded); a reaction or clip cut short by another was cut (now handed over: `Motion.Layers`, two copies
+of each, and a fifth of a second's fade for a clip played through); the lance's cast restarted the answer's cast in one
+clip (now a twin takes over); new shudders and jerks shown with reduced effects (now off); the lighter bosses' recoil
+deeper than tuned (capped); timers restarting from the frame instead of carrying the overshoot, a machine's stop-go
+pace stepped at frame starts (now integrated exactly); one approximate ease left; the test tool unable to build the
+Tollgate, and its runs not repeatable from page to page (now each rate in a new page). Two more found in checking:
+a dying boss's reaction cut as it fell, and the Tollgate's fury snapped on in a frame (both eased).
+
+**Tests on the final build:** the regression from disk IDENTICAL (153 answers in 8 games) and served IDENTICAL, no
+console errors; the sequence ALL 13 STEPS OK; the card faces one face at a time in WebKit and Chromium; the governor's
+checks in both engines; every boss's fight (all twelve) through idle, wind-up, strike, a hit, rage, a ward and death,
+no error and no value not a number; `git diff b6ee1eb..HEAD -- arcade/content scripts` empty.
+
+**For the owner** (Boss Rush, any boss, on the iPhone and the Mac):
+- With a question up: the boss breathes and sways, its head turned to the wizard; the wizard breathes, looks up at
+  it, its wand's tip swaying a little. As the attack bar fills the boss rears back and strains; the strike throws it
+  forward and it holds the blow a beat.
+- A right answer: the wizard throws itself into the cast, its wand whipping; the boss gives, turned away from the
+  wizard's side, a different reaction each time (body, gut, side). Under 35%: it rears up and swells as it roars,
+  in a beat of slow motion, and from then on moves quicker and lower.
+- A wrong answer mid-cast: the wizard flinches without dropping its cast. Out of hearts: the boss celebrates.
+- Compare the Golem (slow, heavy), the Specter (floating), the Fine Print (twitchy), the Titan (a machine), the
+  Phantom (low, predatory). The FPS counter's CPU figure on line one should read as before.

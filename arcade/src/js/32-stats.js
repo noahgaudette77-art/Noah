@@ -70,24 +70,29 @@ function showStats() {
 function showSettings() {
   const s = Store.settings;
   const seg = (key, opts) => `<div class="seg" role="group" style="--c:${COLORS.cyan}">${opts.map(([v, label]) => `<button data-act="set" data-k="${key}" data-v="${v}" aria-pressed="${String(s[key]) === String(v)}">${label}</button>`).join("")}</div>`;
+  // a sound layer's level: OFF (the layer's own switch) or LOW, MID, HIGH (see Sound.LEVELS)
+  const vol = (key) => { const on = s[key] !== false, lv = s[key + "Vol"] || (key === "voice" ? "high" : "low"); return `<div class="seg" role="group" style="--c:${COLORS.cyan}">${[["off", "OFF"], ["low", "LOW"], ["mid", "MID"], ["high", "HIGH"]].map(([v, label]) => `<button data-act="vol" data-k="${key}" data-v="${v}" aria-pressed="${(on ? lv : "off") === v}">${label}</button>`).join("")}</div>`; };
   const row = (ic, label, sub, control) => `<div class="setting"><span class="si" aria-hidden="true">${icon(ic)}</span><div class="sl">${label}<small>${sub}</small></div>${control}</div>`;
   const synced = !!Store.remote;
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("SETUP")}
     <div class="scroll"><div class="wrap">
-      ${row("speaker", "Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
-      ${row("note", "Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
-      ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
-      ${row("tube", "CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("speaker", "Sound effects", "Blips, lasers, engines and explosions (LOW to begin with)", vol("sfx"))}
+      ${row("note", "Music", "The soundtrack (LOW to begin with: quiet under study)", vol("music"))}
+      ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", vol("voice"))}
+      ${row("note", "Sound test", "Every sound in the game with a play button and a label, to say which one to change", `<div class="seg" role="group" style="--c:${COLORS.cyan}"><button data-act="soundtest">OPEN</button></div>`)}
+      ${row("tube", "CRT glass", "Scanlines, bezel and glare (its bend: SCREEN CURVE, under Effects)", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("moon", "Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl"><span class="si" aria-hidden="true">${icon("spark")}</span>Effects<small>Switch any of them off</small></div>
-        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"], ["curve", "SCREEN CURVE"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("gauge", "FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("gauge", "Graphics", "AUTO picks MAC on a computer and PHONE on a phone, and puts a steady 60 first: when frames run late it draws a little smaller, then drops effects, then lights; it eases down gently if a long session heats the chip, sharpens again slowly, and in Low Power Mode, where the device caps the frame rate, keeps the picture sharp. MAC, PHONE, SAFE stay as chosen, though their drawing size still eases a little when frames run late. SAFE: for a weak or hot device", seg("quality", [["auto", "AUTO"], ["high", "MAC"], ["medium", "PHONE"], ["low", "SAFE"]]))}
+      ${row("gauge", "FPS counter", "Frame rate and frame times (a graph of the last two seconds), hitches, the size the picture is drawn at, the graphics tier, the lights, and what AUTO is doing", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
+      <p class="label">VERSION: ${!Assets.on ? "OFFLINE FALLBACK (OPENED AS A FILE: BUILT-IN PICTURES AND SOUND ONLY)" : GFX.ok ? "SERVED (EVERY 3D MODEL, SKY AND SOUND)" : "SERVED · SIMPLE TITLE (NO 3D ON THIS DEVICE)"}</p>
       <h2 class="section-h">HOW IT WORKS</h2>
       <div class="howto">
         <p><b>Stages</b> are the book's 11 chapters, grouped into its 4 sections (worlds).</p>
@@ -102,12 +107,26 @@ function showSettings() {
     el,
     on: (a, t) => {
       if (a === "back") { Sound.sfx("back"); showHub(); return; }
+      if (a === "soundtest") { Store.save(); location.href = "sound-test.html"; return; } // (a page of its own, beside the arcade)
       if (a === "fx") {
         const k = t.dataset.k, fx = Store.settings.fx || (Store.settings.fx = {});
         fx[k] = fx[k] === false;
         Store.save();
         t.setAttribute("aria-pressed", String(fx[k]));
         GFX.applySettings();
+        Sound.sfx("blip");
+        return;
+      }
+      if (a === "vol") { // a sound layer: OFF switches it off; LOW, MID and HIGH switch it on at that level
+        const k = t.dataset.k, v = t.dataset.v, was = Store.settings[k] !== false;
+        Store.settings[k] = v !== "off";
+        if (v !== "off") Store.settings[k + "Vol"] = v;
+        Store.save();
+        el.querySelectorAll(`[data-act=vol][data-k=${k}]`).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+        Sound.applyVolumes();
+        if (k === "music" && was !== (v !== "off")) Sound.refreshMusic();
+        if (k === "sfx" && v === "off") { Sound.ambience(false); Sound.stopLoops(); } // (the hall's hum or blips that were running go quiet, as with the mute button)
+        if (k === "voice" && v !== "off") Sound.say("Announcer on");
         Sound.sfx("blip");
         return;
       }
@@ -123,11 +142,12 @@ function showSettings() {
         if (k === "music") Sound.refreshMusic();
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "fps") $("#fps").hidden = !v;
+        if (k === "quality") GFX.setQuality(v);
         if (k === "tilt" && v) Pointer.initTilt(true);
         if (k === "voice" && v) Sound.say("Announcer on");
         Sound.sfx("blip");
       }
     },
-    key: (e) => { if (e.key === "Escape") showHub(); },
+    key: (e) => { if (e.key === "Escape") showHub(); else UI.arrowNav(e, el, "button", ".seg button[aria-pressed=true]", false, ".setting"); }, // (Up and Down from row to row in reading order, down one column and on down the next; Left and Right along a row's switches; the first arrow to the first switch's setting)
   });
 }

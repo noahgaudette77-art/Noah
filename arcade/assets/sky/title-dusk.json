@@ -1,0 +1,15 @@
+{
+ "name": "title-dusk",
+ "source": "title-dusk",
+ "blockade": {
+  "id": 15930881,
+  "style": "M3 Sky Dome",
+  "seed": 1572428448,
+  "prompt": "Synthwave dusk sky over a far flat horizon, no sun disc: glowing orange and magenta at the horizon, deep violet above, dramatic layered clouds lit pink from below, stars at the zenith, one great distant thundercloud glowing from within on one side, low dark mountain silhouettes, dark plain below. 1980s retro outrun aesthetic, vivid, cinematic."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 216594,
+ "lightAt": 114,
+ "mean": 0.306
+}

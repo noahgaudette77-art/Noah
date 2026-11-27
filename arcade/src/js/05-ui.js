@@ -35,12 +35,65 @@ const UI = {
       const owner = ownerOf(t);
       if (owner && owner.on) owner.on(t.dataset.act, t, e);
     });
+    // Enter or Space on a button the keyboard moved to (Tab, or an arrow over a grid of cards) is that button's: the
+    // browser clicks it, and the screen's own Enter (PLAY in the hall, PLAY AGAIN, the exam's next question, turning a
+    // card) is left out. With the focus where a click or the game itself put it, the screen's keys work as before.
+    // (Phase 7: Tab to STATS in the hall and Enter played the cabinet; to the exam's flag, and Enter went on instead.)
+    let navKey = false, keyFocus = null;
+    // (Option-Tab is how Safari tabs to buttons; an arrow with a modifier is a browser's shortcut, which may leave the
+    // page and never bring its keyup back: so the window's blur ends it too)
+    document.addEventListener("keydown", (e) => { navKey = e.key === "Tab" || (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey && !e.altKey); }, true);
+    document.addEventListener("keyup", () => { navKey = false; }, true);
+    window.addEventListener("blur", () => { navKey = false; });
+    document.addEventListener("focusin", (e) => { keyFocus = navKey ? e.target : null; });
+    document.addEventListener("pointerdown", () => { keyFocus = null; }, true);
+    // ... and only on what is on top and in play: not a button under a client's briefing or a menu (a briefing takes
+    // no focus, so the stage that opened it keeps it: Enter there is the briefing's), not a panel put out of reach (the
+    // exam's while its ending plays). (Phase 7's review: Enter under a first briefing started the stage again.)
+    const keyButton = () => {
+      const b = keyFocus, top = this.modal || this.cur;
+      if (!b || b !== document.activeElement || b.disabled || !b.matches("button, a[href]") || !top || !top.el.contains(b)) return null;
+      const cs = getComputedStyle(b);
+      return cs.pointerEvents === "none" || cs.visibility === "hidden" ? null : b;
+    };
+    // (no key does anything while the graphics context is lost (GFX.contextLost) but the notice's RELOAD, once it is
+    // offered: Tab reaches it, and Enter or Space on it starts the page again; a focused button's Space clicks on its
+    // key's release)
+    const reload = (e) => { const b = $("#gl-lost [data-act=reload]"); return b && !b.hidden && e.target === b ? b : null; };
+    document.addEventListener("keyup", (e) => { if (typeof GFX !== "undefined" && GFX.lost && !reload(e)) { e.preventDefault(); e.stopPropagation(); } }, true);
     document.addEventListener("keydown", (e) => {
+      if (typeof GFX !== "undefined" && GFX.lost) {
+        if (reload(e) && (e.key === "Enter" || e.key === " ")) return;
+        e.preventDefault();
+        const b = $("#gl-lost [data-act=reload]");
+        if (e.key === "Tab" && b && !b.hidden) b.focus();
+        return;
+      }
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
-      if (this.modal) { if (this.modal.key) this.modal.key(e); return; }
-      if (this.cur && this.cur.key) this.cur.key(e);
+      if ((e.key === "Enter" || e.key === " ") && keyButton()) return; // (the browser clicks it)
+      const was = document.activeElement;
+      this._nav = false;
+      if (this.modal) { if (this.modal.key) this.modal.key(e); }
+      else if (this.cur && this.cur.key) this.cur.key(e);
+      // An arrow the screen took as its own (the hall's cabinets, a lane, a grade, a question: it says so with
+      // preventDefault) lets go of the button the keyboard had moved to, so Enter is the screen's again: the ring
+      // would otherwise stay on STATS while the cabinets turn. (Not the arrows over a screen's cards: see arrowNav.)
+      if (e.key.startsWith("Arrow") && e.defaultPrevented && !this._nav && keyFocus && keyFocus === was && document.activeElement === was) { keyFocus = null; was.blur(); }
     });
+  },
+  // The graphics context lost (GFX.contextLost) and back: a notice over everything, which takes the pointer too. Lost
+  // for long (the browser may not give it back), it offers to start the page again (progress is kept: Store).
+  glLost(on) {
+    let el = $("#gl-lost");
+    clearTimeout(this._glLostT);
+    if (!on) { if (el) el.remove(); return; }
+    if (!el) {
+      el = this.el('<div id="gl-lost" role="alertdialog" aria-live="assertive" aria-label="Restoring graphics"><span>RESTORING GRAPHICS</span><button class="btn" data-act="reload" hidden>RELOAD</button></div>');
+      el.addEventListener("click", (e) => { if (e.target && e.target.dataset.act === "reload") location.reload(); });
+      document.body.appendChild(el);
+    }
+    this._glLostT = setTimeout(() => { const b = $("#gl-lost [data-act=reload]"); if (b) b.hidden = false; }, 10000);
   },
   show(ctrl) {
     if (this.cur) {
@@ -53,6 +106,46 @@ const UI = {
     if (ctrl.mounted) ctrl.mounted();
     const f = ctrl.el.querySelector("[autofocus]");
     if (f) f.focus({ preventScroll: true });
+  },
+  // The arrows over a screen's cards or buttons (stage select, the guide's chapters, Setup, a menu, the exam's grid of
+  // questions). Left and Right go to the one before or after in reading order (the order the cards and switches are
+  // read in, and Tab's); Up and Down to the nearest above or below, the nearest row first; with rows (Setup's
+  // .setting), to the row before or after, at the control in it nearest across. The first arrow, none of them focused,
+  // goes to the one the screen lights, or the first. Then Enter or Space is that one's (see init). Safari's Tab skips
+  // buttons unless its settings say otherwise (Option-Tab), so on a Mac the arrows are how a keyboard reaches a stage.
+  // (Phase 7.) across: only Left and Right (Up and Down still scroll the page: a results screen's list). Nothing that
+  // way: the key is left to the page (it scrolls past the last row to what is under it). Returns true when it took it.
+  arrowNav(e, root, sel, first, across, rows) {
+    const d = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
+    if (!d || (across && d[1]) || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
+    const items = [...root.querySelectorAll(sel)].filter((b) => !b.disabled && b.getClientRects().length);
+    if (!items.length) return false;
+    this._nav = true; // (the screen's arrows move its focus: see init)
+    const at = items.indexOf(document.activeElement), mid = (b) => { const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r]; };
+    let to = null;
+    if (at < 0) to = (first && items.find((b) => b.matches(first))) || items[0];
+    else if (d[0]) to = items[at + d[0]] || null;
+    else {
+      const [ax, ay, a] = mid(items[at]);
+      if (rows) { // the row before or after that has any of them, at the one in it nearest across
+        const own = items[at].closest(rows), list = [...root.querySelectorAll(rows)].filter((r) => r !== own && items.some((b) => r.contains(b)));
+        const all = [...root.querySelectorAll(rows)], k = all.indexOf(own);
+        const next = list.filter((r) => (all.indexOf(r) - k) * d[1] > 0).sort((p, q) => (all.indexOf(p) - all.indexOf(q)) * d[1])[0];
+        if (next) to = items.filter((b) => next.contains(b)).sort((p, q) => Math.abs(mid(p)[0] - ax) - Math.abs(mid(q)[0] - ax))[0];
+      } else {
+        let best = Infinity;
+        for (const b of items) {
+          const [bx, by, r] = mid(b), along = (by - ay) * d[1], gap = Math.max(0, Math.abs(bx - ax) - (a.width + r.width) / 2);
+          if (b === items[at] || along < 8) continue;
+          if (3 * along + gap < best) { best = 3 * along + gap; to = b; } // (the nearest row first, and in it the one straight on)
+        }
+      }
+    }
+    if (!to) return false;
+    e.preventDefault();
+    to.focus({ preventScroll: true });
+    to.scrollIntoView({ block: "nearest", inline: "nearest" });
+    return true;
   },
   el(html) {
     const t = document.createElement("template");
@@ -98,11 +191,20 @@ const UI = {
       try { fn(); } finally { this.covering = false; this.flash("crt-on"); }
     }));
   },
+  // The loading line: shown over a black screen while a game's asset files arrive (see Assets.with).
+  loading(on, frac) {
+    const f = $("#flash");
+    let l = $("#loading");
+    if (!on) { if (l) l.remove(); return; }
+    f.className = "cover";
+    if (!l) { l = this.el('<div id="loading" role="status"><span>LOADING</span><div class="lbar"><i></i></div></div>'); document.body.appendChild(l); }
+    $("i", l).style.transform = `scaleX(${clamp(frac || 0, 0.03, 1).toFixed(3)})`;
+  },
   banner(text, color = COLORS.yellow, sub = "", cls = "") {
     Sound.say(text);
     const b = this.el(`<div class="banner${cls ? " " + cls : ""}" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
-    setTimeout(() => b.remove(), 1400);
+    setTimeout(() => b.remove(), cls.indexOf("plated") >= 0 ? 2200 : 1400); // (a plated banner, RANK UP!, stands a little longer: see style.css)
   },
   floater(text, x, y, color = COLORS.yellow, big = false) {
     const f = this.el(`<div class="floater${big ? " big" : ""}" style="--c:${color};left:${x}px;top:${y}px">${esc(text)}</div>`);
@@ -134,6 +236,7 @@ const UI = {
       on: (a) => { this.closeModal(); if (a === "yes") onYes && onYes(); else onNo && onNo(); },
       key: (e) => {
         if (e.key === "Escape") { this.closeModal(); onNo && onNo(); }
+        else this.arrowNav(e, el, ".btn");
       },
       mounted: () => $("[data-act=no]", el).focus(),
     });
@@ -155,6 +258,7 @@ function toggleMute() {
   Store.settings.music = !on;
   Store.save();
   Sound.refreshMusic();
+  if (on) Sound.stopLoops(); // (an engine or an alarm that was running goes quiet with everything else)
   UI.toast(on ? "SOUND OFF" : "SOUND ON");
   return !on;
 }
@@ -175,6 +279,7 @@ class QuizPanel {
   }
   show(round, meta) {
     this.round = round;
+    if (this.el && !this.sheet) this.el.classList.remove("sheet-up"); // (a new question's answers are never left standing back)
     const q = round.q;
     const diff = ["", "EASY", "MEDIUM", "HARD"][q.difficulty] || "";
     this.qEl.classList.toggle("long", q.q.length > 190);
@@ -232,6 +337,7 @@ class QuizPanel {
       </div>
       ${auto ? `<div class="autobar"><i></i></div>` : ""}</div>`);
     this.el.appendChild(el);
+    this.el.classList.add("sheet-up"); // (the answers stand back behind it: see style.css, .sheet-up)
     this.sheet = el;
     this._next = onNext;
     if (auto) {
@@ -251,10 +357,12 @@ class QuizPanel {
     const f = this._next;
     this._next = null;
     if (this.sheet) { this.sheet.remove(); this.sheet = null; }
+    if (this.el) this.el.classList.remove("sheet-up"); // (the answers come back with the sheet gone: they stood back only while it was up)
     if (f) f();
   }
   clearSheet() {
     clearTimeout(this._autoT);
+    if (this.el) this.el.classList.remove("sheet-up");
     if (this.sheet) this.sheet.remove();
     this.sheet = null;
     this._next = null;
@@ -301,21 +409,32 @@ class RunStats {
   }
 }
 
+// each game's keys, shown in its pause menu on a computer (a mouse and a keyboard: .keys, style.css; a phone has none)
+const GAME_KEYS = {
+  blaster: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
+  boss: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
+  racer: "\u2190 \u2192 LANE · ENTER, SPACE OR \u2191 BOOST · 1-4 OR A-D ANSWER · P OR ESC PAUSE",
+  memory: "SPACE OR F FLIP · 1 AGAIN · 2 GOOD · 3 EASY · P OR ESC PAUSE",
+  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · P OR ESC PAUSE",
+};
 function pauseMenu(game) {
+  const keys = GAME_KEYS[game.gameId];
   const el = UI.el(`<div class="modal"><div class="dialog" style="--c:${COLORS.cyan}" role="dialog" aria-modal="true" aria-label="Paused">
     <h2>PAUSED</h2>
     <button class="btn" data-act="resume" style="--c:${COLORS.lime}">${icon("play")} RESUME</button>
     <button class="btn ghost" data-act="restart">RESTART</button>
-    <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button></div></div>`);
+    <button class="btn ghost" data-act="mute">${icon(Store.settings.sfx || Store.settings.music ? "note" : "mute")} <span>${Store.settings.sfx || Store.settings.music ? "SOUND ON" : "SOUND OFF"}</span></button>
+    <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button>${keys ? `<p class="keys">KEYS · ${keys}</p>` : ""}</div></div>`);
   UI.openModal({
     el,
-    on: (a) => {
+    on: (a, t) => {
+      if (a === "mute") { const now = toggleMute(); t.innerHTML = `${icon(now ? "note" : "mute")} <span>${now ? "SOUND ON" : "SOUND OFF"}</span>`; return; } // (the menu stays up: sound is a switch, not a way out)
       UI.closeModal();
       if (a === "resume") game.resume();
       if (a === "restart") game.restart();
       if (a === "quit") game.quit();
     },
-    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } },
+    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } else UI.arrowNav(e, el, ".btn"); },
     mounted: () => $("[data-act=resume]", el).focus(),
   });
 }

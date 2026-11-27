@@ -205,7 +205,7 @@ class TitleLife {
             float len = 1.1 + aSeed * 1.6;
             p += side * aCorner.x * 0.024 - dir * aCorner.y * len;
             vec4 mv = modelViewMatrix * vec4(p, 1.0);
-            vA = (0.5 + 0.5 * aSeed) * smoothstep(1.5, 6.0, -mv.z) * smoothstep(100.0, 60.0, -mv.z) * (1.0 - aCorner.y * 0.7);
+            vA = (0.5 + 0.5 * aSeed) * smoothstep(1.5, 6.0, -mv.z) * (1.0 - smoothstep(60.0, 100.0, -mv.z)) * (1.0 - aCorner.y * 0.7);
             gl_Position = projectionMatrix * mv;
           }`,
         fragmentShader: "uniform float uI; varying float vA; void main(){ gl_FragColor = vec4(vec3(0.62, 0.7, 1.0) * vA * uI, 1.0); }",
@@ -246,9 +246,9 @@ class TitleLife {
             vec2 q = vec2(vUv.x * 7.0 + uTime * 0.012, vUv.y * 2.2);
             float d = fbm(vec3(q, uTime * 0.02)), d2 = fbm(vec3(q * 2.3 + 3.0, uTime * 0.03));
             float body = smoothstep(0.4, 0.68, d + 0.25 * d2 - 0.42 * (1.0 - smoothstep(0.0, 0.55, vUv.y)));
-            float a = body * smoothstep(0.0, 0.2, vUv.y) * smoothstep(1.0, 0.86, vUv.y) * smoothstep(0.0, 0.08, vUv.x) * smoothstep(1.0, 0.92, vUv.x);
+            float a = body * smoothstep(0.0, 0.2, vUv.y) * (1.0 - smoothstep(0.86, 1.0, vUv.y)) * smoothstep(0.0, 0.08, vUv.x) * (1.0 - smoothstep(0.92, 1.0, vUv.x));
             // lit from under by the city, silvered along the tops by a moon that never shows itself
-            float under = smoothstep(0.78, 0.4, d + 0.25 * d2), top = smoothstep(0.5, 0.72, d2) * body;
+            float under = (1.0 - smoothstep(0.4, 0.78, d + 0.25 * d2)), top = smoothstep(0.5, 0.72, d2) * body;
             vec3 col = vec3(0.05, 0.022, 0.11) + uCity * under * (1.0 - vUv.y) + uMoon * top * top * (0.4 + 0.6 * vUv.y);
             // sheet lightning: a glow inside the bank, shaped by the cloud itself
             vec2 bd = (vUv - uBolt.xy) * vec2(3.0, 1.0);

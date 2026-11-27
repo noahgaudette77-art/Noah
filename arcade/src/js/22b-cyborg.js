@@ -47,9 +47,9 @@ function cyborgArmor(env, hex) {
         else {
           vec3 cyV = normalize(vViewPosition);
           float cyNV = max(dot(geometryNormal, cyV), 0.0);
-          totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - cyNV, 3.0); // a rim of its own colour along every edge that turns away
+          totalEmissiveRadiance += emissive * 21.0 * pow(max(1.0 - cyNV, 0.0), 3.0); // a rim of its own colour along every edge that turns away
           // a cool rim from above and behind on the plate: black armour keeps an edge against a dark crowd
-          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(1.0 - cyNV, 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
+          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(max(1.0 - cyNV, 0.0), 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
           // one hard, stepped highlight from the key lamp: lacquer on the plate, brighter on steel (a flat face catches it whole, as a toy's does). Paper takes none.
           float cyS = dot(reflect(-cyV, geometryNormal), normalize(vec3(-0.32, 0.62, 0.72)));
           float cyHi = smoothstep(0.93, 0.945, cyS) * 0.55 + smoothstep(0.985, 0.992, cyS) * 0.45;
@@ -1094,12 +1094,12 @@ class CyborgRig {
         g.bursts.burst(at, Math.random() < 0.5 ? 0xffffff : g.cfg.color, { n: 6, speed: 4, size: 0.1 * g.bossScale + 0.04, life: 0.4, gravity: -8 });
       }
     }
-    // ---- the arena answers a hit: its lights surge, the sky flares, and settle
-    if (g.capMat) {
-      if (!this.capBase) { this.capBase = g.capMat.color.clone(); this.skyGlow = g.sky.material.uniforms.uGlow.value; }
+    // ---- the arena answers a hit: its lamps surge, the sky flares, and settle
+    if (g.glowMat && g.glowMat.uniforms.uSurge) {
+      if (this.skyGlow === undefined) this.skyGlow = g.sky.material.uniforms.uGlow.value;
       this.env = Math.max(0, (this.env || 0) - dt * 1.6);
       const e = this.env * this.env * calm;
-      g.capMat.color.copy(this.capBase).multiplyScalar(1 + 1.6 * e);
+      g.glowMat.uniforms.uSurge.value = 1.6 * e; // (the pillars' lamps: see arenaGlowMaterial)
       g.sky.material.uniforms.uGlow.value = this.skyGlow * (1 + 0.9 * e);
     }
     // ---- shadow

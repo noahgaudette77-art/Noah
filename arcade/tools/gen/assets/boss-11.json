@@ -1,0 +1,47 @@
+{
+ "name": "boss-11",
+ "about": "Boss Rush: Patrimony Phantom, second version (2026-11-16): a deep hood over its whole head with two violet eye slits, its body split down the middle (the left half a bone-white skeleton, the right half dark steel armour), a torn black cloak, a violet-edged cleaver in its right hand. The first version (boss-11-v1.json) showed a bare chrome skull with glowing eyes over a metal ribcage, which could read as a famous film robot's endoskeleton. Tripo H3.1 from concept boss11b-phantom-sd-1; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound to the bone that owns it; the cloak hangs from the chest.",
+ "src": "post/boss11b-animA.glb",
+ "more": [
+  "post/boss11b-animB.glb"
+ ],
+ "seg": "post/boss11b-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    250,
+    305
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.4,
+   0.7
+  ]
+ },
+ "cape": [
+  0
+ ],
+ "turn": -90,
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

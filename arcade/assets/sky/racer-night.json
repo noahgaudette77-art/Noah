@@ -1,0 +1,15 @@
+{
+ "name": "racer-night",
+ "source": "racer-night",
+ "blockade": {
+  "id": 15930869,
+  "style": "M3 Sky Dome",
+  "seed": 234049624,
+  "prompt": "Clear synthwave night sky: dense stars and a violet and cyan milky way arching overhead, a low glow of magenta along a flat far horizon, thin neon-tinted haze, low dark mountain silhouettes far away, dark wet flat plain below. 1980s retro outrun aesthetic, deep contrast, crisp stars."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 412294,
+ "lightAt": 15,
+ "mean": 0.282
+}

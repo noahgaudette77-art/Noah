@@ -1,0 +1,15 @@
+{
+ "name": "guide-archive",
+ "source": "guide-archive",
+ "blockade": {
+  "id": 15930885,
+  "style": "M3 Concept Render",
+  "seed": 1464008002,
+  "prompt": "Inside a vast vaulted library archive at night: tall dark wooden shelves on two tiers receding into the distance, hanging brass lamps with warm light, a great round stained-glass rose window glowing in jewel colours at the far end, dust in the light beams. No people. Quiet, warm amber with violet shadows."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 758564,
+ "lightAt": 124,
+ "mean": 0.215
+}

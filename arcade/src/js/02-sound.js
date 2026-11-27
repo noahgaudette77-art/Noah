@@ -1,5 +1,7 @@
-// Chiptune sound: every effect and the music are synthesised with WebAudio,
-// so there are no audio files. Audio starts only after the first tap.
+// Sound. Two layers: recorded sound (effects, announcer and music in arcade/assets/audio, loaded by Assets when
+// the page can fetch them) and, under it, the chiptune synth that makes every effect and the music with WebAudio
+// from nothing. A sound that has a recording plays it; one that has none, or whose file has not arrived, is
+// synthesised, so the game is never silent and never waits. Audio starts only after the first tap.
 const Sound = {
   ctx: null,
   master: null,
@@ -10,6 +12,70 @@ const Sound = {
   step: 0,
   nextTime: 0,
   timer: 0,
+  sprites: {}, // name -> AudioBuffer: one file holding many effects end to end
+  bank: {}, // cue name -> [{ buf, at, dur, vol }]: where each recorded effect lies (several takes of one sound are picked in turn)
+  tracks: {}, // name -> { buf, loop: [from, to], vol }: recorded music
+  // Each track has a second recording, "<name>-b". A visit to a screen plays one of the two and its next visit the
+  // other (which one comes first is drawn when the page opens; nothing of it is saved). Only the one a visit plays is
+  // loaded (Assets.need and prefetch ask take()), and the other is let go when the visit starts.
+  takes: {}, // name -> the recording this visit of its screen plays
+  nextTake: {}, // name -> the one its next visit will play
+  loops: {}, // id -> a looping effect that is playing (see loop)
+  // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
+  // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
+  // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
+  MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.79, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.15, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
+
+  // The player's own levels (Setup): each layer OFF, LOW, MID or HIGH (OFF is the layer's on/off switch). The music
+  // and the effects start LOW, quiet under study (the owner, 2026-11-17); the announcer starts HIGH, clear over both.
+  LEVELS: { music: { low: 0.4, mid: 0.7, high: 1 }, sfx: { low: 0.45, mid: 0.72, high: 1 }, voice: { low: 0.5, mid: 0.75, high: 1 } },
+  level(kind) { const v = Store.settings[kind + "Vol"] || (kind === "voice" ? "high" : "low"); return this.LEVELS[kind][v] || 1; },
+  applyVolumes() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, set = (node, v) => { if (node) { node.gain.cancelScheduledValues(t); node.gain.setTargetAtTime(v, t, 0.05); } };
+    set(this.musicLevel, this.level("music"));
+    set(this.sfxBus, 0.55 * this.level("sfx"));
+    set(this.voiceBus, 0.95 * this.level("voice"));
+  },
+  // (the owner, 2026-11-17: the engines and the alarm much subtler, the hall's hum and the boost flames a little;
+  // a loop is played at this share of what its caller asks)
+  LOOP_SOFT: { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 },
+  // (and some through a low-pass, in Hz: the hall's hum keeps its tone and loses any air or hiss above it)
+  LOOP_TONE: { hub_hum: 1400 },
+  // Each loop's join (Phase 6). The generator's loops do not run on from their end into their start (a click every time
+  // round: the charge hum's 60 times the sound around it) and they swell in and fade out a little (a dip of 5 to 7 dB).
+  // When the file is decoded, each take's soft head and tail are left out and its last stretch is faded out under its
+  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm keeps its
+  // length (its two beats a loop of 2.25 s are the red frame's pulse, counted on the sound's clock: a loop 10 ms short
+  // drifted a quarter of a second from it in a minute): its end fades out and its start in over 4 ms, a soft seam, never
+  // a step. The hall's hum joins cleanly as it is.
+  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: 0.004 },
+  _join(q, how) {
+    const b = q.buf, sr = b.sampleRate, done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
+    if (typeof how === "number") { // its length kept: its end faded out and its start in
+      const s0 = Math.round(q.at * sr), s1 = Math.round((q.at + q.dur) * sr), n = Math.round(how * sr);
+      if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+      if (!done[s0]) {
+        done[s0] = 1;
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          const d = b.getChannelData(c);
+          for (let i = 0; i < n; i++) { const k = Math.sin((i / n) * (Math.PI / 2)); d[s0 + i] *= k; d[s1 - 1 - i] *= k; }
+        }
+      }
+      q.at = s0 / sr; q.dur = (s1 - s0) / sr;
+      return;
+    }
+    const [head, tail, x] = how, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
+    if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+    if (!done[s0]) {
+      done[s0] = 1;
+      for (let c = 0; c < b.numberOfChannels; c++) {
+        const d = b.getChannelData(c);
+        for (let i = 0; i < n; i++) { const u = (i / n) * (Math.PI / 2); d[s0 + i] = d[s0 + i] * Math.sin(u) + d[s1 - n + i] * Math.cos(u); }
+      }
+    }
+    q.at = s0 / sr; q.dur = (s1 - n - s0) / sr;
+  },
 
   init() {
     if (this.ctx) return this.resume();
@@ -20,10 +86,15 @@ const Sound = {
     } catch (e) { return; }
     const c = this.ctx;
     this.master = c.createGain();
-    this.master.gain.value = 0.7;
-    this.master.connect(c.destination);
+    this.master.gain.value = this.MASTER;
+    // a limiter on the way out: a blast, the music and the announcer at once must not clip
+    try {
+      const lim = c.createDynamicsCompressor();
+      lim.threshold.value = -9; lim.knee.value = 10; lim.ratio.value = 8; lim.attack.value = 0.004; lim.release.value = 0.22;
+      this.master.connect(lim).connect(c.destination);
+    } catch (e) { this.master.connect(c.destination); }
     this.sfxBus = c.createGain();
-    this.sfxBus.gain.value = 0.55;
+    this.sfxBus.gain.value = 0.55 * this.level("sfx");
     this.sfxBus.connect(this.master);
     // the arcade hall: every effect also feeds a short reverb (the music stays dry)
     try {
@@ -39,15 +110,50 @@ const Sound = {
     } catch (e) { /* no convolver: effects stay dry */ }
     this.musicBus = c.createGain();
     this.musicBus.gain.value = 0.22;
-    this.musicBus.connect(this.master);
+    // the music ducks under the announcer and the biggest blasts (see duck), then the player's own music level
+    this.duckGain = c.createGain();
+    this.musicLevel = c.createGain();
+    this.musicLevel.gain.value = this.level("music");
+    this.musicBus.connect(this.duckGain).connect(this.musicLevel).connect(this.master);
+    // recorded music has its own way in: a filter that opens as the streak grows, then the same duck
+    this.trackBus = c.createGain();
+    this.trackBus.gain.value = 0.5;
+    this.trackTone = c.createBiquadFilter();
+    this.trackTone.type = "lowpass";
+    this.trackTone.frequency.value = 20000;
+    this.trackTone.Q.value = 0.5;
+    this.trackBus.connect(this.trackTone).connect(this.duckGain);
+    // the announcer: dry, over everything
+    this.voiceBus = c.createGain();
+    this.voiceBus.gain.value = 0.95 * this.level("voice");
+    this.voiceBus.connect(this.master);
     const len = c.sampleRate * 1;
     this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (!this._watching) { this._watching = true; document.addEventListener("visibilitychange", () => this._onVisible()); }
     this.resume();
   },
+  // (from "suspended", and from Safari's "interrupted": a call or another app took the sound, and the next tap brings it
+  // back; a tap calls init, which calls this)
   resume() {
-    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    const c = this.ctx;
+    if (c && c.state !== "running" && c.state !== "closed") c.resume().catch(() => {});
+  },
+  // A hidden page is silent (Phase 6): the game stands still behind it (its frames stop), so its music, an engine or
+  // the alarm would drone on alone. The sound is faded out while the page is hidden and back in when it is shown, and
+  // runs on, unheard: a blip or a typed letter that a timer plays behind the hidden page plays in its time, silent,
+  // rather than all at once when the page comes back (as it did with the sound suspended), and nothing waits on a
+  // suspend or a resume to finish. A line being spoken is stopped, and none is begun while the page is hidden (say).
+  MASTER: 0.7,
+  _onVisible() {
+    const c = this.ctx;
+    if (!c || !this.master) return;
+    const t = c.currentTime, g = this.master.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(document.hidden ? 0 : this.MASTER, t, 0.02);
+    if (!document.hidden) { this.resume(); return; }
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) { /* no speech here */ }
   },
 
   tone(freq, dur, o = {}) {
@@ -98,22 +204,205 @@ const Sound = {
     return p;
   },
   // The announcer: the browser's own speech voice, pitched down, for the big moments.
+  // It speaks one line at a time. A line asked for while the one before it is still being spoken waits its turn
+  // (0.8 s or more after that one began, by its length); a line that would start more than 2.5 s late is not
+  // spoken at all (a stale call-out is worse than none). Returns how long the line waits, in seconds (-1: not spoken).
+  sayAt: 0, sayGen: 0,
   say(text) {
-    if (!Store.settings.sfx || !Store.settings.voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    try {
-      const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
-      u.lang = "en-US";
-      u.rate = 1.05;
-      u.pitch = 0.5;
-      u.volume = 0.9;
-      if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
-      speechSynthesis.speak(u);
-    } catch (e) { /* speech isn't allowed here */ }
+    if (!Store.settings.sfx || !Store.settings.voice) return 0;
+    if (document.hidden) return -1; // (a hidden page says nothing: _onVisible)
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
+    const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes ? takes[0].dur + 0.1 : 0.5 + String(text).length * 0.05));
+    if (takes) { this.duck(0.4, 1.1 + wait, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait }); return wait; }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return wait;
+    const speak = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
+        u.lang = "en-US";
+        u.rate = 1.05;
+        u.pitch = 0.5;
+        u.volume = 0.9;
+        if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
+        speechSynthesis.speak(u);
+      } catch (e) { /* speech isn't allowed here */ }
+    };
+    if (wait > 0.02) { const gen = this.sayGen; setTimeout(() => { if (gen === this.sayGen) speak(); }, wait * 1000); } else speak();
+    return wait;
   },
-  sfx(name, pan = 0) {
+  // A line in someone's own recorded voice ("vo@adam:game over": a boss's last word), on the announcer's bus and in
+  // its queue (one line at a time). Without that recording, the announcer says it.
+  sayAs(who, text) {
+    const key = "vo@" + who + ":" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    if (!takes || !Store.settings.sfx || !Store.settings.voice) return this.say(text);
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes[0].dur + 0.1));
+    this.duck(0.4, 1.1 + wait, 0.7);
+    this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait });
+    return wait;
+  },
+  // Play an effect. o: { vol, rate, delay } scale a recorded take, lp (Hz) muffles it as a sound far off does (the
+  // title hall's distant growls); the synth ignores them.
+  sfx(name, pan = 0, o) {
     if (!this.ctx || !Store.settings.sfx) return;
+    if (this.bank[name]) { this._cue(name, pan, o); return; }
     this.pan = pan;
-    try { this._sfx(name); } finally { this.pan = 0; }
+    try { this._sfx(this.ALIAS[name] || name); } finally { this.pan = 0; }
+  },
+  // What the synth plays for a sound that only exists as a recording (when the recordings are not loaded).
+  ALIAS: {
+    laser_fire: "laser", laser_heavy: "laser", plasma_fire: "shot", muzzle: "tick", shell: "tick",
+    impact_good: "boom", impact_big: "bigboom", impact_reject: "wrong", impact_hull: "hit", impact_shield: "shield", impact_metal: "clunk",
+    explosion_small: "boom", explosion_big: "bigboom", explosion_huge: "bossblast", debris: "shatter",
+    charge_up: "charge", charge_long: "bosscharge", warning: "buzz", lock_on: "tick", alarm: "buzz",
+    beam_fire: "laser", missile_fire: "swoosh", missile_hit: "boom", slam: "bosssmash", wave_fire: "whoosh",
+    boss_roar: "bossroar", boss_hurt: "hit", boss_stagger: "bossdown", boss_break: "bosspop", boss_death: "bossblast",
+    player_hit: "hit", heart_lost: "shatter", shield_down: "shield", low_health: "buzz",
+    crash: "hit", crash_glass: "shatter", skid: "swoosh", near_miss: "whoosh", boost: "warp", boost_flame: "whoosh",
+    reward: "coin", slowmo_in: "whoosh", ui_click: "blip", ui_select: "select", ui_back: "back",
+    volley_fire: "shot", sting_correct: "correct", sting_wrong: "wrong",
+  },
+  // A recorded effect. Takes of one sound are played in turn, each a touch different in pitch and level.
+  _cue(name, pan, o = {}) {
+    const takes = this.bank[name], c = this.ctx;
+    if (!takes || !c) return null;
+    const k = (takes.i = ((takes.i || 0) + 1 + (takes.length > 2 ? Math.floor(Math.random() * (takes.length - 1)) : 0)) % takes.length), q = takes[k];
+    const src = c.createBufferSource(), g = c.createGain(), vary = o.vary === undefined ? 1 : o.vary;
+    src.buffer = q.buf;
+    src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() - 0.5) * 0.06 * vary);
+    g.gain.value = (o.vol === undefined ? 1 : o.vol) * q.vol * (1 - Math.random() * 0.12 * vary);
+    let out = o.bus || this.sfxBus;
+    if (pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(out); out = p; }
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; f.Q.value = 0.5; f.connect(out); out = f; }
+    // Its envelope (Phase 6), on a gain of its own (hush fades g): in over 2 ms, so a take that starts inside a sound (an
+    // announcer's line started at its words, Starfall at its crash) cannot click; and a take the generator stopped while
+    // it was still sounding is let go over its last stretch (_release) rather than cut by the build's 30 ms fade.
+    const t0 = c.currentTime + (o.delay || 0), env = c.createGain(), len = q.dur / src.playbackRate.value, rel = q.rel === undefined ? (q.rel = this._release(q)) : q.rel;
+    env.gain.setValueAtTime(0, t0);
+    env.gain.linearRampToValueAtTime(1, t0 + 0.002);
+    if (rel) env.gain.setTargetAtTime(0, t0 + len - rel, rel / 3);
+    src.connect(env).connect(g).connect(out);
+    src.start(t0, q.at, q.dur);
+    if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    const live = this.live || (this.live = new Set()), e = { src, g, born: c.currentTime, end: t0 + q.dur / src.playbackRate.value + 0.2 }; // (kept until it ends, so hush can cut it short)
+    if (live.size > 48) live.forEach((x) => { if (x.end < c.currentTime) live.delete(x); }); // (should an end go unreported)
+    live.add(e);
+    src.onended = () => live.delete(e);
+    return src;
+  },
+  // How long a take is let go over at its end, measured the first time it is played: none for one that ends in its own
+  // decay; for one still sounding when the build's fade ends it (anywhere in the 40 ms before its last 30 ms within
+  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s, and never from
+  // before its loudest moment (a take the generator stopped on its height keeps it, and is let go just after it). It
+  // reads a copy of the take alone (copyFromChannel into a scratch kept for it), never the whole sprite's channel,
+  // which a browser may have to copy whole once the sprite has played.
+  _release(q) {
+    const sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), q.buf.length - a), w = Math.round(0.02 * sr);
+    if (n < 8 * w) return 0;
+    if (!this._scratch || this._scratch.length < n) this._scratch = new Float32Array(Math.max(n, 2 * sr));
+    const d = this._scratch.subarray(0, n);
+    q.buf.copyFromChannel(d, 0, a);
+    let top = 0, peak = 0, end = 0;
+    for (let i = 0; i + w <= n; i += w >> 1) {
+      let s = 0;
+      for (let j = i; j < i + w; j++) s += d[j] * d[j];
+      if (s > top) { top = s; peak = i + w; }
+      if (i + w >= n - 2.5 * w && i + w <= n - 1.5 * w && s > end) end = s;
+    }
+    return end > top * 0.063 ? Math.max(0, Math.min(0.15, q.dur / 4, (n - peak) / sr)) : 0;
+  },
+  // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
+  // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
+  // was started in this same moment is left alone: the menu's own blip.
+  hush(fade = 0.12) {
+    this.sayGen++; this.sayAt = 0; // (a line still waiting its turn is not spoken either)
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
+    if (!this.ctx || !this.live) return;
+    const t = this.ctx.currentTime;
+    this.live.forEach((e) => {
+      if (e.born >= t) return;
+      try { e.g.gain.cancelScheduledValues(t); e.g.gain.setTargetAtTime(0.0001, t, fade / 3); e.src.stop(t + fade + 0.05); } catch (err) { /* ended */ }
+      this.live.delete(e);
+    });
+  },
+  // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
+  // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false
+  // when there is no recording by that name, so the caller can fall back on the synth.
+  loop(id, name, o = {}) {
+    if (!this.ctx || !Store.settings.sfx || !this.bank[name]) return false;
+    if (this.loops[id]) { if (this.loops[id].name === name) return true; this.stopLoop(id, 0.05); }
+    const takes = this.bank[name], c = this.ctx, q = takes[(takes.li = ((takes.li === undefined ? -1 : takes.li) + 1) % takes.length)], src = c.createBufferSource(), g = c.createGain(); // (a loop recorded more than once: each start takes the next take)
+    src.buffer = q.buf; src.loop = true; src.loopStart = q.at; src.loopEnd = q.at + q.dur;
+    src.playbackRate.value = o.rate || 1;
+    const lv = q.vol * (this.LOOP_SOFT[name] || 1), to = (o.vol === undefined ? 1 : o.vol) * lv;
+    g.gain.value = 0.0001;
+    g.gain.setTargetAtTime(to, c.currentTime, o.fade || 0.25);
+    if (name === "alarm") g.gain.setTargetAtTime(to * 0.35, c.currentTime + 3.4, 0.9); // (three beats to say it, then a faint beat under the play: the red frame keeps saying it)
+    if (this.LOOP_TONE[name]) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = this.LOOP_TONE[name]; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
+    g.connect(this.sfxBus);
+    src.start(c.currentTime, q.at);
+    this.loops[id] = { name, src, g, vol: lv };
+    return true;
+  },
+  loopSet(id, o) {
+    const l = this.loops[id];
+    if (!l) return;
+    const t = this.ctx.currentTime;
+    if (o.vol !== undefined) l.g.gain.setTargetAtTime(Math.max(0.0001, o.vol * l.vol), t, 0.08);
+    if (o.rate !== undefined) l.src.playbackRate.setTargetAtTime(o.rate, t, 0.08);
+  },
+  stopLoop(id, fade = 0.25) {
+    const l = this.loops[id];
+    if (!l) return;
+    delete this.loops[id];
+    try { l.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, fade / 3); l.src.stop(this.ctx.currentTime + fade + 0.1); } catch (e) { /* stopped */ }
+  },
+  stopLoops() { for (const id in this.loops) this.stopLoop(id, 0.15); },
+  // The music steps back for a moment (the announcer, a great blast) and comes back up.
+  duck(depth = 0.45, hold = 0.5, release = 0.8) {
+    if (!this.ctx || !this.duckGain) return;
+    const g = this.duckGain.gain, t = this.ctx.currentTime;
+    try { g.cancelScheduledValues(t); g.setTargetAtTime(depth, t, 0.03); g.setTargetAtTime(1, t + hold, release / 3); } catch (e) { /* not supported */ }
+  },
+  // ---- recorded sound, loaded by Assets --------------------------------------------------
+  _decode(buf) { return new Promise((res, rej) => { try { const p = this.ctx.decodeAudioData(buf.slice(0), res, rej); if (p && p.catch) p.catch(rej); } catch (e) { rej(e); } }); },
+  // Every sound file starts with a click exactly a quarter of a second in. Decoders differ in what they do with an
+  // encoder's padding, so where the click turns up says how far this one has shifted everything after it.
+  _clickAt(buf) {
+    const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7));
+    for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25;
+    return 0;
+  },
+  // One file of effects and the list of where each lies: Assets.files.sprites[name] = { file, cues: { cue: [[at, dur, vol, duck]...] } }
+  loadSprite(name) {
+    const sp = Assets.files.sprites[name];
+    if (!sp || !this.ctx) return Promise.resolve(null);
+    return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
+      this.sprites[name] = buf;
+      Assets.release(sp.file); // (kept decoded for the session: the file's bytes are not needed again)
+      const off = this._clickAt(buf), mix = name === "voice" ? this.MIX.voice : this.MIX.sets[name] || 1; // (the set's level in the mix)
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: (vol === undefined ? 1 : vol) * mix, duck: duck || 0 }));
+      for (const cue in this.LOOP_JOIN) if (sp.cues[cue]) this.bank[cue].forEach((q) => this._join(q, this.LOOP_JOIN[cue])); // (before anything can play from it)
+      return buf;
+    }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
+  },
+  // A piece of music: Assets.files.music[name] = { file, loop: [from, to], vol }. If it is the one that should be
+  // playing by the time it arrives, it takes over from the synth.
+  loadTrack(name) {
+    const m = Assets.files.music[name];
+    if (!m || !this.ctx) return Promise.resolve(null);
+    if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
+    const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
+      const off = this._clickAt(buf);
+      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: (m.vol === undefined ? 1 : m.vol) * (this.MIX.music[name] || 1) }; // (the track's level in the mix)
+      if (this.trackName && (this.takes[this.trackName] || this.trackName) === name && Store.settings.music) this.play(this.trackName, true);
+      return buf;
+    }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
+    (this._trackLoad || (this._trackLoad = {}))[name] = p;
+    return p;
   },
   _sfx(name) {
     const T = (f, d, o) => this.tone(f, d, o);
@@ -229,20 +518,21 @@ const Sound = {
   // Arcade-floor ambience: a low crowd murmur plus distant cabinets beeping.
   ambience(on) {
     if (!this.ctx) return;
+    // (the hall's own recording when it has loaded: a loop under the music, in place of the synth's murmur)
+    clearTimeout(this._ambEnd);
+    if (on && this.bank.hub_hum && Store.settings.sfx) {
+      if (this._amb) this.ambience(false);
+      this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 });
+      this._ambEnd = setTimeout(() => this.stopLoop("ambience", 4), 14000); // (it sets the room as it comes on, then settles away: not a loop under every minute in the hall)
+      return;
+    }
+    if (!on) this.stopLoop("ambience", 0.6);
+    // Without the recording: the distant cabinets' soft blips, and nothing under them. (Until 2026-11-17 a loop of
+    // white noise through a wide band-pass lay under them as a "crowd murmur": on a phone, where the hall's recording
+    // is often still on its way 2.6 s after the room comes on, that started instead and never stopped, a steady
+    // hiss at about -57 dBFS that was the only sound above 2 kHz under the soft new music. It is gone.)
     if (on && !this._amb && Store.settings.sfx) {
       const c = this.ctx;
-      const src = c.createBufferSource();
-      src.buffer = this.noiseBuf;
-      src.loop = true;
-      const f = c.createBiquadFilter();
-      f.type = "bandpass";
-      f.frequency.value = 420;
-      f.Q.value = 0.7;
-      const g = c.createGain();
-      g.gain.value = 0.0001;
-      g.gain.setTargetAtTime(0.05, c.currentTime, 1.2);
-      src.connect(f).connect(g).connect(this.sfxBus);
-      src.start();
       const blip = () => {
         if (!this._amb) return;
         const at = c.currentTime;
@@ -262,12 +552,11 @@ const Sound = {
         o.stop(at + 0.2);
         this._amb.t = setTimeout(blip, rand(500, 2200));
       };
-      this._amb = { src, g, t: setTimeout(blip, 600) };
+      this._amb = { t: setTimeout(blip, 600) };
     } else if (!on && this._amb) {
       const a = this._amb;
       this._amb = null;
       clearTimeout(a.t);
-      try { a.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.2); a.src.stop(this.ctx.currentTime + 0.8); } catch (e) { /* already stopped */ }
     }
   },
 
@@ -288,10 +577,13 @@ const Sound = {
       f.connect(g).connect(this.sfxBus);
       o1.start();
       o2.start();
+      // its breath, in tone: the drone's filter opens and it swells a little (in), then settles slower (out). (It
+      // breathed in bursts of band-passed noise, a hiss every 4.8 s all through the exam.)
       const breathe = () => {
         if (!this._dread) return;
-        this.noise(1.1, { vol: 0.035, freq: 620, type: "bandpass", q: 0.9 }); // in
-        this.noise(1.7, { delay: 1.5, vol: 0.06, freq: 380, type: "bandpass", q: 0.8 }); // out
+        const t = c.currentTime;
+        f.frequency.cancelScheduledValues(t); f.frequency.setTargetAtTime(640, t, 0.45); f.frequency.setTargetAtTime(380, t + 1.4, 0.75);
+        g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.064, t, 0.45); g.gain.setTargetAtTime(0.05, t + 1.4, 0.75);
         this._dread.t = setTimeout(breathe, 4800);
       };
       this._dread = { o1, o2, g, t: setTimeout(breathe, 1200) };
@@ -341,7 +633,15 @@ const Sound = {
 
   // Music builds with your streak: 0 calm, 1 hats, 2 lead, 3 everything.
   intensity: 0,
-  setIntensity(n) { this.intensity = clamp(n, 0, 3); },
+  setIntensity(n) {
+    this.intensity = clamp(n, 0, 3);
+    // recorded music opens up with the streak: a touch darker and lower while it is calm, everything at the top
+    if (this.ctx && this.trackTone) {
+      const t = this.ctx.currentTime, i = this.intensity;
+      this.trackTone.frequency.setTargetAtTime([5200, 8000, 12500, 20000][Math.round(i)], t, 0.4);
+      this.trackBus.gain.setTargetAtTime([0.4, 0.44, 0.48, 0.52][Math.round(i)], t, 0.4);
+    }
+  },
   intensityFor(streak) { return streak >= 8 ? 3 : streak >= 5 ? 2 : streak >= 2 ? 1 : 0; },
 
   // --- music: a tiny step sequencer ----------------------------------------
@@ -350,13 +650,73 @@ const Sound = {
     hub: { bpm: 92, prog: [[38, 50, 53, 57], [43, 50, 55, 59], [36, 48, 52, 55], [41, 48, 53, 57]], arp: [0, 2, 1, 3, 2, 1, 3, 2], lead: null },
     game: { bpm: 128, prog: [[45, 57, 60, 64], [45, 57, 60, 64], [41, 53, 57, 60], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 1, 2, 3, 2], lead: null },
     boss: { bpm: 140, prog: [[40, 52, 55, 59], [40, 52, 55, 59], [41, 53, 56, 60], [38, 50, 53, 57]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: null },
+    get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
+    get finalboss() { return this.boss; }, // (the last boss has its own recording; without it, the boss tune)
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
+    get memory() { return this.calm; }, get exam() { return this.calm; }, // (Memory Bank and the Final Exam have their own recordings; without them, the calm tune as before)
   },
-  play(name) {
-    if (this.trackName === name && this.timer) return;
+  // The recording to load or play for a track: during its screen's visit the one that visit plays, between visits the
+  // one the next visit will play (a track with one recording: itself).
+  take(name) {
+    const base = String(name).replace(/-b$/, ""), b = base + "-b", files = Assets.files.music;
+    if (!Assets.on || !files[base] || !files[b]) return name; // (from disk: one tune per track, as before)
+    if (this.trackName === base && this.takes[base]) return this.takes[base];
+    return this.nextTake[base] || (this.nextTake[base] = Math.random() < 0.5 ? base : b);
+  },
+  // again: the same visit, started over (its recording has arrived, the music was switched back on)
+  play(name, again) {
+    if (!again && this.trackName === name && (this.timer || this._now)) return;
+    if (this.trackName !== name && Assets.on && Assets.files.music[name + "-b"]) { // a new visit: the recording lined up for it, and the other one next time
+      const t = (this.takes[name] = this.take(name)), o = (this.nextTake[name] = t === name ? name + "-b" : name);
+      delete this.tracks[o];
+      if (this._trackLoad) delete this._trackLoad[o];
+    }
+    // A decoded track is about 30 MB (some 85 s of stereo): only the one this visit plays is kept. Another screen's is
+    // let go when its own visit ends; going back decodes it again from the file, which stays downloaded.
+    if (this.trackName !== name) { const keep = this.takes[name] || name; for (const k in this.tracks) if (k !== keep) { delete this.tracks[k]; if (this._trackLoad) delete this._trackLoad[k]; } }
     this.trackName = name;
     this.stopMusic();
-    if (!this.ctx || !Store.settings.music || !this.TRACKS[name]) return;
+    if (!this.ctx || !Store.settings.music) return;
+    const take = this.takes[name] || name, rec = this.tracks[take];
+    if (rec) { // the recording: its loop played pass after pass (_pass), faded in
+      const c = this.ctx, g = c.createGain(), now = { g, passes: [] }, t = c.currentTime;
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(rec.vol, t, 0.5);
+      g.connect(this.trackBus);
+      this._now = now;
+      this._pass(rec, now, t, true);
+      this._pass(rec, now, t + (rec.loop[1] - rec.loop[0]), false);
+      this.setIntensity(this.intensity);
+      return;
+    }
+    const coming = Assets.on && !!Assets.files.music[take];
+    // (a recording on its way is waited for in silence and fades in when it arrives: the synth's chiptune, with its
+    // noise hi-hats, no longer stands in for a few seconds first. It plays only when there is no recording: opened
+    // from disk, or the file would not load.)
+    if (coming) { this.loadTrack(take).then((buf) => { if (!buf && this.trackName === name && !this._now && !this.timer && Store.settings.music) this._synth(name); }); return; }
+    this._synth(name);
+  },
+  // One pass of a recording's loop, from time t (Phase 6). Its file holds a copy of the loop's start right after the
+  // loop's end, so each pass runs on into that copy for MUSIC_X while the next comes in over it: the two copies, coded
+  // apart, differ only by the codec's own noise, and the seam is a blend, never a step (looped in place, the title's
+  // soft music had a faint tick each time round). When a pass ends, the one after the next is set to follow, so a pass
+  // is always waiting a whole loop ahead.
+  MUSIC_X: 0.03,
+  _pass(rec, now, t, first) {
+    if (this._now !== now || !this.ctx) return;
+    const c = this.ctx, L = rec.loop[1] - rec.loop[0], X = this.MUSIC_X, src = c.createBufferSource(), e = c.createGain();
+    src.buffer = rec.buf;
+    e.gain.setValueAtTime(first ? 1 : 0, t);
+    if (!first) e.gain.linearRampToValueAtTime(1, t + X);
+    e.gain.setValueAtTime(1, t + L);
+    e.gain.linearRampToValueAtTime(0, t + L + X);
+    src.connect(e).connect(now.g);
+    src.start(t, rec.loop[0], L + X);
+    now.passes.push(src);
+    src.onended = () => { now.passes = now.passes.filter((s) => s !== src); this._pass(rec, now, t + 2 * L, false); };
+  },
+  _synth(name) {
+    if (!this.TRACKS[name]) return;
     this.track = this.TRACKS[name];
     this.step = 0;
     this.nextTime = this.ctx.currentTime + 0.08;
@@ -365,12 +725,17 @@ const Sound = {
   stopMusic() {
     clearInterval(this.timer);
     this.timer = 0;
+    if (this._now) {
+      const n = this._now;
+      this._now = null;
+      try { n.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.18); } catch (e) { /* no context */ }
+      n.passes.forEach((s) => { try { s.stop(this.ctx.currentTime + 0.9); } catch (e) { /* stopped */ } }); // (one waiting to start never starts)
+    }
   },
   refreshMusic() {
     const n = this.trackName;
-    this.trackName = null;
-    if (Store.settings.music && n) this.play(n);
-    else this.stopMusic();
+    if (Store.settings.music && n) this.play(n, true);
+    else { this.trackName = null; this.stopMusic(); }
   },
   _schedule() {
     const c = this.ctx;
@@ -391,7 +756,7 @@ const Sound = {
       if (lvl >= 2 && s % 4 === 0) this._tone(this.musicBus, hz(chord[(s / 4 + bar) % 4] + 24), stepDur * 3.5, { type: "square", vol: 0.06, at });
       if (lvl >= 3 && s % 2 === 1) this._tone(this.musicBus, hz(chord[tr.arp[((s - 1) / 2) % tr.arp.length]] + 24), stepDur * 0.9, { type: "triangle", vol: 0.08, at });
       if (s % 8 === 0) this._tone(this.musicBus, 120, 0.14, { type: "sine", slide: -80, vol: 0.55, at });
-      if (s % 8 === 4 && this.trackName !== "calm") this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
+      if (s % 8 === 4 && tr !== this.TRACKS.calm) this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
       this.nextTime += stepDur;
       this.step++;
     }

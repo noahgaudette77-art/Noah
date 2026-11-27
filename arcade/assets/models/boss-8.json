@@ -1,0 +1,97 @@
+{
+ "name": "boss-8",
+ "triangles": 50912,
+ "bytes": 1851376,
+ "tex": 1024,
+ "bones": {
+  "R_Hand": {
+   "tris": 4411,
+   "caps": 3
+  },
+  "R_Forearm": {
+   "tris": 1846,
+   "caps": 6
+  },
+  "Hip": {
+   "tris": 11374,
+   "caps": 78
+  },
+  "R_Upperarm": {
+   "tris": 2909,
+   "caps": 15
+  },
+  "R_Calf": {
+   "tris": 3881,
+   "caps": 16
+  },
+  "R_Thigh": {
+   "tris": 2113,
+   "caps": 14
+  },
+  "Spine02": {
+   "tris": 5439,
+   "caps": 49
+  },
+  "Head": {
+   "tris": 6413,
+   "caps": 26
+  },
+  "Spine01": {
+   "tris": 500,
+   "caps": 6
+  },
+  "L_Thigh": {
+   "tris": 2341,
+   "caps": 9
+  },
+  "L_Calf": {
+   "tris": 2103,
+   "caps": 7
+  },
+  "L_Foot": {
+   "tris": 1603,
+   "caps": 6
+  },
+  "L_Forearm": {
+   "tris": 1401,
+   "caps": 8
+  },
+  "L_Upperarm": {
+   "tris": 2925,
+   "caps": 18
+  },
+  "L_Hand": {
+   "tris": 1653,
+   "caps": 4
+  }
+ },
+ "clips": {
+  "attackB": 5.4,
+  "death": 3.033,
+  "idle": 15.367,
+  "enter": 3.733,
+  "attackA": 6.6,
+  "rage": 3.533,
+  "hurt": 1.3,
+  "stagger": 1.867,
+  "idle2": 17.083,
+  "win": 5.667,
+  "hurtS": 1.25,
+  "hurtG": 1.542
+ },
+ "size": [
+  0.7506,
+  1,
+  0.6343
+ ],
+ "source": "post/boss08-animA.glb",
+ "joints": {
+  "head": "Head",
+  "chest": "Spine02",
+  "hips": "Hip",
+  "handL": "L_Hand",
+  "handR": "R_Hand",
+  "footL": "L_Foot",
+  "footR": "R_Foot"
+ }
+}

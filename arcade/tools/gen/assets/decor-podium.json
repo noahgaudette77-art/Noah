@@ -1,0 +1,34 @@
+{
+ "name": "decor-podium",
+ "about": "Background decor: the first podium (replaced as a topper for being dark on the hall's black), put to use where its darkness suits; an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/props/prop-podium-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 8000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    345,
+    15
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "bar": "the game's one quality bar (2026-11-17): a figure or prop seen small, far off or in the background: about 7K to 10K triangles, 512 px maps"
+}

@@ -1,0 +1,46 @@
+{
+ "name": "boss-1",
+ "about": "Boss Rush: Product Pusher, second version (2026-11-16): a salesman robot in a plated chrome suit with a glowing cyan tie and a briefcase; an angular chrome head with slick moulded hair, a faceplate with cyan eye slits and a fixed cyan grin line. The first version (boss-1-v1.json) had a grinning chrome skull in dark glasses that read as a famous film robot in sunglasses; a second draft with a round chrome helmet and a black visor screen was not used (it would read as a famous duo's helmets). Tripo H3.1 from concept boss01c-pusher-sd-0; rigged by Tripo (rig v1.0, biped); ten clips retargeted from Tripo's presets (three requests); parts from Tripo segmentation, each bound whole to the bone that owns it.",
+ "src": "post/boss01c-animA.glb",
+ "more": [
+  "post/boss01c-animB.glb",
+  "post/boss01c-animC.glb"
+ ],
+ "seg": "post/boss01c-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death",
+  "victory_celebration": "win",
+  "defeat_02": "defeat"
+ },
+ "emissive": {
+  "hues": [
+   [
+    160,
+    215
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.45,
+   0.75
+  ]
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

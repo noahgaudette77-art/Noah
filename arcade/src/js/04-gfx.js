@@ -23,12 +23,371 @@ const GFX = {
   opt: { bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true },
   calm: false,
   flashAt: -9, hitAt: -9,
+  danger: 0, dangerT: 0, // low health: a red vignette that beats (see setDanger)
+  bloomKick: 0, // a blow's bloom: the glow of the whole picture swells for a moment (see bloomPulse)
   // Setup: the effect switches and Reduced effects.
   applySettings() {
     const s = Store.settings;
-    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
+    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: false, ao: true, curve: false }, s.fx || {});
+    // (2026-11-23, the owner: as crisp as it can be, no visible blur. Depth of field, which softens what is behind the
+    // subject on purpose, starts off, once, for a save made before; it and the glass's bend are Setup > Effects switches.
+    // The mark is kept with the switches, so switches synced from an older copy are brought along too, and goes with the
+    // next save: saving here would make this device's settings look newer than a copy synced from another.)
+    if (!(s.fx.v >= 2)) { s.fx.v = 2; s.fx.dof = false; }
     this.opt = s.fx;
     this.calm = !!s.calm;
+    if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
+  },
+  // ---- quality tiers (2026-11-23, the owner's: a MAC tier, a PHONE tier and a SAFE one, chosen by the device, with
+  // Setup's override). MAC draws everything: the screen's own Retina pixels (twice the page's), edges smoothed by 4x
+  // multisampling, every effect. PHONE: at most 2x (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip
+  // can), 2x multisampling, the bloom from half size, no ambient shade, depth of field, motion blur or lens streaks, and
+  // fewer particles. SAFE, for a weak or a throttled device: 1.5x, 2x multisampling, the fewest passes. LIGHTEST is the
+  // governor's last step, never Setup's: 1.25x, still with 2x multisampling (the master overhaul, 2026-11-23: no FXAA
+  // on any tier: it blurred every edge just when a phone was struggling; a phone's chip resolves 2x samples on chip).
+  // No tier draws the lens's resting fringe (a pixel's colour split toward the corners: a soft edge for an effect the
+  // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
+  // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
+  TIERS: [
+    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 }, // (mirror: the Mac's richer tier tried 0.8, 2026-11-25: 5 to 7% more of a frame in the hall and Boss Rush, 11% in Nest Egg Run with its sharper skies, drawn in software here; with no MacBook to measure on, smoothness first: 0.6 as before)
+    { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
+    { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
+    { name: "LIGHTEST", pr: 1.25, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
+  ],
+  // On a phone (Assets.phone) each tier is lighter still (the owner, 2026-11-17: the shared render cost first): no
+  // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at MAC no
+  // lens streaks, six bloom levels), and at PHONE, where a phone starts, no god rays, no contact shadows, four bloom
+  // levels, and fewer particles still.
+  PHONE: [
+    { samples: 2, mirror: 0, lens: false, levels: 6 },
+    { mirror: 0, rays: false, shadows: false, levels: 4, fx: 0.7 },
+    { mirror: 0, shadows: false },
+    { mirror: 0, shadows: false },
+  ],
+  tier: 0,
+  auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
+  extras: true, // background figures and decorative extras (the tier's; scenes check it)
+  fxScale: 1, // how many particles an effect throws (the tier's; effects may scale by it)
+  // (the Mac's richer tier, 2026-11-25: the owner raised the Mac's graphics memory budget to about 2 GB) A computer
+  // drawing at the MAC tier: what spends the larger budget on denser props and richer effects asks this (never a phone,
+  // nor a computer the governor or Setup holds lower), each game as it is built. What it adds draws from a randomness of
+  // its own (richRandom) and takes slots of its own (Risk Blaster's far rocks past the first 96, CombatFX's chunks past
+  // its own), so what the game draws from the seeded randomness, the captures' questions and scenery, is the same.
+  get rich() { return this.tier === 0 && !(typeof Assets !== "undefined" && Assets.phone); },
+  richN: 0,
+  richRandom(fn) { return ownRandom(0x6b43a9b5 + this.richN++, fn); },
+  // the effects as drawn: the player's own switches, less what the tier leaves out
+  eopt() {
+    const T = this.TIERS[this.tier], o = this.opt;
+    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen, shadows: o.shadows !== false && T.shadows !== false, fringe: T.fringe !== false });
+  },
+  // how many lights the current scene has on (for the readout: each one is reckoned for every lit pixel)
+  lightCount() {
+    const sc = Scenes.cur && Scenes.cur.scene;
+    if (!sc) return 0;
+    let n = 0; sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight && o.layers.mask !== (1 << LIGHT_LAYER)) n++; }); // (the lights drawn: a screen's own lights under a budget are not)
+    return n;
+  },
+  setTier(n, why) {
+    n = Math.max(0, Math.min(this.TIERS.length - 1, n | 0));
+    if (n === this.tier && this._tierSet) return;
+    this._tierSet = true;
+    const T = this.TIERS[n];
+    this.tier = n; this.extras = T.extras; this.fxScale = T.fx;
+    document.body.classList.toggle("lite", n >= 1 || this.liteAlways()); // (no frosted glass over the live picture below MAC, nor on a phone or a tablet at any tier: see style.css, body.lite)
+    if (this.ok && this.pipe) { this.pipe.setSamples(T.samples); this.pipe.setMirror(T.mirror); this.resize(); }
+    this.perf.changedAt = performance.now(); this.perf.why = why || "";
+    if (typeof Scenes !== "undefined" && Scenes.cur && Scenes.cur.onTier) { try { Scenes.cur.onTier(n); } catch (e) { /* a scene's own response to the tier */ } }
+  },
+  // Setup > Graphics: "auto" lets the frame rate choose; a fixed tier stays put
+  // (the saved values keep their old names: high is MAC, medium PHONE, low SAFE)
+  setQuality(q) {
+    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf, cap = P.capped ? P.capMs : 0, fast = P.capFast; // (a device's cap held now is the device's, not the tier's: held again on the new choice, at its sharpest, its band of rates kept)
+    this.auto = fixed === undefined;
+    P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
+    P.changedAt = performance.now(); // (the frames before the choice are not the choice's: its own first seconds are left out, as a step's)
+    const held = cap ? "setup: held at " + Math.round(1000 / cap) + " fps, the device's cap" : "";
+    if (this.auto && P.ladder) { P.ladder = this.makeLadder(); P.start = this.startRung(); this.setRung(P.start, "setup"); if (cap) { this.capHold(P.start, cap, held); P.capFast = fast; } return; }
+    const lights = this.lightCap !== 99;
+    this.scale = 1; this.lightCap = 99;
+    if (lights) this.lightsReset();
+    if (P.ladder) { P.ladder = this.fixedLadder(fixed); P.rung = P.start = 0; }
+    if (fixed === this.tier) this.resize();
+    this.setTier(fixed, "setup");
+    if (cap) { this.capHold(0, cap, held); P.capFast = fast; }
+  },
+  // ---- the frame rate, watched (Setup > Graphics: AUTO) by a governor (the owner, 2026-11-22 and 2026-11-23: a steady
+  // 60 FPS comes before any one effect, on the phone and through a long session on the Mac). It moves the picture along
+  // a ladder of steps, sharpest first: the size the scene is drawn at goes first (on a high-density screen 2x, then
+  // 1.9x, 1.8x and on to 1.5x the page's pixels, about a tenth of the pixels a step: the page's own text stays sharp),
+  // then the effects (a tier down: PHONE, SAFE, LIGHTEST; no step down draws more pixels than the one above it), then
+  // the lights (the screen's point lights cut to two, then one: the one step that costs a moment, its shaders made
+  // again). A desktop's ladder starts at MAC, a phone's and a tablet's at PHONE, and AUTO never climbs above where it
+  // starts (the rest is Setup's).
+  // A step down when frames have run under 55 a second (or kept catching: a tenth of them over 25 ms) through a second
+  // of its looks, each look the last two seconds; frames still slow at the next look take two of a tier's sizes at
+  // once, then three (the effects and the lights only ever go a step at a time). Heat: a long session's frames may creep
+  // up (a fanless laptop slows its chip as it warms). One frame in fifty running late through ten seconds, late for a
+  // reason the main thread did not cause, eases the drawing size one small step before it becomes a stutter: only the
+  // size, within the tier. Each ease is judged from its own first full ten seconds: no help (the late frames did not
+  // fall by three in ten), and it steps back and does not ease from there for five minutes, then ten, then twenty (what
+  // a smaller picture does not help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
+  // minute steady with no more than one late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
+  // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
+  // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
+  // one after it, are left out, and so are the first seconds of a new screen, a new step, or the page come back into view.
+  // The device's own cap: iOS holds a page at a lower rate in Low Power Mode (30 frames a second, or 24: the owner's
+  // iPhone, 2026-11-26, 41.7 ms a frame), and a phone grown hot may. Frames held at one steady rate slower than the mark
+  // (heldRate: a tenth of them either side within a tenth of the middle one) are a cap or a load: blank frames timed at
+  // the start that come steadily at 45 a second or fewer are the cap; in play, a rate held through a real cut and one
+  // step lighter still (deepStep: past a tier down and 60% of the pixels or fewer; on a fixed tier, or below the last
+  // real cut, the ladder's last step) is the cap too (a load lifts off it with less). Held, the picture goes back to the
+  // sharpest step that held the rate (a smaller one would not run faster: the owner, 2026-11-26, "max graphics possible
+  // ... Good FPS"; until then a phone went to SAFE, and a rate other than 30 was taken for a load, all the way to the
+  // last step), the readout names the rate, frames are judged against the cap's own frame (a step down if they still
+  // run late, back up as they hold), and a step down is tried now and then in case it was a load after all: one step,
+  // or past the real cut when there is a reason (frames faster than the cap's, which a load in the cap's place could
+  // give, or the page back in view: the mode may have been switched off meanwhile). Frames faster than the cap's that
+  // such a test does not lift are the device's too (its band of rates: 24 to 30, say); frames well under the band's
+  // fastest (the mode switched off), and the hold lets go, the picture back to the step it had. A lower cap under a hold
+  // is found as the first was; a Setup choice keeps the hold. Reduced effects is its own switch. (Automated browsers
+  // keep where they start.)
+  scale: 1, // the drawing size, a share of the tier's (see outPR)
+  lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
+  perf: {
+    ring: new Float32Array(720), at: new Float64Array(720), cpu: new Float32Array(720), busy: new Uint8Array(720), n: 0, i: 0, skip: 0, wp: -1, wt: -1,
+    changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, easeNo: {}, easing: null, upAt: -1e9, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
+    lockFrom: -1, lockMs: 0, capped: false, capMs: 33.33, capFast: 33.33, fastMed: 1e9, testDeep: false, capRung: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
+  },
+  FINE: [1, 0.95, 0.9, 0.85, 0.8, 0.75], // (the first tier's sizes on a high-density screen: 2x, 1.9x, 1.8x, 1.7x, 1.6x, 1.5x)
+  // the steps, sharpest first: { tier, scale, lights }. A step down never draws more pixels than the one above it: a
+  // tier whose own size is larger than the last step's is drawn at the last step's.
+  makeLadder() {
+    const L = [], T = this.TIERS, last = T.length - 1, first = Assets.phone || this.small ? 1 : 0, dpr = window.devicePixelRatio || 1, hi = dpr >= 1.5;
+    let cur = Infinity;
+    for (let t = first; t <= last; t++) {
+      const own = Math.min(dpr, T[t].pr), scales = t === first && hi ? this.FINE : t === last ? [1, 0.85] : [1];
+      for (const sc of scales) { const k = Math.min(sc, cur / own); L.push({ tier: t, scale: +k.toFixed(4), lights: 99 }); cur = own * k; }
+    }
+    const end = L[L.length - 1].scale;
+    L.push({ tier: last, scale: end, lights: 2 }, { tier: last, scale: end, lights: 1 });
+    return L;
+  },
+  // Setup's fixed tier (the owner, 2026-11-26: an iPhone held at a fixed tier drew the title hall under 55 FPS, with
+  // many hitches, and nothing eased it: the governor did nothing at a fixed tier). Its effects and its lights stay as
+  // chosen; only its drawing size steps down while frames run late and back as they hold, on a high-density screen
+  // from the tier's own size to three quarters of it (2x to 1.5x on a phone at PHONE or MAC), as AUTO's first tier does.
+  // A screen of one device pixel a page pixel has the one size: there it does nothing, as before.
+  fixedLadder(t) { return ((window.devicePixelRatio || 1) >= 1.5 ? this.FINE : [1]).map((sc) => ({ tier: t, scale: sc, lights: 99 })); },
+  // a phone or a tablet: no frosted glass over the live picture at any tier (Setup's HIGH included). Each such panel
+  // makes the browser blur what is behind it again every frame the picture changes, every frame of a game
+  liteAlways() { return !!((typeof Assets !== "undefined" && Assets.phone) || this.small); },
+  // the step AUTO starts from: the ladder's first (a desktop's MAC at the screen's own pixels, a phone's PHONE at 2x)
+  startRung() { return 0; },
+  // a step's pixels, for the cap's test (the scene's own drawing size, squared)
+  rungPixels(i) { const R = this.perf.ladder[i], px = Math.min(window.devicePixelRatio || 1, this.TIERS[R.tier].pr) * R.scale; return px * px; },
+  // a real cut from step a down to step b: 60% of the pixels or fewer, and on AUTO's ladder a tier down too (a fixed
+  // tier has its sizes only). A load that held a rate before it lifts off it after; a device's cap does not
+  realCut(a, b) { const L = this.perf.ladder; return b > a && (!this.auto || L[b].tier > L[a].tier) && this.rungPixels(b) <= 0.6 * this.rungPixels(a); },
+  // the step that settles it from step a: one past the first real cut below a (a load that held a rate through the cut
+  // itself, a graphics chip nearly full at a, lifts off it there), or the ladder's last step when there is no such cut
+  // (a fixed tier's last size; a step already low)
+  deepStep(a) { const L = this.perf.ladder; for (let b = a + 1; b < L.length; b++) if (this.realCut(a, b)) return Math.min(b + 1, L.length - 1); return L.length - 1; },
+  // frames held at one rate (m the middle one; lo, hi a tenth of them in from either end): within a tenth of it
+  heldRate(m, lo, hi) { return lo > m * 0.9 && hi < m * 1.1; },
+  setRung(i, why) {
+    const P = this.perf, L = P.ladder;
+    if (!L) return;
+    i = Math.max(0, Math.min(L.length - 1, i));
+    const R = L[i], lights = R.lights !== this.lightCap;
+    P.rung = i; this.scale = R.scale; this.lightCap = R.lights; P.slowSince = 0; P.okSince = 0;
+    if (lights) this.lightsReset();
+    if (R.tier !== this.tier) this.setTier(R.tier, why); else { this.resize(); P.changedAt = performance.now(); P.why = why || ""; }
+  },
+  // held at the device's cap (ms: its frame; rung: the sharpest step that held it): the picture back to that step, and
+  // the step it had kept for when the cap lifts. Steady under the cap, it may climb higher still (to the ladder's first
+  // step): the sharpest step that holds the cap's rate is the one to keep. A fixed tier of one size has nothing to hold
+  capHold(rung, ms, why) {
+    const P = this.perf;
+    if (!P.ladder || (!this.auto && P.ladder.length < 2)) return;
+    P.capFast = P.capped ? Math.min(P.capFast, ms) : ms; // (the device's rates: a lower cap found under a hold widens the band)
+    if (!P.capped) P.preCap = rung;
+    P.capped = true; P.capMs = ms; P.lockFrom = -1; P.testing = false; P.testDeep = false; P.fastMed = 1e9; P.downRun = 0; P.easing = null; P.testAt = performance.now(); P.testGap = 60000; // (an ease under way is called off: its verdict would move the picture under the hold)
+    P.capRung = rung;
+    this.setRung(rung, why);
+  },
+  // let go of the cap: back to the step it had (back), or left where it is (a step down showed the 30 was a load)
+  capRelease(why, back) {
+    const P = this.perf, to = P.preCap;
+    P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.slowSince = 0; P.okSince = 0; P.downRun = 0;
+    if (back && to >= 0 && to < P.rung) { P.upAt = performance.now(); this.setRung(to, why); return; }
+    P.changedAt = performance.now(); P.why = why;
+  },
+  // the blank frames timed at the start (measureScreen): steadily at 45 a second or fewer (22 ms a frame or more: a
+  // 50 Hz screen's are under it, see screenMs) is the device's cap from the start, at its own rate (30, 24, ...): held
+  // at the step it starts at, AUTO's or a fixed tier's, with no step taken to find it
+  screenProbed(d) {
+    if (d.length < 8 || !this.perf.ladder || navigator.webdriver) return;
+    const m = d[d.length >> 1], lo = d[Math.floor(d.length * 0.15)], hi = d[Math.floor(d.length * 0.85)];
+    if (m >= 22 && m < 70 && this.heldRate(m, lo, hi)) this.capHold(this.perf.rung, m, "held at " + Math.round(1000 / m) + " fps from the start: the device's cap (low power mode?)");
+  },
+  // the page back in view (or a frame that took a second or more): its first seconds are not looked at, its timers
+  // start afresh, and a held cap is tested soon, past the real cut (Low Power Mode may have been switched off
+  // meanwhile, with a load in the cap's place)
+  perfAfresh() {
+    const P = this.perf, now = performance.now();
+    P.shownAt = now; P.slowSince = 0; P.okSince = 0;
+    if (P.capped) { P.testAt = now - P.testGap + 2500; P.testGap = 60000; P.testDeep = true; }
+  },
+  // the frames since `from`, over the last span (ms) at most: their times and main-thread times sorted (a moment's
+  // work left out, unless all), and the time they cover
+  recent(span, from, all) {
+    const P = this.perf, w = [], cpu = [], N = P.ring.length;
+    let t = 0;
+    for (let k = 1; k <= P.n && t < span; k++) { const j = (P.i - k + N) % N; if (from !== undefined && P.at[j] <= from) break; t += P.ring[j]; if (all || !P.busy[j]) { w.push(P.ring[j]); cpu.push(P.cpu[j]); } }
+    w.sort((a, b) => a - b); cpu.sort((a, b) => a - b);
+    return { w, cpu, covered: t };
+  },
+  // the last ten seconds' frames (from the last change, screen or return, at most): how many, and how many ran late
+  // (over a frame and a half) while the main thread's own share of them was small (what the main thread does, a smaller
+  // picture would not help)
+  late10(F, now, ms = 10000) {
+    const P = this.perf, N = P.ring.length, from = Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500, now - ms);
+    let n = 0, late = 0;
+    for (let k = 1; k <= P.n; k++) { const j = (P.i - k + N) % N; if (P.at[j] <= from) break; if (P.busy[j]) continue; n++; if (P.ring[j] > F * 1.5 && P.cpu[j] < F * 0.6) late++; }
+    return { n, late, rate: n ? late / n : 0, span: now - from };
+  },
+  perfTick(ms, cpu) {
+    if (this.lost) return; // (a frame that draws nothing tells nothing: perfAfresh when the context is back)
+    const P = this.perf, now = performance.now(), N = P.ring.length, dpr = window.devicePixelRatio || 1;
+    if (dpr !== this._dpr && this._dpr) { this._dpr = dpr; this.dprChanged(); } // (moved to another screen, or the page zoomed: a property read a frame, where a media query's event is not sent everywhere)
+    // a frame that made shaders or sent new pictures to the chip: its time is the moment's (and the next frame's too)
+    if (this.ok) { const I = this.renderer.info, wp = I.programs ? I.programs.length : 0, wt = I.memory.textures; if (wp !== P.wp || wt !== P.wt) { if (P.wp >= 0) P.skip = 2; P.wp = wp; P.wt = wt; } }
+    if (ms > 0 && ms < 1000) { P.ring[P.i] = ms; P.at[P.i] = now; P.cpu[P.i] = cpu || 0; P.busy[P.i] = P.skip > 0 ? 1 : 0; P.i = (P.i + 1) % N; P.n = Math.min(N, P.n + 1); } // (every frame, whatever the setting: the readout reads them too)
+    else if (ms >= 1000) this.perfAfresh();
+    if (P.skip > 0) P.skip--;
+    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; } // (a new screen: its own frames decide, from its own start)
+    if (P.off || !P.ladder || (!this.auto && P.ladder.length < 2) || navigator.webdriver || document.hidden) return; // (a fixed tier: its sizes only, see fixedLadder)
+    if (now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.shownAt < 2000 || now - P.evalAt < 500) return;
+    P.evalAt = now;
+    const r = this.recent(2000, Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500)), w = r.w;
+    if (r.covered < 1500 || w.length < 4) return; // (a second and a half of frames at least: at 10 a second, 15)
+    const L = P.ladder, F = P.capped ? P.capMs : this.screenMs || 16.67; // (a frame of the screen's: 60 Hz, or 50 if measured so; held at a cap, the cap's)
+    const q = (f) => w[Math.min(w.length - 1, Math.floor(f * w.length))], med = q(0.5), p10 = q(0.1), p90 = q(0.9), long = w.filter((x) => x > F * 1.5).length / w.length;
+    P.fps = 1000 / med; P.cpuMed = r.cpu.length ? r.cpu[r.cpu.length >> 1] : 0;
+    if (P.capped) {
+      const n = Math.round(1000 / P.capMs);
+      // (frames well under the band's fastest: the cap lifted (the mode switched off), or was a load that the step under
+      // test lifted. A rate held again after is found afresh, below)
+      if (med < P.capFast * 0.75) { this.capRelease(P.testing ? "a step down lifted the " + n + " fps hold: it was the load" : "the " + n + " fps cap lifted", !P.testing); return; }
+      if (P.testing) { // (a step down ran no faster: held as it was, tested again later; faster frames that sent it were the device's too)
+        P.testing = false; P.testAt = now; P.testGap = Math.min(P.testGap * 2, 480000);
+        if (P.testDeep && P.fastMed < P.capFast * 0.88) P.capFast = P.fastMed;
+        P.testDeep = false; P.fastMed = 1e9;
+        this.setRung(P.capRung, "held at " + n + " fps: the device's cap (low power mode?)"); return;
+      }
+      // (frames faster than the cap's at the hold's own step: the cap moved up, or lifted with a load in its place that a
+      // cut past the real one would lift: tested soon, that deep)
+      if (P.rung === P.capRung && med < P.capFast * 0.88) { if (!P.testDeep) P.testAt = Math.min(P.testAt, now - P.testGap + 2500); P.testDeep = true; P.fastMed = Math.min(P.fastMed, med); }
+      if (P.rung === P.capRung && P.rung < L.length - 1 && now - P.testAt > P.testGap && med < F * 1.09) { P.testing = true; this.setRung(P.testDeep ? this.deepStep(P.rung) : P.rung + 1, "testing the " + n + " fps hold"); return; } // (one step finds a load just over a frame)
+    }
+    // held at one steady rate slower than the mark (the screen's frame, or a cap's under a hold: a lower cap): the
+    // device's cap, or a load, which a real cut lifts. The step where it was first seen is kept, the steps go down as
+    // ever, and once the step that settles it (deepStep: past the real cut, or the ladder's last) still holds the same
+    // rate, the picture goes back to the first step, held there
+    if (med > F * 1.09 && med < 70 && this.heldRate(med, p10, p90)) {
+      if (P.lockFrom < 0 || Math.abs(med - P.lockMs) > P.lockMs * 0.08) { P.lockFrom = P.rung; P.lockMs = med; }
+      else if (P.rung > P.lockFrom && P.rung >= this.deepStep(P.lockFrom)) { this.capHold(P.lockFrom, med, "held at " + Math.round(1000 / med) + " fps: the device's cap (low power mode?)"); return; }
+    } else P.lockFrom = -1;
+    const slow = med > F * 1.09 || long > 0.1;
+    if (slow) {
+      P.okSince = 0;
+      if (!P.slowSince) P.slowSince = now;
+      if (now - P.slowSince < 1000 || P.rung >= L.length - 1) return; // (late through a second of looks, not one)
+      if (now - P.upAt < 8000) P.failed[P.rung] = (P.failed[P.rung] || 0) + 1; // (a step just climbed to, dropped again)
+      // how far: one step; still slow at the next look, two of the tier's sizes, then three (a big load is met in
+      // seconds, a small one by a tenth of the pixels). Only ever sizes at once: the effects and the lights a step at a time.
+      const far = Math.min(3, 1 + P.downRun), R0 = L[P.rung];
+      let j = P.rung + 1;
+      for (let k = 1; k < far && j + 1 < L.length && L[j + 1].tier === R0.tier && L[j + 1].lights === R0.lights; k++) j++;
+      P.downRun++;
+      this.setRung(j, (long > 0.1 && med <= F * 1.09 ? "frames catching" : "slow frames") + " (" + Math.round(1000 / med) + " fps)");
+      if (P.capped) P.capRung = P.rung;
+      return;
+    }
+    P.slowSince = 0; P.downRun = 0;
+    // heat: frames creeping up over ten seconds (one in fifty late), eased one small step before they become a stutter:
+    // the drawing size only, within the tier (never its effects or its lights). Each ease is judged once, from its own
+    // first full ten seconds (a new screen in between: looked at once ten seconds are in): if the late frames did not
+    // fall by three in ten against the rate before it (the last ten seconds', or the last five's if higher: late frames
+    // on the rise), and by a few frames at least (what a smaller picture does not help: the main thread's pauses, the
+    // browser's own), it steps back and does not ease from there for five minutes (ten, then twenty, if it happens
+    // again); if they fell, it stays, and may ease again from the new step if they creep up again
+    const E = P.easing;
+    if (E && now - E.at >= 12000) {
+      const s10 = this.late10(F, now);
+      if (P.rung !== E.to || now - E.at > 40000) P.easing = null; // (another step since, or no full look in time: no verdict)
+      else if (s10.span >= 9000 && s10.n >= 300) {
+        P.easing = null;
+        if (s10.rate >= 0.01 && !(s10.rate <= E.rate * 0.7 && (E.rate - s10.rate) * s10.n >= 3)) {
+          const no = P.easeNo[E.from]; P.easeNo[E.from] = { at: now, wait: no ? Math.min(1200000, no.wait * 2) : 300000 }; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1); // (five minutes, then ten, then twenty: each try and undo costs a moment)
+          this.setRung(E.from, "easing did not help: back");
+          return;
+        }
+      }
+    }
+    const no = P.easeNo[P.rung];
+    if (!P.capped && !P.easing && !(no && now - no.at < no.wait) && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
+      const s10 = this.late10(F, now);
+      if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02)) {
+        const s5 = this.late10(F, now, 5000);
+        P.easing = { from: P.rung, to: P.rung + 1, at: now, rate: Math.max(s10.rate, s5.n >= 150 ? s5.rate : 0) };
+        P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
+        this.setRung(P.rung + 1, "easing: frames creeping up (heat?)");
+        return;
+      }
+    }
+    if (p90 < F * 1.044 && w[w.length - 1] < F * 2.04) {
+      if (!P.okSince) P.okSince = now;
+      // (a step eased from: climbed back after half a minute steady, a minute the second time, never after a third,
+      // and only with no more than one late frame in a hundred through ten seconds)
+      const up = P.rung - 1, f = P.failed[up] || 0, e = P.eased[up] || 0, wait = e ? 30000 * e : 8000 * (1 + 2 * f);
+      if (up >= 0 && f < 3 && e < 3 && !P.easing && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
+    } else P.okSince = 0;
+  },
+  // the governor's state, for the readout
+  govLabel() {
+    const P = this.perf, n = Math.round(1000 / P.capMs), nf = Math.round(1000 / P.capFast), step = P.ladder && P.rung > 0 ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "";
+    // (held at a cap: its rate (the band of them, when the device moves between rates), and what holds it: the main
+    // thread when that fills most of its frame, else the device)
+    const held = P.capped ? "HELD AT " + (nf > n ? n + "-" + nf : n) + " FPS · " + (P.cpuMed > P.capMs * 0.6 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE?" : "LOW POWER MODE OR A " + n + " HZ SCREEN?") + (P.testing ? " (TESTING)" : "") : "";
+    if (!this.auto) return "FIXED (SETUP)" + (step ? " · SIZE" + step.slice(2) : "") + (held ? " · " + held : "");
+    if (P.capped) return held + step;
+    return "AUTO" + (P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
+  },
+  // the window moved to a screen of another density (a Retina laptop's own and an external monitor's), or the page
+  // zoomed: the ladder made again for it, AUTO kept at the same tier and lights at the nearest size, and the picture
+  // drawn at the new pixels at once (never shown stretched, or drawn at the old screen's density)
+  dprChanged() {
+    const P = this.perf;
+    if (P.ladder) {
+      const old = P.ladder, L = (P.ladder = this.auto ? this.makeLadder() : this.fixedLadder(this.tier));
+      // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
+      const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
+      const at = P.capped && P.testing ? P.capRung : P.rung, r = near(at); // (a test of the hold under way: called off, the hold's own step kept)
+      P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.lockFrom = -1; P.testing = false;
+      if (P.preCap >= 0) P.preCap = near(P.preCap);
+      if (P.capped) P.capRung = r;
+      if (P.capped && !this.auto && L.length < 2) { P.capped = false; P.preCap = -1; } // (a fixed tier with one size now: nothing to hold)
+      if (this.auto) {
+        const R = L[r];
+        P.rung = r; this.scale = R.scale;
+        if (R.lights !== this.lightCap) { this.lightCap = R.lights; this.lightsReset(); }
+        if (R.tier !== this.tier) this.setTier(R.tier, "a screen of another density");
+      } else { P.rung = r; this.scale = L[r].scale; } // (a fixed tier: the nearest of its sizes)
+    }
+    this.perfAfresh();
+    this.resize();
   },
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
@@ -50,23 +409,66 @@ const GFX = {
       return;
     }
     const r = this.renderer;
+    // (a lost graphics context: see contextLost. three.js listens first, and makes its own state again before this)
+    r.domElement.addEventListener("webglcontextlost", () => this.contextLost(), false);
+    r.domElement.addEventListener("webglcontextrestored", () => this.contextRestored(), false);
+    this.guardDeletes(r.getContext());
     // every texture is filtered as finely as the graphics chip can, so signs, floors and walls stay sharp at a slant
-    try { THREE.Texture.DEFAULT_ANISOTROPY = Math.max(1, Math.min(16, r.capabilities.getMaxAnisotropy())); } catch (e) { /* default */ }
+    // (on a phone 4 times over, not 16: a floor or a road seen low cost up to four times the reads at 16, for a
+    // difference a phone's screen does not show)
+    try { THREE.Texture.DEFAULT_ANISOTROPY = Math.max(1, Math.min(Assets.phone ? 4 : 16, r.capabilities.getMaxAnisotropy())); } catch (e) { /* default */ }
+    // A new shader is checked for errors only when the page is opened for tests (#debug). Each check makes the page
+    // wait for the graphics chip to finish compiling (Safari asks its graphics process and waits for the answer), so
+    // every new material stalled a frame twice over; a shader that will not compile is no more drawn with the check.
+    if (!/debug/.test(location.hash)) r.debug.checkShaderErrors = false;
     const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
-    this.pipe = makePipeline(r, this.hdr);
+    if (Assets.phone) this.TIERS = this.TIERS.map((T, i) => Object.assign({}, T, this.PHONE[i] || {})); // (a phone's lighter tiers: see PHONE)
+    // the first tier: Setup's choice, or (auto) MAC on a desktop and PHONE on a phone or a tablet, from where the frame rate leads
+    // (the owner, 2026-11-26: the iPhone held at a fixed Graphics setting stuttered through the title hall, and then "max
+    // graphics possible, good FPS": the best picture a device holds at a steady frame rate is AUTO's to find. A Graphics
+    // setting fixed before then goes back to AUTO, once; Setup can fix one again. The mark is kept with the settings and
+    // goes with the next save, as GFX.applySettings's for the effect switches; a copy synced from another device is
+    // brought along the same way: mergeStates)
+    if (Store.settings && !(Store.settings.qv >= 2)) { Store.settings.qv = 2; Store.settings.quality = "auto"; }
+    const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
+    this.auto = fixed === undefined;
+    this.perf.ladder = fixed === undefined ? this.makeLadder() : this.fixedLadder(fixed);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) this.perfAfresh(); }); // (back in view: see perfAfresh)
+    let t0 = fixed !== undefined ? fixed : navigator.webdriver ? 0 : this.small ? 1 : 0;
+    if (this.auto && !navigator.webdriver) { const P = this.perf, R = P.ladder[(P.rung = P.start = this.startRung())]; t0 = R.tier; this.scale = R.scale; this.lightCap = R.lights; } // (AUTO: from its first step)
+    this.tier = t0; this.extras = this.TIERS[t0].extras; this.fxScale = this.TIERS[t0].fx;
+    document.body.classList.toggle("lite", t0 >= 1 || this.liteAlways());
+    this.pipe = makePipeline(r, this.hdr, this.TIERS[t0].samples);
+    this.pipe.setMirror(this.TIERS[t0].mirror);
+    this._tierSet = true;
     this.resize();
+    // a window resized: the picture and its passes made again at once (a browser sends one a frame at most, before the
+    // frame's drawing: the frame is drawn at the new size, never stretched; made again later, it would be shown blank)
     window.addEventListener("resize", () => this.resize());
+    this._dpr = window.devicePixelRatio || 1; // (the screen's density, looked at every frame: see perfTick and dprChanged)
   },
   look: "hd",
   // The scene is drawn at the screen's own pixels (its full device pixel ratio), limited
   // only by the largest texture the graphics chip can make.
+  // A scene may ask to be drawn larger than that and brought down in the final pass (its post.ssaa, up to 2): thin
+  // bright edges and seams of light come out as smooth lines that do not shimmer. (As large as asked, within what a
+  // graphics chip can be trusted to hold.) No scene that does not ask is drawn any differently.
   scenePR() {
-    const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
-    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim));
+    const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8, out = this.outPR();
+    const post = Scenes.cur && Scenes.cur.scene && Scenes.cur.scene.userData.post, want = post && post.ssaa > 1 ? Math.min(2, post.ssaa) : 1;
+    // drawing larger than the screen smooths thin edges, but its cost multiplies: only at the MAC tier, only on a
+    // screen of less than 1.5 device pixels per page pixel (a high-density screen is smooth already), and never past
+    // four million pixels
+    if (want <= 1 || this.tier > 0 || out >= 1.5 || this.scale < 1) return out; // (nor while AUTO is drawing smaller)
+    return Math.min(lim, out * Math.max(1, Math.min(want, Math.sqrt(4e6 / Math.max(1, this.w * this.h * out * out)))));
   },
-  outPR() { return this.scenePR(); },
+  outPR() {
+    const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
+    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim, this.TIERS[this.tier].pr) * (this.scale || 1)); // (AUTO's scale: a share of what the tier would draw, on any screen)
+  },
+  ss: 1, // how many times larger than the screen the scene is drawn (1 unless the scene asked: see scenePR)
   resize() {
     this.w = window.innerWidth;
     this.h = window.innerHeight;
@@ -74,6 +476,7 @@ const GFX = {
       this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
       const pr = (this._pr = this.scenePR());
+      this.ss = pr / this.outPR();
       this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
       $("#gl").classList.add("post");
     }
@@ -83,6 +486,8 @@ const GFX = {
   refit() { if (this.ok && Math.abs(this.scenePR() - (this._pr || 0)) > 1e-3) this.resize(); },
   setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
+    if (this.lost) return; // (nothing to draw into: see contextLost)
+    if (scene.userData.lightBudget) this.lightsFor(scene); // (the strongest of the screen's lights into its budget: see LightPool)
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
@@ -91,13 +496,15 @@ const GFX = {
     this.punch *= Math.pow(0.0006, dt);
     const rp = this.rip, rk = Math.min(1, (rp.t += dt) / rp.dur);
     const gk = Math.min(1, (this.gl.t += dt) / this.gl.dur);
+    this.danger += (this.dangerT - this.danger) * Math.min(1, dt * 3);
+    this.bloomKick *= Math.pow(0.0015, dt);
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
     scene.autoUpdate = false;
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
-    if (mirrors) for (const m of mirrors) { if (!this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (mirrors) for (const m of mirrors) { if (!this.opt.wet || !(this.TIERS[this.tier].mirror > 0) || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
@@ -111,14 +518,18 @@ const GFX = {
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
       punch: this.punch < 0.0006 || this.calm ? 0 : this.punch,
       zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(0.72, this.speedBlur + this.punch * 9), // (streaks, not a smear: the subject stays readable through a boost or a blow)
-      opt: this.opt, calm: this.calm,
+      opt: this.eopt(), calm: this.calm, levels: this.TIERS[this.tier].levels,
       heat: this.heat,
       keep: this.keep,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
+      danger: this.danger < 0.004 ? 0 : this.danger,
+      bloomKick: this.bloomKick < 0.004 ? 0 : this.bloomKick,
       glass: Store.settings.crt ? 1 : 0,
       look: this.look,
       post: scene.userData.post || {},
     });
+    if (scene.userData.edge) scene.userData.edge(this.renderer); // (a red frame round the band, over the finished picture: see BandEdge)
+    if (scene.userData.overlay) scene.userData.overlay(this.renderer); // (a scene's own last word, over the finished picture: what must stay sharp through every effect)
     this.heat.a = 0; // a scene asks for its heat haze again every frame
     this.keep.a = 0; // and names its subject again
   },
@@ -180,6 +591,10 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
+  // Low health: a red vignette round the picture that beats like a pulse, until it is set back to 0. amt 0..1.
+  setDanger(amt) { this.dangerT = REDUCED_MOTION || this.calm ? amt * 0.45 : amt; },
+  // The glow of the whole picture swells for a moment (a blow that lands, a blast). k 0..1.5.
+  bloomPulse(k = 0.6) { if (!REDUCED_MOTION && !this.calm) this.bloomKick = Math.max(this.bloomKick, k); },
   // Right/wrong flashes, drawn by the final shader as a coloured vignette over the
   // 3D view (they used to be a full-screen page layer, which the browser had to
   // blend on every frame of the fade, plus a forced layout to restart it).
@@ -206,6 +621,8 @@ const GFX = {
         over = true;
         const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
         this.screenProbe = d; // for the FPS tools
+        if (d.length >= 6 && d[d.length >> 1] > 18.5 && d[d.length >> 1] < 22) this.screenMs = d[d.length >> 1]; // (a 50 Hz screen: its own frame is the governor's mark, not 60's)
+        this.screenProbed(d); // (steadily slower than any screen: the device holds the page at a lower rate, 30 or 24 a second)
         if (d.length >= 6) {
           const hz = snapHz(d[d.length >> 1] / 1000); // the median interval
           if (hz > 60) this.vsync = Math.min(this.vsync, 1 / Math.min(hz, 120));
@@ -220,7 +637,7 @@ const GFX = {
         if (ts.length < 14) requestAnimationFrame(tick); else finish();
       };
       requestAnimationFrame(tick);
-      setTimeout(finish, 600); // a hidden tab gets no frames: don't hold up the title
+      setTimeout(finish, 900); // a hidden tab gets no frames: don't hold up the title (900 ms: fourteen frames of a page held at 24 a second, with a slow first one, are in by then)
     });
   },
   // One environment-map generator for the whole session. Making one per scene and
@@ -228,6 +645,124 @@ const GFX = {
   pmrem() {
     if (!this._pmrem) this._pmrem = new THREE.PMREMGenerator(this.renderer);
     return this._pmrem;
+  },
+  // ---- a lost graphics context (the master overhaul, 2026-11-26) --------------------------------------------------
+  // The browser may take the graphics context away (the graphics chip or its driver restarted, the system took its
+  // memory back from a page in the background, a second graphics chip switched in) and give it back later. three.js
+  // makes its own state again then, and sends every texture and shape again from what it keeps of them. What the page
+  // drew at run time into targets of its own it cannot: every reflection made from a sky or a small scene (keepEnv), a
+  // room's probe (each screen's probeNow or restoreGraphics), Risk Blaster's nebula (onRestore).
+  // Lost: nothing is drawn and nothing moves (Scenes.frame), a game in play is paused by its own pause too (its timers
+  // held, as when the page is hidden), the screen says so and takes no input, and what would make something on the
+  // graphics chip waits (whenGL). Back: three.js's own state first (its listener comes first), then all of that made
+  // again into the same targets (whatever holds them holds them still), the screen readied (its pictures and shaders,
+  // its skies in waiting), a frame drawn, its probe drawn again, and the game resumed if this paused it. Nothing of a
+  // game's state is touched: a paused game, then the same game. (docs/master/contextloss/README.md)
+  lost: false,
+  kept: new Set(),
+  _restore: new Set(),
+  _afterRestore: [],
+  gen: 0, // (the graphics context's generation: one more at each loss; see guardDeletes)
+  contextLost() {
+    if (this.lost) return;
+    this.lost = true;
+    this.gen++;
+    this.lostAt = performance.now();
+    const s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    this._lostPaused = null;
+    if (s && s.pause && !s.paused && s.state && s.state !== "over" && s.state !== "intro") { s.pause(); if (s.paused) this._lostPaused = s; }
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(true);
+  },
+  contextRestored() {
+    if (!this.lost) return;
+    this.lost = false;
+    this._par = undefined; // (an extension's object belongs to the lost context: asked for again)
+    const r = this.renderer, s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    r.setClearColor(0x090320, 1); // (three.js makes its background state again, black and clear: the page's own colour, as init set it)
+    if (this.pipe) this.pipe.compiled = false; // (every post-processing pass's shader made again with the screen's: GFX.warm)
+    // (all of it from a randomness of its own: what three.js makes draws ids from Math.random, and the game's own draws,
+    // seeded in a test, go on as they would have)
+    ownRandom(0x6c057e57, () => {
+      for (const fn of [...this._restore]) { try { fn(); } catch (e) { console.warn("graphics restore: " + (e && e.message)); } }
+      if (!s || !s.scene || !s.camera) return;
+      try {
+        this.warm(s, true); // (every picture it draws sent again, every shader made again, now and not in play)
+        // a frame drawn, as in play, before a probe is drawn from the screen: what the screen draws again every frame
+        // came back black, Boss Rush's mirror of its deck above all, which its arena shows (its probe a fifth darker
+        // without it: tools/scenarios/context-loss.js). Nothing moves (no time passes in it)
+        this.render(s.scene, s.camera, 0);
+        // a room's probe (the title hall's, the exam's): drawn again whole, three times over, as its reflections came to
+        // be: its steel (or its columns) mirrors the probe, and the probe the steel, which came back black
+        if (s.restoreGraphics) s.restoreGraphics(); else if (s.probeNow) for (let i = 0; i < 3; i++) s.probeNow();
+        const used = Assets.skiesFor(s);
+        // (its skies in waiting, Nest Egg Run's landscapes and Risk Blaster's regions: the skies' own pictures alone, as
+        // GFX.warm sends them; what else a screen's materials read, a probe's cube among them, is sent as it is drawn)
+        if (r.initTexture) for (const k in Assets.kept) { const sky = Assets.kept[k]; if (k.startsWith("sky:") && sky && sky.map && used.has(sky.map)) { try { r.initTexture(sky.map); } catch (e) { /* sent the first time it is drawn instead */ } } }
+        Assets.restSkies(s); // (a sharper sky made again for its reflection and not drawn here leaves the chip again)
+      } catch (e) { console.warn("graphics restore: " + (e && e.message)); } // (what is not made again now is made as it is drawn)
+    });
+    const later = this._afterRestore;
+    this._afterRestore = [];
+    for (const fn of later) { try { fn(); } catch (e) { console.error(e); } }
+    this.restoredAt = performance.now();
+    this.perfAfresh();
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(false);
+    const p = this._lostPaused;
+    this._lostPaused = null;
+    if (p && p === Scenes.cur && p.paused) { UI.closeModal(); p.resume(); } // (the game this paused, as it was)
+  },
+  // fn now, or once the graphics context is back (whatever would make something on the graphics chip, while it is lost)
+  whenGL(fn) { if (this.lost) this._afterRestore.push(fn); else fn(); },
+  // something drawn on the graphics chip at run time, drawn again after a restore; returns what forgets it
+  onRestore(fn) { this._restore.add(fn); return () => { this._restore.delete(fn); }; },
+  // A target drawn once at run time (a reflection from PMREM): make() returns a new target with it. The first is the one
+  // everything holds; after a restore make() is drawn again and copied into it. Forgotten when the target is let go.
+  // (make goes with the target: what make draws from, a closed game's sky among them, is not held by the target, which
+  // a closed screen's materials still hold, kept for their shaders: GFX.park)
+  keepEnv(make) {
+    const rt = make();
+    if (!rt) return rt;
+    let mk = make;
+    const forget = this.onRestore(() => { const fresh = mk && mk(); if (fresh) { this.copyTarget(fresh, rt); fresh.dispose(); } });
+    this.kept.add(rt); // (what is kept, for a test to read back: tools/scenarios/context-loss.js)
+    rt.dispose = () => { forget(); this.kept.delete(rt); mk = null; delete rt.dispose; rt.dispose(); };
+    return rt;
+  },
+  // A lost context's objects went with it. three.js r128 keeps the listeners of what it made before a restore on every
+  // texture, shape and target it had sent, so letting one go after a restore deletes its old object too, which the
+  // browser reports as an error each time ("object does not belong to this context"; WebKit stops reporting any after
+  // a few). Each object is marked with the context's generation, and a delete of one from an earlier one is skipped:
+  // there is nothing left of it to delete.
+  guardDeletes(gl) {
+    if (!gl) return;
+    const self = this;
+    for (const k of ["Texture", "Buffer", "Framebuffer", "Renderbuffer", "Program", "Shader", "VertexArray", "Query", "Sampler"]) {
+      const make = gl["create" + k], del = gl["delete" + k];
+      if (typeof make !== "function" || typeof del !== "function") continue;
+      gl["create" + k] = function () { const o = make.apply(gl, arguments); if (o) o.__gen = self.gen; return o; };
+      gl["delete" + k] = function (o) { if (o && (o.__gen || 0) !== self.gen) return; return del.call(gl, o); };
+    }
+  },
+  // one target's picture into another of its size, texel for texel (no filtering, no colour or tone change)
+  copyTarget(src, dst) {
+    const r = this.renderer;
+    if (!this._copy) {
+      const m = new THREE.ShaderMaterial({
+        uniforms: { tSrc: { value: null } }, depthTest: false, depthWrite: false, blending: THREE.NoBlending,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+        fragmentShader: "uniform sampler2D tSrc; varying vec2 vUv; void main(){ gl_FragColor = texture2D(tSrc, vUv); }",
+      });
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m), sc = new THREE.Scene();
+      q.frustumCulled = false;
+      sc.add(q);
+      this._copy = { m, sc, cam: new THREE.Camera() };
+    }
+    const C = this._copy, was = r.getRenderTarget();
+    C.m.uniforms.tSrc.value = src.texture;
+    r.setRenderTarget(dst);
+    r.render(C.sc, C.cam);
+    r.setRenderTarget(was);
+    C.m.uniforms.tSrc.value = null;
   },
   // A closing scene's materials are parked here, still holding their GPU programs,
   // until the next scene of the same kind has been warmed: replaying a game (or
@@ -248,13 +783,89 @@ const GFX = {
     P[name].forEach((m) => m.dispose());
     delete P[name];
   },
+  // A scene that is kept while you play (the arcade hall: see hubScene) lets go of its pictures and its shapes on the
+  // graphics chip while you are away: every texture drawn from a picture, a canvas or data, every geometry's buffers.
+  // It keeps them in memory, and its programs and the pictures it rendered (reflections, the screens' own) on the chip,
+  // so coming back is still no rebuild and no shader compile: warm() sends them back behind the change of screen.
+  rest(old) {
+    if (!old.scene) return;
+    const up = (img) => img && ((typeof HTMLImageElement !== "undefined" && img instanceof HTMLImageElement) || (typeof HTMLCanvasElement !== "undefined" && img instanceof HTMLCanvasElement) || (typeof ImageBitmap !== "undefined" && img instanceof ImageBitmap) || (img.data && img.width > 0));
+    const done = new Set(), tex = (t) => { if (t && t.isTexture && !done.has(t) && t !== _glowTex && up(t.image)) { done.add(t); t.dispose(); } };
+    old.scene.traverse((o) => {
+      if (o.geometry && !done.has(o.geometry)) { done.add(o.geometry); o.geometry.dispose(); }
+      (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => {
+        for (const k of DISPOSE_MAPS) tex(m[k]);
+        if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) tex(v); }
+      });
+    });
+  },
   // Draw a new scene once, tiny and off-screen, with everything that starts hidden
   // (pooled effects, speed lines, and the pieces a scene lists in warmExtra) showing.
   // Every shader and GPU pipeline state it will need is built now, behind the screen
   // transition, instead of stalling the frame where a hit first happens.
-  warm(s) {
-    if (!this.ok || !s.scene || !s.camera) return;
-    const r = this.renderer, scene = s.scene, extra = s.warmExtra || [];
+  // A new screen is drawn once, off-screen and tiny, with everything in it shown: every shader it will use is
+  // compiled and every picture sent to the graphics chip now, behind the curtain, and not the first time a thing
+  // appears in play (on a phone each of those was a stall of a frame or more). With it: what the screen keeps aside
+  // for later (warmExtra), every model its files brought that it has not put in the scene yet (allies, props, the
+  // pieces of an event), and every sky it may fly into.
+  // the screen's light budget: made the first time its scene is drawn (see LightPool), then kept up each frame
+  lightsFor(scene) {
+    const b = scene && scene.userData.lightBudget;
+    if (!b) return null;
+    let p = scene.userData.lightPool;
+    if (p && p.cap !== this.lightCap) { p.dispose(); p = null; } // (the governor's last steps cut the point lights: the screen's shaders are made again, once)
+    if (!p) { p = scene.userData.lightPool = new LightPool(scene, Object.assign({}, b, { point: Math.min(b.point || 0, this.lightCap) })); p.cap = this.lightCap; }
+    p.update();
+    return p;
+  },
+  // the current screen's light budget made again at the governor's cap (see lightsFor)
+  lightsReset() { const sc = typeof Scenes !== "undefined" && Scenes.cur && Scenes.cur.scene; if (sc && sc.userData.lightPool) { sc.userData.lightPool.dispose(); sc.userData.lightPool = null; } },
+  // Shaders asked for ahead of a piece's first draw (the master overhaul, 2026-11-23: nothing arriving in view may stall
+  // a frame). The programs the new pieces need are made now, unseen, in a scene of their own lit by as many lights of
+  // each kind as the screen draws (a program depends on how many, not where), into a target like the screen's own;
+  // the returned function says when they are ready to be shown: when the graphics driver says they are built
+  // (KHR_parallel_shader_compile: Safari builds them on threads of its own, and Chrome on a graphics chip), at most a
+  // second and a half on; without that word, two frames on. Pieces not yet hung anywhere.
+  prepare(scene, camera, objs) {
+    if (!this.ok || this.lost || !objs || !objs.length) return () => true; // (lost: the screen is readied whole when it is back)
+    const r = this.renderer, gl = r.getContext();
+    if (this._par === undefined) { try { this._par = gl.getExtension("KHR_parallel_shader_compile") || null; } catch (e) { this._par = null; } }
+    const K = this._par, P = this._prep || (this._prep = { scene: new THREE.Scene(), lights: {} });
+    const kinds = { DirectionalLight: 0, PointLight: 0, SpotLight: 0, HemisphereLight: 0 };
+    scene.traverseVisible((o) => { if (o.isLight && o.layers.test(camera.layers) && kinds[o.type] !== undefined) kinds[o.type]++; });
+    for (const k in kinds) {
+      const have = P.lights[k] || (P.lights[k] = []);
+      while (have.length < kinds[k]) { const l = new THREE[k](0xffffff, 0); have.push(l); P.scene.add(l); }
+      have.forEach((l, i) => { l.visible = i < kinds[k]; });
+    }
+    P.scene.fog = scene.fog; P.scene.environment = scene.environment;
+    const before = new Set(r.info.programs || []), was = r.getRenderTarget();
+    try {
+      for (const o of objs) P.scene.add(o);
+      r.setRenderTarget(this._warmRT || null); // (a program differs by the kind of target it draws into: the screen's is like this one)
+      r.compile(P.scene, camera);
+    } catch (e) { /* best effort: they are made at their first draw instead */ }
+    r.setRenderTarget(was);
+    for (const o of objs) P.scene.remove(o);
+    const made = (r.info.programs || []).filter((p) => !before.has(p)), gen = this.gen;
+    let n = 0;
+    return () => {
+      n++;
+      if (!made.length || this.gen !== gen) return true; // (asked for before a lost context: the screen was readied whole when it came back)
+      if (!K) return n > 2;
+      if (n > 90) return true;
+      try { return made.every((p) => gl.getProgramParameter(p.program, K.COMPLETION_STATUS_KHR)); } catch (e) { return true; }
+    };
+  },
+  // (again: after a lost graphics context, the screen readied once more from what it listed the first time: Assets.cur
+  // may by then be the list of a screen about to be built, whose own warm takes it)
+  warm(s, again) {
+    if (!this.ok || this.lost || !s.scene || !s.camera) return; // (lost: readied when it is back: contextRestored)
+    if (again && !s._warm) again = false; // (a screen built while the context was lost: readied now, the first time)
+    const r = this.renderer, scene = s.scene, W = again ? s._warm : null;
+    const want = W ? W.want : Assets.cur || [], extra = W ? W.extra.filter((o) => !o.parent) : (s.warmExtra || []).slice(), tex = W ? W.tex : s.warmTextures || [];
+    if (!W) { Assets.cur = null; s._warm = { want, extra: extra.slice(), tex }; }
+    for (const n of want) { const m = n.startsWith("model:") && Assets.fresh[n]; if (m && m.scene && !m.scene.parent) extra.push(m.scene); }
     extra.forEach((o) => scene.add(o));
     const saved = [];
     scene.traverse((o) => { saved.push(o, o.visible, o.frustumCulled); o.visible = true; o.frustumCulled = false; });
@@ -263,24 +874,139 @@ const GFX = {
         type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
       });
     }
+    if (this.pipe && this.pipe.compileAll) this.pipe.compileAll(); // (and every post-processing pass, the first time)
+    this.lightsFor(scene); // (the screen's light budget in place, so its shaders are compiled for the lights it will draw)
+    const layers = s.camera.layers.mask;
+    s.camera.layers.mask = ~(1 << LIGHT_LAYER); // (what a screen keeps on layers of its own, the mirror's or the overlay's, is readied too; not the hidden lights)
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
     } catch (e) { /* best effort */ }
+    s.camera.layers.mask = layers;
     r.setRenderTarget(null);
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));
     s.warmExtra = null;
+    if (r.initTexture) {
+      const used = Assets.hdSkies() ? Assets.skiesFor(s) : null; // (a sharper sky only if the screen draws it or keeps it in waiting: Assets.restSkies)
+      for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map && (!k.hd || used.has(k.map))) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
+      for (const t of tex) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
+    }
+    s.warmTextures = null;
   },
   sceneChanged() {
     this.speedBlur = this.punch = 0;
+    this.danger = this.dangerT = this.bloomKick = 0;
+    VFX.reset();
     this.rip.t = this.rip.dur;
     this.gl.t = this.gl.dur;
   },
 };
 
+// The show clock. Everything that is look and not rule (effects, model animation, telegraphs, deaths) runs on
+// VFX.dt instead of the scene's own dt, so a hit-stop or a beat of slow motion changes what is seen and never when
+// a rule fires: timers, charge bars and the order of events run on, frame for frame, as they always did.
+//   VFX.hitStop(frames)      freeze the show for that many 60 Hz frames (2 or 3 on a big impact)
+//   VFX.slowMo(k, dur, hold) drop to k of full speed, hold, and ease back to full over dur seconds (real time)
+//   VFX.dt                   this frame's show time step; VFX.k its speed (0..1); VFX.t show time so far
+const VFX = {
+  dt: 0, k: 1, t: 0,
+  stop: 0, // seconds of freeze left
+  slow: { k: 1, t: 0, dur: 0, hold: 0 },
+  hitStop(frames = 3) { if (!REDUCED_MOTION && !GFX.calm) this.stop = Math.max(this.stop, frames / 60); },
+  slowMo(k = 0.25, dur = 0.5, hold = 0.12) {
+    if (REDUCED_MOTION || GFX.calm) return;
+    const s = this.slow;
+    if (s.t < s.dur + s.hold && s.k < k) return; // a deeper one is already running
+    s.k = k; s.t = 0; s.dur = dur; s.hold = hold;
+  },
+  // called once a frame by the main loop, with the scene's time step and the real one
+  frame(dt, real) {
+    let k = 1;
+    const s = this.slow;
+    if (s.t < s.dur + s.hold) {
+      s.t += real;
+      const u = clamp((s.t - s.hold) / Math.max(1e-4, s.dur), 0, 1);
+      k = lerp(s.k, 1, u * u * (3 - 2 * u));
+    }
+    if (this.stop > 0) { this.stop -= real; k = 0; }
+    this.k = k;
+    this.dt = dt * k;
+    this.t += this.dt;
+  },
+  reset() { this.stop = 0; this.slow.t = this.slow.dur = this.slow.hold = 0; this.k = 1; },
+};
+
 // The standard refresh rate nearest a frame interval (seconds).
 const snapHz = (dt) => [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - dt) < Math.abs(1 / b - dt) ? r : b), 60);
+
+// The game's one colour grade (the owner, 2026-11-17: one shared look): every screen's picture is finished with the
+// same saturation and contrast. What still differs from screen to screen is only how bright a room is lit (exposure)
+// and how much its lights bloom: a moonlit exam hall is not a sunlit avenue.
+const GRADE = { saturation: 1.16, contrast: 1.15 };
+// ---- the light budget (the owner, 2026-11-17: a small budget of lights per screen). A screen states how many
+// lights of each kind it may draw: scene.userData.lightBudget = { dir, point, spot }. Its own lights stay where its
+// code keeps them (moved, faded, coloured, switched by `visible` as before) but are never drawn themselves (they live
+// on layer 31, which no lens sees); each frame the strongest of each kind is copied into the few lights that are
+// drawn. The number of lights the shaders see never changes, so nothing recompiles when a flash comes and goes, and
+// every lit pixel reckons with a handful of lights, not a dozen. A spot light the budget has no room for competes for
+// a point light's place, drawn as a point light. A light marked userData.keep (a key light) always keeps its place.
+const LIGHT_LAYER = 31;
+class LightPool {
+  constructor(scene, budget) {
+    this.scene = scene;
+    this.slots = { dir: [], point: [], spot: [] };
+    const make = { dir: () => new THREE.DirectionalLight(0xffffff, 0), point: () => new THREE.PointLight(0xffffff, 0, 0, 2), spot: () => new THREE.SpotLight(0xffffff, 0) };
+    for (const k of ["dir", "point", "spot"]) for (let i = 0; i < (budget[k] || 0); i++) {
+      const l = make[k]();
+      l.userData.slot = true; l.name = "budget-" + k + i;
+      scene.add(l);
+      if (l.target) { l.target.userData.slot = true; scene.add(l.target); }
+      this.slots[k].push({ l, src: null });
+    }
+    this.lists = { dir: [], point: [], spot: [] };
+    this._p = new THREE.Vector3();
+  }
+  // its lights taken out of the scene (a pool with fewer is made in its place)
+  dispose() { for (const k of ["dir", "point", "spot"]) for (const s of this.slots[k]) { this.scene.remove(s.l); if (s.l.target) this.scene.remove(s.l.target); } }
+  // every light of the screen's own: found each frame (a scene adds lights as it builds things), moved out of sight
+  collect() {
+    const L = this.lists; L.dir.length = L.point.length = L.spot.length = 0;
+    this.scene.traverse((o) => {
+      if (!o.isLight || o.userData.slot || o.isAmbientLight || o.isHemisphereLight) return;
+      if (o.layers.mask !== (1 << LIGHT_LAYER)) o.layers.set(LIGHT_LAYER);
+      (o.isDirectionalLight ? L.dir : o.isSpotLight ? (this.slots.spot.length ? L.spot : L.point) : o.isPointLight ? L.point : L.dir).push(o);
+    });
+  }
+  // is it on, as its screen means it: lit, and it and everything it hangs on shown
+  shown(o) { for (let p = o; p; p = p.parent) if (p.visible === false) return false; return o.intensity > 0; }
+  score(o, held) {
+    const reach = o.isDirectionalLight ? 1 : Math.min(o.distance > 0 ? o.distance : 40, 60) / 20;
+    return o.intensity * reach * (held ? 1.25 : 1) * (o.userData.keep ? 1000 : 1); // (a light that holds a place keeps it against a near equal: no flicker between two)
+  }
+  update() {
+    this.collect();
+    for (const k of ["dir", "point", "spot"]) {
+      const slots = this.slots[k];
+      if (!slots.length) continue;
+      const held = new Set(slots.map((s) => s.src));
+      const lit = this.lists[k].filter((o) => this.shown(o)).sort((a, b) => this.score(b, held.has(b)) - this.score(a, held.has(a))).slice(0, slots.length);
+      // a light that keeps its place keeps its slot (no jump in which slot draws what)
+      const free = slots.filter((s) => !s.src || lit.indexOf(s.src) < 0);
+      for (const s of free) s.src = null;
+      for (const o of lit) if (!slots.some((s) => s.src === o)) { const s = slots.find((x) => !x.src); if (s) s.src = o; }
+      for (const s of slots) this.copy(s.l, s.src);
+    }
+  }
+  copy(l, o) {
+    if (!o) { l.intensity = 0; return; }
+    l.color.copy(o.color); l.intensity = o.intensity;
+    l.position.setFromMatrixPosition(o.matrixWorld);
+    if (l.isPointLight || l.isSpotLight) { l.distance = o.distance; l.decay = o.decay; }
+    if (l.isSpotLight) { l.angle = o.angle; l.penumbra = o.penumbra; }
+    if (l.target && o.target) l.target.position.setFromMatrixPosition(o.target.matrixWorld);
+  }
+}
 
 const Scenes = {
   cur: null,
@@ -288,15 +1014,16 @@ const Scenes = {
     const old = this.cur;
     this.cur = s;
     if (old && old !== s && !old.keepAlive) { if (GFX.ok) GFX.park(old); else old.dispose(); } // the hub stays built (see hubScene)
-    if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); }
+    else if (old && old !== s && GFX.ok) GFX.rest(old); // (and lets its pictures and shapes go from the graphics chip while you are away)
+    if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); GFX.sceneAt = performance.now(); } // (the frame-rate watch skips a new screen's first moments: building it is not drawing it)
     if (s) s.resize(GFX.w, GFX.h);
-    if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
+    if (s && old !== s) { if (GFX.ok) Assets.restSkies(s); GFX.warm(s); GFX.unpark(s); }
     return s;
   },
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
   frame(dt, realDt) {
     const s = this.cur;
-    if (!s) return;
+    if (!s || GFX.lost) return; // (a lost graphics context: the screen waits, its clocks with it, a game in its opening moments too, which no pause holds: GFX.contextLost)
     s.update(dt);
     if (GFX.ok && s.scene && s.camera) GFX.render(s.scene, s.camera, realDt);
   },
@@ -342,10 +1069,9 @@ const Pointer = {
     window.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") { this.tx = 0; this.ty = 0; } }, { passive: true });
     if (Store.settings.tilt) this.initTilt(false);
   },
-  update(dt) {
-    const k = Math.min(1, dt * 3);
-    this.x += (clamp(this.tx + this.tiltX, -1, 1) - this.x) * k;
-    this.y += (clamp(this.ty + this.tiltY, -1, 1) - this.y) * k;
+  update(dt) { // (eased exactly: the same glide at any frame rate)
+    this.x = Motion.damp(this.x, clamp(this.tx + this.tiltX, -1, 1), 3, dt);
+    this.y = Motion.damp(this.y, clamp(this.ty + this.tiltY, -1, 1), 3, dt);
   },
 };
 
@@ -372,6 +1098,18 @@ function shockTexture() {
   return _shockTex;
 }
 
+// The camera's shake: value noise from -1 to 1 on its own hashed lattice (no random stream is drawn from), smoothed
+// between its points, and pushed out toward its edges (v (1.3 - 0.3 v^2): as far off on average as the random offsets
+// were, 0.76 of the amount, and never further, its most 1, so the staged games' caps hold; no steep slope where it
+// crosses naught, as a power had); ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up, read half a
+// step later, so the two never rest on their lattice points in the same instant).
+const SHAKE_HZ = 18;
+const shakeHash = (n, ch) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+function shakeNoise(u, ch) {
+  if (ch) u += 0.5;
+  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f), a = shakeHash(i, ch), v = a + (shakeHash(i + 1, ch) - a) * s;
+  return v * (1.3 - 0.3 * v * v);
+}
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
     this.tw = new TweenSet();
@@ -445,12 +1183,17 @@ class Scene3D {
       ring.material.opacity = 1 - k;
     }, () => { if (ring.userData.tok === tok) ring.visible = false; });
   }
+  // (Phase 4, 2026-11-25: the shake is a smooth noise in time, x and y each their own, about 18 turns a second: it was a
+  // fresh random offset every frame, a buzz more than a shake, and twice as fast at 120 Hz as at 60. The same now at
+  // any frame rate, slowed with the scene's clock in a hit-stop, and drawn from no random stream; as far off on average,
+  // a third of the jump a frame. Its size, its decay and every cap and calm scale on it are as they were.)
   placeCamera() {
     if (!this.camera) return;
     this.camera.position.copy(this.camBase);
     if (this.shakeAmt > 0.001) {
-      this.camera.position.x += rand(-1, 1) * this.shakeAmt;
-      this.camera.position.y += rand(-1, 1) * this.shakeAmt;
+      const u = this.t * SHAKE_HZ;
+      this.camera.position.x += shakeNoise(u, 0) * this.shakeAmt;
+      this.camera.position.y += shakeNoise(u, 1) * this.shakeAmt;
     }
     this.camera.lookAt(this.lookAt);
   }
@@ -467,12 +1210,20 @@ class Scene3D {
   }
 }
 
+// (Phase 5: a loaded model's other maps go too, its glow, relief, finish and shade: a model is handed to one scene
+// only, and they stayed on the graphics chip after it, some 60 MB a visit for a Boss Rush boss. A texture that is
+// shown again is sent to the chip again, from the picture it keeps. Reflection maps are shared and stay.)
+const DISPOSE_MAPS = ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "alphaMap", "bumpMap"];
+// (Phase 7's soak: a skinned model's bones go too. three.js keeps each skeleton's bones in a texture of its own, made
+// the first time it is drawn; the title's cells' rigged bosses left two on the graphics chip every visit. A skeleton
+// drawn again makes its texture again.)
 function disposeTree(root) {
   root.traverse((o) => {
+    if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) o.skeleton.dispose();
     if (o.geometry) o.geometry.dispose();
     if (o.material) {
       (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
-        if (m.map && m.map !== _glowTex) m.map.dispose();
+        for (const k of DISPOSE_MAPS) if (m[k] && m[k].isTexture && m[k] !== _glowTex) m[k].dispose();
         m.dispose();
       });
     }
@@ -551,6 +1302,79 @@ function glowSprite(color, scale = 2, opacity = 1) {
   );
   s.scale.set(scale, scale, 1);
   return s;
+}
+
+// One draw for many glow sprites (the master overhaul, Phase 2's gate, 2026-11-24): three.js draws every Sprite on its
+// own, and Risk Blaster's fighter and demon carried fifteen small glows between them, which put the screen over the
+// phone's draw budget once its ships had all arrived (102 of 100). The sprites stay where their owners put them and go on
+// being driven as before (scale, colour, opacity, their parents' motion: a demon coming apart carries its glows with
+// its chunks), but no longer draw themselves (their material is not visible); the batch reads them as the scene is
+// about to be drawn (after its matrices are updated, before anything is sent: no frame behind) and draws them all as one
+// set of points, each the size a sprite of that scale would be at that distance, with the same picture and the same
+// additive light. For small round glows only: a point is square, sized from its sprite's width (a sprite scaled taller
+// than wide stays a sprite), it may be drawn at most 511 pixels across on Apple's chips, and it goes whole when its
+// middle leaves the picture.
+class GlowBatch {
+  constructor(scene, sprites, order = 5) {
+    this.sprites = sprites.filter(Boolean);
+    this.scene = scene;
+    const n = this.sprites.length, g = new THREE.BufferGeometry(), attr = (a, k) => new THREE.BufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage);
+    this.pos = new Float32Array(n * 3); this.col = new Float32Array(n * 3); this.size = new Float32Array(n);
+    g.setAttribute("position", attr(this.pos, 3));
+    g.setAttribute("aCol", attr(this.col, 3));
+    g.setAttribute("aSize", attr(this.size, 1));
+    this.U = { tMap: { value: glowTexture() }, uPx: { value: 500 } };
+    this.points = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: this.U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aCol; attribute float aSize; uniform float uPx; varying vec3 vCol;
+        void main(){
+          vCol = aCol;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = aSize > 0.0 ? aSize * uPx * projectionMatrix[1][1] / max(-mv.z, 1e-3) : 0.0; // (a sprite's size, seen from where it is)
+        }`,
+      fragmentShader: "uniform sampler2D tMap; varying vec3 vCol; void main(){ vec4 t = texture2D(tMap, gl_PointCoord); gl_FragColor = vec4(vCol * t.rgb, t.a); }",
+    }));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = order;
+    this.points.name = "glow-batch";
+    for (const s of this.sprites) s.material.visible = false;
+    scene.add(this.points);
+    // (one hook a scene, for every batch it holds)
+    const list = scene.userData.glowBatches || (scene.userData.glowBatches = []);
+    list.push(this);
+    if (!scene.userData.glowHook) {
+      scene.userData.glowHook = true;
+      const prev = scene.onBeforeRender;
+      scene.onBeforeRender = function (r, sc, cam, rt) { prev.call(this, r, sc, cam, rt); for (const b of list) b.update(r, rt); };
+    }
+  }
+  // each sprite's place, size and light as it would be drawn now; nothing for one not seen (it, or anything it hangs
+  // from, hidden, or no longer in the scene)
+  update(r, rt) {
+    const t = rt || r.getRenderTarget();
+    this.U.uPx.value = (t ? t.height : r.domElement.height) * 0.5;
+    const P = this.pos, C = this.col, S = this.size;
+    this.sprites.forEach((s, i) => {
+      let seen = s.visible, top = s;
+      for (let p = s.parent; seen && p; p = p.parent) { seen = p.visible; top = p; }
+      seen = seen && top === this.scene; // (taken out of the scene: not seen either)
+      const m = s.matrixWorld.elements, mat = s.material, a = seen ? mat.opacity : 0;
+      P[i * 3] = m[12]; P[i * 3 + 1] = m[13]; P[i * 3 + 2] = m[14];
+      S[i] = a > 0.001 ? Math.hypot(m[0], m[1], m[2]) : 0;
+      C[i * 3] = mat.color.r * a; C[i * 3 + 1] = mat.color.g * a; C[i * 3 + 2] = mat.color.b * a;
+    });
+    const at = this.points.geometry.attributes;
+    at.position.needsUpdate = at.aCol.needsUpdate = at.aSize.needsUpdate = true;
+  }
+  dispose() {
+    const list = this.scene.userData.glowBatches;
+    if (list) { const i = list.indexOf(this); if (i >= 0) list.splice(i, 1); }
+    if (this.points.parent) this.points.parent.remove(this.points);
+    this.points.geometry.dispose();
+    this.points.material.dispose();
+    for (const s of this.sprites) s.material.visible = true;
+  }
 }
 
 function makeStars(n = 500, r = 300, { color = 0xffffff, size = 1.6, lowest = -0.05 } = {}) {
@@ -773,7 +1597,7 @@ function carpetTexture() {
   const x = c.getContext("2d");
   x.fillStyle = "#0d0626";
   x.fillRect(0, 0, 256, 256);
-  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#a65fff"];
+  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#a65fff"];
   x.lineWidth = 3;
   for (let i = 0; i < 60; i++) {
     const col = pick(cols);

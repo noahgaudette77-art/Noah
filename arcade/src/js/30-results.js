@@ -3,7 +3,9 @@
 function showResults(o) {
   Store.state.stats.games++;
   Store.save();
+  const had = Object.assign({}, Store.state.ach || {});
   Trophies.check(o);
+  o.won = TROPHIES.filter((t) => (Store.state.ach || {})[t.id] && !had[t.id]).map((t) => t.id); // (the trophies this game earned: they arrive in the reward moment)
   const go = (rank) => renderResults(o, rank);
   if (o.score > 0 && o.game !== "memory" && Store.qualifies(o.game, o.score)) askInitials(o, go);
   else go(-1);
@@ -82,13 +84,28 @@ function renderResults(o, rank) {
   // the picture over the headline: the boss that was fought, or the game's own emblem, on a medal with turning rays
   const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
   const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
-  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  const heroGen = genIconReady() ? genIcon({ blaster: "star", racer: "coin", memory: "coin", exam: "trophy" }[o.game] || "star", false, "hero") : ""; // (served: the game's emblem drawn from a model, like every other icon)
+  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : heroGen || icon(PIXELS[heroIcon] ? heroIcon : "star");
+  // The reward moment (served, with the icons drawn from the models): after the stars, what this game earned arrives
+  // one by one, each with its sound: a coin for every 40 XP (up to five), a medal for a run without a miss, a cup for a
+  // new best score, and each trophy unlocked as it stands in the hall. Pictures only: the screen's words are as before.
+  const rw = [];
+  if (genIconReady()) {
+    const coins = xp1 > xp0 ? clamp(Math.round((xp1 - xp0) / 40), 1, 5) : 0;
+    for (let k = 0; k < coins; k++) rw.push({ kind: "coin", cls: "coin", sfx: "coin", gap: 0.09 });
+    if (run.answered && !run.missed.length && o.game !== "memory") rw.push({ kind: "medal", sfx: "powerup", gap: 0.3 });
+    if (rank === 0) rw.push({ kind: "trophy", cls: "big", sfx: "fanfare", gap: 0.35 });
+    (o.won || []).forEach((id) => rw.push({ kind: trophyKind(id), cls: "big", sfx: "reward", gap: 0.35 }));
+    let at = o.stars !== undefined ? 0.55 : 0.25;
+    rw.forEach((r) => { r.at = at; at += r.gap; });
+  }
   const el = UI.el(`<section class="screen scr-results" style="background:rgba(9,3,32,.86)">
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
         <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
+        ${rw.length ? `<div class="res-rewards" aria-hidden="true">${rw.map((r) => `<span class="rw ${r.cls || ""}">${genIcon(r.kind)}</span>`).join("")}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
@@ -107,7 +124,7 @@ function renderResults(o, rank) {
           <div class="ra">${o.game === "memory" ? "" : "ANSWER: "}${esc(r.a)}</div>
           ${r.e ? `<div class="re">${esc(r.e)}</div>` : ""}
           <div class="rr">${esc(r.r)}</div></li>`).join("")}</ol>`
-        : run.answered ? `<h2 class="section-h" style="color:${COLORS.lime}">NO MISSES. FLAWLESS.</h2>` : ""}
+        : run.answered ? `<h2 class="section-h flawless">NO MISSES. FLAWLESS.</h2>` : ""}
       ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<div class="actions">
         <button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>
       </div>` : ""}
@@ -127,8 +144,9 @@ function renderResults(o, rank) {
       if (a === "hub") showHub();
     },
     key: (e) => {
-      if (e.key === "Enter") { e.preventDefault(); again(); }
-      if (e.key === "Escape") showHub();
+      if (e.key === "Enter") { e.preventDefault(); if (!e.repeat) again(); } // (not a key still held from the game's last answer)
+      else if (e.key === "Escape") showHub();
+      else UI.arrowNav(e, el, ".actions.pinned button[data-act]", "[data-act=again]", true); // (Left and Right along its bar, Enter then that one's; Up and Down scroll)
     },
     mounted: () => {
       $("[data-act=again]", el).focus({ preventScroll: true });
@@ -136,8 +154,25 @@ function renderResults(o, rank) {
       if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
       const bust = $(".res-hero canvas", el);
       if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
+      if (genIconReady()) { // the reward moment's sounds, each on the beat its picture lands (see rw above), and the announcer
+        for (let k = 0; k < (o.stars || 0); k++) setTimeout(() => { if (el.isConnected) Sound.sfx("reward", (k - 1) * 0.4); }, 120 + k * 140);
+        const items = $$(".res-rewards .rw", el); // (each lands on its own beat: a timer, so it keeps the page's clock)
+        rw.forEach((r, k) => setTimeout(() => { if (!el.isConnected) return; if (items[k]) items[k].classList.add("in"); Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000));
+        // (a chapter won, a boss beaten or a full career run on one stage, with nothing else to say, not even RANK UP!:
+        // the announcer's own CHAPTER COMPLETE. Risk Blaster's runs are not won: they end at GAME OVER)
+        const won = !(r1.i > r0.i) && o.sel && o.sel.chapters && o.sel.chapters.length === 1 && !o.sel.weak && ((o.game === "boss" && o.title === "STAGE CLEAR") || (o.game === "racer" && /^RETIRED (RICH|AT 65)$/.test(o.title)));
+        const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : won ? "CHAPTER COMPLETE" : "";
+        if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
+      }
       if (r1.i > r0.i) {
-        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
+        // (with a reward moment it waits until the last reward has landed, and stands on its own plate inside the screen's edges)
+        const settle = rw.length ? (rw[rw.length - 1].at + 0.75) * 1000 : 500;
+        setTimeout(() => {
+          Sound.sfx("rankup");
+          if (rw.length) { const sc = UI.root.appendChild(UI.el('<div class="rank-scrim"></div>')); setTimeout(() => sc.remove(), 2200); } // (Phase 6: the tiles go dark under its plate while it is up)
+          UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : "");
+          GFX.pulse(6, 0.25);
+        }, settle);
       }
     },
   });

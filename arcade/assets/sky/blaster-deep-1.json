@@ -1,0 +1,15 @@
+{
+ "name": "blaster-deep-1",
+ "source": "blaster-deep-1",
+ "blockade": {
+  "id": 15930903,
+  "style": "M3 Advanced (artistic)",
+  "seed": 1834699751,
+  "prompt": "Equirectangular 360 panorama of open outer space, the view from a ship floating in the void: only stars and nebula in every direction, above and below. A vast luminous emission nebula in neon magenta and violet with electric cyan filaments and dark dust lanes, dense fields of sharp pinpoint stars, a few bright blue-white star clusters. Mostly deep black space. Retro synthwave palette, high contrast, astrophotography detail."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 763694,
+ "lightAt": 86,
+ "mean": 0.184
+}

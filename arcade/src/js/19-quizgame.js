@@ -11,6 +11,15 @@ class QuizGame extends Scene3D {
     this.paused = false;
     this.state = "intro";
     this.bursts = this.has3D ? new Bursts(this.scene) : null;
+    // the generated icon props (a shield, a heart, a bolt, stars, coins: see PropFX), when they were served
+    const pk = { blaster: ["shield", "bolt", "star"], racer: ["shield", "heart", "bolt", "star"], boss: ["heart", "bolt", "star", "coin"] }[gameId];
+    this.iconFX = pk && this.has3D && GFX.ok && Assets.on ? new PropFX(this.scene, pk) : null;
+  }
+  // The streak has reached a new tier (see Hype): a bolt spins up where the game says (tierAt: { p, size }: over the
+  // fighter, over the rig, on the player's side of the arena).
+  propTier(lv, col) {
+    const at = this.iconFX && this.tierAt ? this.tierAt() : null;
+    if (at) this.iconFX.spin("bolt", at.p, { size: at.size, face: this.camera, col });
   }
   mountUI(html) {
     this.el = UI.el(html);
@@ -23,6 +32,9 @@ class QuizGame extends Scene3D {
     this.quiz = new QuizPanel(this.el);
     this.bandEl = $(".band", this.el);
     if (this.run.hype) Hype.bind(this.el);
+    // (the icon props mirror the sky as the game's own models do: Risk Blaster hands its panorama's reflection to each
+    // material (pano.mirror) rather than to the whole scene. Done here, with the scene built and before its warm-up.)
+    if (this.iconFX && this.pano && this.pano.mirror && this.scene && !this.scene.environment) this.iconFX.mirror((m) => this.pano.mirror(m, 1.3));
   }
   on(a, t) {
     if (a === "pause") this.pause();
@@ -78,6 +90,7 @@ class QuizGame extends Scene3D {
     if (this.paused) return;
     super.update(dt);
     if (this.bursts) this.bursts.update(dt);
+    if (this.iconFX) this.iconFX.update(VFX.dt);
   }
   dispose() {
     this.unmounted = true;
@@ -86,18 +99,27 @@ class QuizGame extends Scene3D {
   }
 }
 
+// The asset files one play needs beyond its game's standing set: Boss Rush fights one boss, so it loads one (the Proctor:
+// its skeleton and clips, boss-all-rig; its parts are in the page: 24f-proctor.js).
+function gameAssets(id, sel) {
+  if (id === "boss") return ["model:boss-" + (sel && sel.chapters && sel.chapters.length === 1 ? sel.chapters[0] : "all-rig")];
+  return [];
+}
 function startGame(id, sel) {
   const G = { blaster: BlasterGame, racer: RacerGame, boss: BossGame, memory: MemoryGame, exam: ExamGame }[id];
   const go = () => {
     Sound.ambience(false);
     Sound.setIntensity(0);
     Sound.sfx("crton");
-    UI.cover(() => {
+    // (the game's asset files first, when the page can fetch them: see Assets. With nothing to wait for this runs
+    // straight through, as it always did.)
+    Assets.with(id, gameAssets(id, sel), () => UI.cover(() => {
       const g = new G(sel);
       Scenes.set(g);
       g.start();
-    });
+    }));
   };
+  Assets.prefetch(id, gameAssets(id, sel)); // (its files, the boss it fights among them, are on their way during the briefing)
   if (id === "exam") go();
   else withBriefing(sel, go);
 }

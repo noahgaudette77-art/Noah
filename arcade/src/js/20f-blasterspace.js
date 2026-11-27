@@ -25,7 +25,7 @@ const SPACE_REGIONS = [
     sun: [10, 9.5], sunCol: 0xffffff, sunK: 0.8, planet: [-11.5, -8, 1800, 72], clouds: 0.2, cloudA: 0x3a4ad8, cloudB: 0xff7ad0, rocks: 0.05, rockTint: 0x7a80a0,
     station: 1, streak: 0xcfe0ff, traffic: { freighter: 3, tanker: 2, cruiser: 1, fighter: 3, drone: 3, shuttle: 5 } },
   { id: "graveyard", name: "SHIP GRAVEYARD", base: 0x020a0a, a: 0x0a5a50, b: 0x3adf9a, c: 0xc8ff6a, gold: 0xffd27a, neb: 0.75, stars: 0.8, fog: 0x04120e, amb: 0x4a9080, key: 0xd0ffe6,
-    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
+    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x4dffa6, rocks: 0.45, rockTint: 0x5a6a70,
     wrecks: 1, streak: 0xb8ffd8, traffic: { freighter: 0, tanker: 0, cruiser: 0, fighter: 2, drone: 4, shuttle: 1 } },
   { id: "gate", name: "WORMHOLE GATE", base: 0x0a0318, a: 0x8a3aff, b: 0xffe14f, c: 0xff3ad4, gold: 0xffffff, neb: 1.05, stars: 1.1, fog: 0x10052a, amb: 0x8a62d8, key: 0xf2e4ff,
     sun: [10.5, 8], sunCol: 0xffe0f8, sunK: 0.7, planet: [-11, -7.5, 1700, 64], clouds: 0.7, cloudA: 0xa65fff, cloudB: 0xffe14f, rocks: 0.08, rockTint: 0x8a70b0,
@@ -41,41 +41,48 @@ function spaceBakeNebula(size) {
   if (!GFX.ok) return flat();
   try {
     const rt = new THREE.WebGLRenderTarget(size, size, { wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false, stencilBuffer: false });
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      depthTest: false, depthWrite: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
-      fragmentShader: `varying vec2 vUv;
-        float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
-        float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-          vec2 a = mod(i, per), b = mod(i + 1.0, per);
-          return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
-        float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
-        void main(){
-          vec2 p = vUv;
-          vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
-          vec2 q = p + w * 0.13;
-          float A = fbm(q, 5.0, 21.0);
-          float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
-          float C = fbm(p - w * 0.09, 4.0, 77.0);
-          vec2 g = p * 150.0, c = floor(g), f = fract(g);
-          float on = step(0.93, h2(c, 3.0));
-          vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
-          float sb = h2(c, 13.0);
-          float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
-          gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
-        }`,
-    }));
-    quad.frustumCulled = false;
-    const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
-    sc.add(quad);
-    r.setRenderTarget(rt);
-    r.render(sc, new THREE.Camera());
-    r.setRenderTarget(prev);
-    quad.geometry.dispose();
-    quad.material.dispose();
+    spaceNebulaDraw(rt);
+    // (drawn again after a lost graphics context: the picture lives only on the graphics chip)
+    const forget = GFX.onRestore(() => spaceNebulaDraw(rt)), let0 = rt.dispose.bind(rt);
+    rt.dispose = () => { forget(); let0(); };
     rt.texture.rt = rt; // (kept so it can be let go with the scene)
     return rt.texture;
   } catch (e) { return flat(); }
+}
+// The nebula drawn into its target (spaceBakeNebula; and again after a lost graphics context)
+function spaceNebulaDraw(rt) {
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    depthTest: false, depthWrite: false,
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: `varying vec2 vUv;
+      float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
+      float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        vec2 a = mod(i, per), b = mod(i + 1.0, per);
+        return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
+      float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
+      void main(){
+        vec2 p = vUv;
+        vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
+        vec2 q = p + w * 0.13;
+        float A = fbm(q, 5.0, 21.0);
+        float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
+        float C = fbm(p - w * 0.09, 4.0, 77.0);
+        vec2 g = p * 150.0, c = floor(g), f = fract(g);
+        float on = step(0.93, h2(c, 3.0));
+        vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
+        float sb = h2(c, 13.0);
+        float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
+        gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
+      }`,
+  }));
+  quad.frustumCulled = false;
+  const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
+  sc.add(quad);
+  r.setRenderTarget(rt);
+  r.render(sc, new THREE.Camera());
+  r.setRenderTarget(prev);
+  quad.geometry.dispose();
+  quad.material.dispose();
 }
 // A spiral galaxy seen from far away: a warm heart, two arms of blue and rose stars.
 function spaceGalaxyTexture() {
@@ -103,7 +110,7 @@ function spaceGalaxyTexture() {
 function spaceHullMaterial(shared, o = {}) {
   return new THREE.ShaderMaterial({
     defines: o.swim ? { SPACE_SWIM: 1 } : {},
-    uniforms: Object.assign(fogUniforms(), shared, { uTime: { value: 0 }, uFogK: { value: o.fog === undefined ? 0.85 : o.fog }, uDim: { value: 1 }, uTint: { value: new THREE.Color(1, 1, 1) } }),
+    uniforms: Object.assign(fogUniforms(), shared, { uTime: { value: 0 }, uFogK: { value: o.fog === undefined ? 0.85 : o.fog }, uDim: { value: 1 }, uTint: { value: new THREE.Color(1, 1, 1) }, uLampTint: { value: new THREE.Color(1, 1, 1) } }),
     vertexShader: `attribute vec3 aCol; attribute float aGlow; attribute float aPanel;
       #ifdef USE_INSTANCING
       attribute float aSeed;
@@ -126,7 +133,7 @@ function spaceHullMaterial(shared, o = {}) {
         vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uAmb; uniform vec3 uRimCol; uniform vec3 uFlashPos; uniform vec3 uFlashCol; uniform vec3 uTint; uniform float uTime; uniform float uFogK; uniform float uDim;
+      uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uAmb; uniform vec3 uRimCol; uniform vec3 uFlashPos; uniform vec3 uFlashCol; uniform vec3 uTint; uniform float uTime; uniform float uFogK; uniform float uDim; uniform vec3 uLampTint;
       varying vec3 vC; varying vec3 vN; varying vec3 vNo; varying vec3 vL; varying vec3 vW; varying float vGlow; varying float vDepth; varying float vSeed; varying float vPanel;
       float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       void main(){
@@ -135,7 +142,7 @@ function spaceHullMaterial(shared, o = {}) {
         vec2 pc = uv / vPanel, pf = fract(pc);
         float seam = max(step(0.95, pf.x), step(0.93, pf.y));
         vec3 alb = vC * uTint * (0.84 + 0.32 * h21(floor(pc) + vSeed * 3.0)) * (1.0 - 0.34 * seam);
-        float key = max(dot(n, uSunDir), 0.0), fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        float key = max(dot(n, uSunDir), 0.0), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
         vec3 col = alb * (uAmb + uSunCol * key) + uRimCol * fr * (0.25 + 0.6 * dot(alb, vec3(0.33)));
         vec3 fd = vW - uFlashPos;
         col += alb * uFlashCol * (1.0 / (1.0 + 0.0012 * dot(fd, fd)));
@@ -149,6 +156,7 @@ function spaceHullMaterial(shared, o = {}) {
             float win = step(0.4, r) * step(0.18, wf.x) * step(wf.x, 0.82) * step(0.28, wf.y) * step(wf.y, 0.74);
             col = mix(col, mix(vec3(1.7, 1.2, 0.62), vec3(0.5, 1.3, 1.8), step(0.84, r)) * (0.7 + 0.6 * r), win);
           } else col = vC * 1.8;
+          col *= uLampTint;
         }
         gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * uFogK) * uDim, 1.0);
       }`,
@@ -180,21 +188,46 @@ function spaceRockGeo(detail, seed) {
   return g;
 }
 // An instanced mesh of the hull material: each copy has its own seed (panel shades, window pattern, when its lights blink).
-function spaceInstanced(geo, mat, n) {
+// (seeded: how many of the n take their seed from Math.random; the rest, the Mac's richer tier's extra ones, from a
+// randomness of their own (GFX.richRandom), so what the game draws after them is what it always drew)
+function spaceInstanced(geo, mat, n, seeded = n) {
   const seed = new Float32Array(n);
-  for (let i = 0; i < n; i++) seed[i] = Math.random();
+  for (let i = 0; i < Math.min(n, seeded); i++) seed[i] = Math.random();
+  if (n > seeded) GFX.richRandom(() => { for (let i = seeded; i < n; i++) seed[i] = Math.random(); });
   geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seed, 1));
   const m = new THREE.InstancedMesh(geo, mat, n);
   m.frustumCulled = false;
   return m;
 }
 
+// The far ships' and rocks' light (genKit), each wrapped round blasterSkin's hook. Made out here, not in genKit:
+// a hook made there shared genKit's scope, and with it the model's geometry as made (made); a closing scene's
+// materials are kept for their shaders (GFX.park), and with them that, until Risk Blaster came round again
+// (Phase 7's soak; the performance re-check).
+function spaceShipFar(skin) {
+  return (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65);\n float shK = 1.0 - 0.75 * smoothstep(100.0, 320.0, length(vViewPosition)); reflectedLight.directDiffuse *= shK; reflectedLight.indirectDiffuse *= shK; reflectedLight.directSpecular *= shK; reflectedLight.indirectSpecular *= shK; totalEmissiveRadiance *= shK; }"); };
+}
+function spaceRockFar(skin) {
+  return (sh) => {
+    skin(sh);
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", `#include <lights_fragment_end>
+      { float skFar = smoothstep(55.0, 140.0, length(vViewPosition)), skW = dot(geometryNormal, uSkFarDir) * 0.5 + 0.5;
+        reflectedLight.directDiffuse += skFar * max(material.diffuseColor, vec3(0.04)) * uSkFarKey * (skW * skW + 0.12); // (the darkest stone taken as a dark grey: at that size a darker one read as nothing at all)
+        reflectedLight.indirectSpecular *= 1.0 - 0.6 * skFar; }`);
+  };
+}
+
 class BlasterSpace {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._c = new THREE.Color();
-    this.regions = SPACE_REGIONS.map((r) => this.parse(r));
-    this.cur = this.parse(SPACE_REGIONS[0]);
+    // With a panorama for a sky (when the page could fetch one: see 20i-blastersky.js) each region takes its fog, its
+    // hulls' light and its clouds from that picture. Without one, everything here is as it always was.
+    const pano = !!g.pano;
+    const regs = pano ? SPACE_REGIONS.map((r) => Object.assign({}, r, (BLASTER_SKIES[r.id] || {}).space)) : SPACE_REGIONS;
+    this.regions = regs.map((r) => this.parse(r));
+    this.cur = this.parse(regs[0]);
     this.from = this.regions[0]; this.to = this.regions[0]; this.ri = 0; this.blend = 1; this.blendDur = 1;
     this.travel = 0; this.zoom = 0; this.flashK = 0;
     this.sunDir = new THREE.Vector3(-0.17, 0.17, -1).normalize();
@@ -233,11 +266,11 @@ class BlasterSpace {
           vec3 col = mix(uA, uB, smoothstep(0.3, 0.68, t.b));
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
-          float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
-          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
+          float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * (1.0 - smoothstep(0.2, 0.5, t.r));
+          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(max(dens, 0.0), 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
           c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
-          c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
+          c += uSunCol * (pow(max(sd, 0.0), 6000.0) * 4.0 + pow(max(sd, 0.0), 700.0) * 0.4 + pow(max(sd, 0.0), 70.0) * 0.08);
           // darker and quieter round the way ahead, where the enemy and the answers are
           c *= mix(1.0 - uCalm, 1.0, smoothstep(0.02, 0.2, length(uv - vec2(0.0, 0.015))));
           c += uFlash * (0.06 + dens * 0.9); // a blast lights the dust
@@ -334,7 +367,7 @@ class BlasterSpace {
           alb = mix(alb, uC, (0.5 + 0.5 * sin((vP.y - turb * 1.6) * 43.0 + 1.3)) * 0.32);
           vec2 sv = (vec2(atan(vP.z, vP.x), vP.y) - vec2(2.2, -0.26)) * vec2(2.6, 8.0);
           alb = mix(alb, uGold, exp(-dot(sv, sv)) * 0.85); // the great storm
-          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(1.0 - max(dot(n, v), 0.0), 2.6);
+          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 2.6);
           gl_FragColor = vec4(alb * (0.015 + 0.78 * day) + uRim * fr * (0.1 + 0.55 * day), 1.0);
         }`,
     })));
@@ -357,9 +390,9 @@ class BlasterSpace {
         void main(){
           float r = length(vP), t = (r - 1.32) / 0.98;
           float lanes = mix(0.6, 0.3 + 0.7 * (0.5 + 0.5 * sin(r * 96.0)) * (0.55 + 0.45 * sin(r * 23.0 + 1.0)), uLaneK);
-          lanes *= 1.0 - smoothstep(0.012, 0.0, abs(r - 1.86)) * 0.95; // the gap
+          lanes *= 1.0 - (1.0 - smoothstep(0.0, 0.012, abs(r - 1.86))) * 0.95; // the gap
           float along = dot(vQ, uSunDir), shade = along < 0.0 ? smoothstep(0.92, 1.06, length(vQ - along * uSunDir)) : 1.0; // the planet's shadow
-          gl_FragColor = vec4(uColor * (lanes * smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.88, t) * (0.06 + 0.94 * shade) * 0.62), 1.0);
+          gl_FragColor = vec4(uColor * (lanes * smoothstep(0.0, 0.07, t) * (1.0 - smoothstep(0.88, 1.0, t)) * (0.06 + 0.94 * shade) * 0.62), 1.0);
         }`,
     }));
     this.rings = rings;
@@ -386,7 +419,7 @@ class BlasterSpace {
           vUv = uv - 0.5; vMix = aData.y; vUn = uv * 0.55 + aData.yw * 3.7;
           vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
           float dz = -mv.z;
-          vA = aData.z * smoothstep(620.0, 430.0, dz) * smoothstep(40.0, 130.0, dz);
+          vA = aData.z * (1.0 - smoothstep(430.0, 620.0, dz)) * smoothstep(40.0, 130.0, dz);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `uniform sampler2D uNeb; uniform vec3 uCA; uniform vec3 uCB; uniform float uK; varying vec2 vUv; varying vec2 vUn; varying float vMix; varying float vA;
@@ -402,14 +435,40 @@ class BlasterSpace {
 
     // ---- rocks: a handful of big detailed ones near the ship's path, many small ones filling the distance
     this.rockMat = spaceHullMaterial(this.shared);
-    this.rockNear = spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
-    this.rockFar = spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
+    // (the near ones are the two generated asteroids when they arrived, taking turns: see genKit. The far ones, specks
+    // at that distance, stay the built-in rock.)
+    this.genMats = [];
+    const rockA = this.genKit("prop-rock", true), rockB = this.genKit("prop-rock2", true) || null, near = (k) => {
+      const m = new THREE.InstancedMesh(k.geo, k.mat, 16), tone = new Float32Array(48), T = [[1, 0.93, 0.86], [0.82, 0.9, 1.05], [0.62, 0.62, 0.68], [1.15, 1.1, 1.04], [0.95, 0.85, 0.95]];
+      for (let i = 0; i < 16; i++) tone.set(T[Math.floor(Math.random() * T.length)].map((v) => v * rand(0.85, 1.15)), i * 3); // (each rock its own stone: warm, slate, basalt, pale)
+      k.geo.setAttribute("aTone", new THREE.InstancedBufferAttribute(tone, 3));
+      m.frustumCulled = false; return m;
+    };
+    this.rockNear = rockA || rockB ? near(rockA || rockB) : spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
+    this.rockNear2 = rockA && rockB ? near(rockB) : null;
+    if (this.rockNear2) s.add(this.rockNear2);
+    // (Phase 5: the far ones are light copies of the same two rocks, about two hundred triangles each, in the near ones'
+    // own material and picture: the built-in grey lumps beside the crystal and the ore were the audit's #25. The odd
+    // ones the second rock. Until the copies are in hand, and from disk, the built-in rock as before.)
+    // (each copy room for all 96: which of the two arrive is not known until both are made, and a copy sized for half
+    // that is then drawn alone would be asked for twice its instances: Phase 5's review)
+    // (the Mac's richer tier, GFX.rich: twice as many far ones, a denser field at every distance; the light copies are a
+    // couple of hundred triangles each, and drawn together: no draw more. The first 96 are the far ones any computer
+    // draws, made, placed and moved as they always were; the others take slots of their own past them: see update)
+    const FAR = (this.farCap = GFX.rich ? 192 : 96);
+    const loB = rockB && this.genLo("prop-rock2-lo", rockB, FAR), loA = rockA && this.genLo("prop-rock-lo", rockA, FAR);
+    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, FAR, 96);
+    this.rockFar2 = loA && loB ? loB : null;
+    if (this.rockFar2) s.add(this.rockFar2);
     this.rocks = [];
-    for (let i = 0; i < 112; i++) {
-      const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.1, 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
+    const rock = (i) => {
+      const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(near ? 0.05 : 0.1, near ? 0.9 : 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
       this.resetRock(r, rand(-640, 0));
       this.rocks.push(r);
-    }
+    };
+    for (let i = 0; i < 112; i++) rock(i);
+    // (the Mac's extra far ones from a randomness of their own: the rest of the build draws what it always drew)
+    if (FAR > 96) GFX.richRandom(() => { for (let i = 112; i < 16 + FAR; i++) rock(i); });
     s.add(this.rockNear, this.rockFar);
 
     this.buildStation();
@@ -417,13 +476,13 @@ class BlasterSpace {
     this.buildGate();
 
     // ---- a halo behind the enemy: the picture is dimmed there and ringed with the wave's colour, so what must be read stands clear
-    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 } };
+    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 }, uDim: { value: 0.66 } };
     this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
       uniforms: this.haloU, transparent: true, depthWrite: false,
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
+      fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uDim; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.66, aura = exp(-r * r * 2.6) * 0.05;
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * uDim, aura = exp(-r * r * 2.6) * 0.05;
           vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.07); // a cold backlight (no ring: it read as a pale hoop behind the demon)
           gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
@@ -435,17 +494,38 @@ class BlasterSpace {
     this.traffic = new SpaceTraffic(this); // ships on their way (20g-blastertraffic.js)
     this.director = spaceEvents(this); // and what happens out there
     this.apply(1);
+    // The panorama, when there is one: it is the backdrop and the light. What was drawn here in its place is put away
+    // (the nebula, the galaxies, the star and its ghosts in the lens); the stars at depth, the clouds, the rocks, the
+    // giant, the landmarks and the traffic stay, since they are what moves past.
+    this.pano = g.pano || null;
+    if (this.pano) {
+      this.sky.visible = false; this.sun.visible = false; this.galaxies.forEach((sp) => { sp.visible = false; });
+      // Against a painted sky a rock is a dark shape with one lit side and a bright edge: it stands in front of the
+      // nebula instead of fading into it. (Its own light, apart from the hulls'.)
+      const ru = this.rockMat.uniforms;
+      ru.uAmb = { value: new THREE.Color() }; ru.uSunCol = { value: new THREE.Color() }; ru.uRimCol = { value: new THREE.Color() };
+      // The traffic, the station and the wrecks are background: dark gunmetal hulls held by an edge of light, their
+      // lamps cool, dimmed and hazed with distance. They are shapes behind the fight, never objects beside it.
+      const hu = this.hull.uniforms;
+      hu.uAmb = { value: new THREE.Color() }; hu.uSunCol = { value: new THREE.Color() }; hu.uRimCol = { value: new THREE.Color() };
+      hu.uTint.value.setRGB(0.16, 0.18, 0.26); hu.uDim.value = 0.7; hu.uFogK.value = 0.95; hu.uLampTint.value.setRGB(0.45, 1.0, 1.25);
+      this.haloU.uDim.value = 0.72; // (and the sky behind the fight is taken down a little further, over a wider patch: see update)
+    }
   }
 
   // a region as numbers and colours that can be blended
   parse(r) {
     const C = (h) => new THREE.Color(h), D2R = Math.PI / 180;
-    return {
+    const o = {
       id: r.id, name: r.name, base: C(r.base), a: C(r.a), b: C(r.b), c: C(r.c), gold: C(r.gold), fog: C(r.fog), amb: C(r.amb), key: C(r.key), sunCol: C(r.sunCol), cloudA: C(r.cloudA), cloudB: C(r.cloudB), rockTint: C(r.rockTint), streak: C(r.streak),
       neb: r.neb, stars: r.stars, sunK: r.sunK, clouds: r.clouds, rocks: r.rocks, station: r.station || 0, wrecks: r.wrecks || 0, gate: r.gate || 0,
       sun: new THREE.Vector3(Math.tan(r.sun[0] * D2R), Math.tan(r.sun[1] * D2R), -1).normalize(), traffic: r.traffic,
       planet: new THREE.Vector4(r.planet[2] * Math.tan(r.planet[0] * D2R), r.planet[2] * Math.tan(r.planet[1] * D2R), -r.planet[2], r.planet[3]),
+      planetW: new THREE.Vector4(), // (where a wide window has it: planetW, else where the phone has it; see update)
     };
+    const W = r.planetW || r.planet;
+    o.planetW.set(W[2] * Math.tan(W[0] * D2R), W[2] * Math.tan(W[1] * D2R), -W[2], W[3]);
+    return o;
   }
   // Travel on to a region (by its number in the run), over dur seconds.
   setRegion(i, dur = 3) {
@@ -456,6 +536,7 @@ class BlasterSpace {
     this.ri = ((i % n) + n) % n;
     this.blend = 0;
     this.blendDur = Math.max(0.01, dur);
+    if (this.pano) this.pano.go(to.id, this.blendDur);
   }
   snapshot() {
     const c = this.cur, o = {};
@@ -469,6 +550,7 @@ class BlasterSpace {
     ["neb", "stars", "sunK", "clouds", "rocks", "station", "wrecks", "gate"].forEach((n) => { c[n] = lerp(A[n], B[n], e); });
     c.sun.copy(A.sun).lerp(B.sun, e).normalize();
     c.planet.copy(A.planet).lerp(B.planet, e);
+    c.planetW.copy(A.planetW).lerp(B.planetW, e);
     c.traffic = B.traffic; c.id = B.id; c.name = B.name;
   }
 
@@ -563,8 +645,8 @@ class BlasterSpace {
         void main(){
           float r = length(vP), a = atan(vP.y, vP.x);
           float arms = smoothstep(0.1, 0.95, 0.5 + 0.5 * sin(a * 4.0 + log(r + 0.02) * 9.0 - uTime * 0.9)) * (0.6 + 0.4 * sin(a * 9.0 - log(r + 0.02) * 15.0 + uTime * 0.5));
-          float disc = smoothstep(1.0, 0.6, r) * smoothstep(0.02, 0.2, r);
-          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow((r - 0.86) * 9.0, 2.0)) * 0.8;
+          float disc = (1.0 - smoothstep(0.6, 1.0, r)) * smoothstep(0.02, 0.2, r);
+          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow(abs((r - 0.86) * 9.0), 2.0)) * 0.8;
           gl_FragColor = vec4(col * uK, 1.0);
         }`,
     });
@@ -585,7 +667,7 @@ class BlasterSpace {
     this.cloudData.set([i % 4, Math.random(), rand(0.5, 1), Math.random()], i * 4);
   }
   resetRock(r, z) {
-    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.4, 4.2) : rand(1.2, 6.5) * (Math.random() < 0.1 ? 2.2 : 1);
+    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.0, 5.2) : rand(0.8, 3.4); // (the big rocks are the generated ones; the built-in ones only fill the distance)
     r.p.set(Math.cos(a) * rr * 1.1, Math.sin(a) * rr * 0.9, z);
     if (Math.abs(r.p.x) < SPACE_CALM_R + s && Math.abs(r.p.y) < SPACE_CALM_R + s) r.p.x += (r.p.x < 0 ? -1 : 1) * (SPACE_CALM_R + s);
     r.sc.set(s * rand(0.8, 1.3), s * rand(0.7, 1.1), s * rand(0.8, 1.25));
@@ -597,6 +679,7 @@ class BlasterSpace {
     this.flashCol = this.flashCol || new THREE.Color();
     this.flashCol.set(color);
     this.shared.uFlashPos.value.copy(pos);
+    if (this.pano) this.pano.flash(k);
   }
 
   update(dt, sp, w) {
@@ -633,10 +716,21 @@ class BlasterSpace {
     S.uAmb.value.copy(c.amb).multiplyScalar(0.42);
     S.uRimCol.value.copy(c.b).lerp(c.c, 0.4).multiplyScalar(1.1);
     this.rockMat.uniforms.uTint.value.copy(c.rockTint).lerp(this._rockInk || (this._rockInk = new THREE.Color(0x2c2470)), 0.5).multiplyScalar(0.8);
+    if (this.pano) {
+      const hu = this.hull.uniforms;
+      hu.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
+      hu.uSunCol.value.copy(S.uSunCol.value).multiplyScalar(0.35);
+      hu.uRimCol.value.copy(this.pano.rimB.color).lerp(this.pano.rimA.color, 0.35).multiplyScalar(1.3);
+      const ru = this.rockMat.uniforms, P = this.pano;
+      ru.uTint.value.lerp(this._c.setRGB(0.42, 0.41, 0.46), 0.5).multiplyScalar(0.75); // (Phase 5 fix: eased toward a neutral stone, not the region's flat maroon)
+      ru.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
+      if (P.key) ru.uSunCol.value.copy(P.key.color).lerp(this._c.setRGB(1, 0.95, 0.9), 0.45).multiplyScalar(1.6);
+      ru.uRimCol.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(1.5);
+    }
     const sv = this._v.copy(this.sunDir).multiplyScalar(950).add(g.camera.position).project(g.camera), on = sv.z < 1 && Math.abs(sv.x) < 1.25 && Math.abs(sv.y) < 1.25 && !calm;
     const fade = on ? clamp(1.35 - Math.max(Math.abs(sv.x), Math.abs(sv.y)), 0, 1) * sunK : 0;
     this.ghosts.forEach((gh) => {
-      gh.visible = fade > 0.02;
+      gh.visible = fade > 0.02 && !this.pano;
       if (!gh.visible) return;
       const a = this._w.set(sv.x * gh.userData.k, sv.y * gh.userData.k, -1).unproject(g.camera), b = this._s.set(sv.x * gh.userData.k, sv.y * gh.userData.k, 1).unproject(g.camera);
       gh.position.copy(g.camera.position).add(b.sub(a).normalize().multiplyScalar(60));
@@ -646,10 +740,12 @@ class BlasterSpace {
     this.starU.uTravel.value = this.travel;
     this.starU.uTime.value = t;
     this.starU.uStarK.value = c.stars * (1 + w * 0.8);
-    this.starU.uPx.value = GFX.ok ? GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y / 800 : 1;
+    this.starU.uPx.value = GFX.ok ? (GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y * GFX.ss) / 800 : 1; // (in the scene's own pixels)
     this.galaxies.forEach((sp) => { sp.material.opacity = 0.5 * c.stars; });
-    // the giant: where this region has it in the sky; it turns slowly, its moon goes round
-    const pl = this.planet, P = c.planet;
+    // the giant: where this region has it in the sky (a wide window, a Mac's, sees some forty-five degrees each side
+    // where a phone sees fifteen, and has it where its band is clear: planetW; the window's shape blends one into the
+    // other); it turns slowly, its moon goes round
+    const pl = this.planet, P = (this._pw || (this._pw = new THREE.Vector4())).copy(c.planet).lerp(c.planetW, smoothstep(0.8, 1.5, g.camera.aspect));
     pl.position.set(P.x, P.y, P.z);
     pl.scale.setScalar(P.w);
     pl.children[0].rotation.y = t * 0.012;
@@ -681,18 +777,48 @@ class BlasterSpace {
     // rocks: as many as the region has, tumbling past
     // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
     const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
-    this.rockNear.count = nearN; this.rockFar.count = farN;
-    this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
+    // (the Mac's richer tier: as many again, the extra ones in their own slots from 96 on (two rocks: from 48 on in each
+    // mesh), so the first 96 are shown, moved and reset exactly as on any computer, from the seeded randomness; those of
+    // the first 96 a region does not show are drawn at nothing, the meshes' counts reaching past them to the extras)
+    const xtra = (this.farCap || 96) > 96 ? farN : 0;
+    const two = this.rockNear2, nearA = two ? Math.ceil(nearN / 2) : nearN; // (two asteroids: the even rocks are the first, the odd ones the second)
+    const far2 = this.rockFar2, farA = far2 ? (xtra ? 48 + Math.ceil(xtra / 2) : Math.ceil(farN / 2)) : xtra ? 96 + xtra : farN; // (and the far ones the same way)
+    this.rockNear.count = nearA; this.rockFar.count = farA;
+    this.rockNear.visible = nearA > 0; this.rockFar.visible = farA > 0;
+    if (two) { two.count = nearN - nearA; two.visible = two.count > 0; }
+    if (far2) { far2.count = xtra ? 48 + Math.floor(xtra / 2) : farN - farA; far2.visible = far2.count > 0; }
     if (nearN + farN > 0) {
+      const none = this._none || (this._none = new THREE.Matrix4().makeScale(0, 0, 0));
       this.rocks.forEach((r) => {
-        if (r.i >= (r.near ? nearN : farN)) return;
+        if (r.i >= (r.near ? nearN : r.i < 96 ? farN : 96 + xtra)) {
+          if (xtra && !r.near && r.i < 96 && !r.hid) { r.hid = true; (far2 && r.i & 1 ? far2 : this.rockFar).setMatrixAt(far2 ? r.i >> 1 : r.i, none); } // (drawn at nothing: see xtra)
+          return;
+        }
+        r.hid = false;
         r.p.z += sp * r.f * dt;
         r.ph += r.w * dt;
-        if (r.p.z > 30) this.resetRock(r, -660);
+        if (r.p.z > 30) { if (r.i >= 96 && !r.near) GFX.richRandom(() => this.resetRock(r, -660)); else this.resetRock(r, -660); } // (the Mac's extra ones from their own randomness)
         const grow = smoothstep(-660, -560, r.p.z) * (1 - smoothstep(-45, 12, r.p.z)); // they come out of the distance rather than popping in, and shrink away as they pass
-        (r.near ? this.rockNear : this.rockFar).setMatrixAt(r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
+        const pair = r.near ? two : far2;
+        (r.near ? (two && r.i & 1 ? two : this.rockNear) : (far2 && r.i & 1 ? far2 : this.rockFar)).setMatrixAt(pair ? r.i >> 1 : r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
       });
       this.rockNear.instanceMatrix.needsUpdate = this.rockFar.instanceMatrix.needsUpdate = true;
+      if (two) two.instanceMatrix.needsUpdate = true;
+      if (far2) far2.instanceMatrix.needsUpdate = true;
+    }
+    // the generated ships and rocks take the region's rims, a cold kicker along their upper edges and a fill of its colour
+    if (this.genU && this.pano) {
+      const U = this.genU, P = this.pano;
+      U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.85); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.85);
+      U.uSkKick.value.setRGB(0.55, 0.88, 1.2).multiplyScalar(0.8); // (a cool rim from above and behind: every upper edge drawn in light)
+      U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).lerp(this._coolFill || (this._coolFill = new THREE.Color(0.5, 0.56, 0.72)), 0.5).multiplyScalar(0.4); // (the region's light, eased toward a cool grey)
+      if (this.genUR) {
+        const R = this.genUR;
+        R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1);
+        // a rock far off is lit again by the region's key, from the side the picture's own light comes from (see genKit)
+        if (P.key) R.uSkFarKey.value.copy(P.key.color).multiplyScalar(P.key.intensity * 8); else R.uSkFarKey.value.setRGB(6.3, 5.7, 8);
+        R.uSkFarDir.value.fromArray(BLASTER_LAMPS.key).normalize().transformDirection(g.camera.matrixWorldInverse);
+      }
     }
     // the station, off to port: it is there in its region, far ahead before, left behind after
     const place = (obj, k, home, near) => {
@@ -735,7 +861,7 @@ class BlasterSpace {
     }
     // the halo behind the enemy (or the answers' targets)
     const fr = g.enemy && g.enemy.root.visible ? g.enemy : null, H = this.halo;
-    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
+    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); if (this.pano) H.scale.set(fr.S * 1.75, fr.S * 1.4, 1); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
     H.quaternion.copy(g.camera.quaternion);
     this.haloU.uColor.value.copy(g.waveCol).multiplyScalar(0.55);
     this.haloU.uK.value += ((g.state === "over" ? 0 : 1) - this.haloU.uK.value) * Math.min(1, dt * 3);
@@ -743,6 +869,7 @@ class BlasterSpace {
     if (g.scene.fog) g.scene.fog.color.copy(c.fog);
     if (this.ambLight) this.ambLight.color.copy(this.amb0).lerp(c.amb, 0.4);
     if (g.keyLight) g.keyLight.color.copy(this.key0).lerp(c.key, 0.4);
+    if (this.pano) this.pano.update(dt, w); // (the panorama's own lamps, over those two)
     if (this.traffic) this.traffic.update(dt, sp, w);
     if (this.fx) this.fx.update(dt, sp);
     if (this.director) this.director.update(dt, g.state === "ask" || g.state === "explain");
@@ -766,10 +893,97 @@ class BlasterSpace {
     }
   }
   // keep the far things where the camera is
-  follow(camera) { this.far.position.copy(camera.position); }
+  follow(camera) { this.far.position.copy(camera.position); if (this.pano) this.pano.follow(camera); }
   dispose() {
     if (this.nebTex.rt) this.nebTex.rt.dispose(); else this.nebTex.dispose();
     this.galaxyTex.dispose();
     if (this.traffic) this.traffic.dispose();
+    if (this.genMats.length) blasterDropMaps(this.genMats); // (the generated ships' and rocks' maps; their colour maps go in the scene's sweep)
+    // (and every kit's own shape and colour map: the escort's ships take one kit after another, so the scene's sweep
+    // found only the two each ship last flew as; the others were left on the graphics chip, a model's worth a visit.
+    // 2026-11-23, a long session's memory measured. A kit the sweep already let go of is let go of once more: nothing.)
+    for (const k of Object.values(this.genKits || {})) if (k) { k.geo.dispose(); if (k.mat.map) k.mat.map.dispose(); k.mat.dispose(); }
+  }
+  // A generated model (SPACE_GEN_PROPS) made ready to be drawn many times over: turned to fly down -z (its nose is +z),
+  // centred, one unit from nose to tail (a rock: two across, as the built-in rocks are), in its own material taught
+  // blasterSkin's rims, lit by the region's lamps and mirroring its sky, as the fighter and the demon are. One geometry
+  // and one material per model, shared by every kind drawn with it. null when it did not arrive (or there is no
+  // panorama to light it): the kind is drawn as before.
+  genKit(name, rock) {
+    const kits = this.genKits || (this.genKits = {});
+    if (kits[name] !== undefined) return kits[name];
+    const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
+    let kit = null;
+    if (model && g.pano) {
+      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 1.3, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow. Phase 6: a ship's neon at 1.3, not 3: at 3 it bloomed into a smear; its lamps and ports carry it now)
+      const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
+      if (made) {
+        const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
+        const fit = { c: bb.getCenter(new THREE.Vector3()), s }; // (how it was fitted: its light copy is fitted the same way: genLo)
+        made.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
+        made.geo.scale(s, s, s);
+        made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
+        // (the performance re-check: on a phone, the same shape at two fifths of its triangles, fitted as the full one
+        // is and drawn in its material and picture: tools/gen/phone-lod.mjs. There a ship or a near rock is a few dozen
+        // pixels across, and at its busiest a frame asked for some 450,000 triangles, most of them these.)
+        // (made in a randomness of its own: three.js draws an id for each shape it makes, and a phone's extra shapes would
+        // otherwise move what is drawn after them, the questions among them, in the capture tool's seeded runs)
+        const md = Assets.phone && g.gen.props[name + "-md"], lite = md && ownRandom(0x3a7e5d11, () => modelGeometry(md, new THREE.Matrix4().makeRotationY(Math.PI)));
+        if (md) md.scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose()); } });
+        if (lite) {
+          lite.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
+          lite.geo.scale(s, s, s);
+          lite.geo.computeBoundingBox(); lite.geo.computeBoundingSphere();
+          made.geo.dispose();
+          made.geo = lite.geo;
+        }
+        const U = (this.genU = this.genU || blasterSkinUniforms());
+        U.uSkAA.value = 1.2; U.uSkSpec.value = 0.4;
+        // (background: a hull is dark gunmetal and a rock darker stone, so the region's hard lamps draw their edges and
+        // their own neon carries them; at full albedo they stood as pale shapes beside the fight)
+        // (Phase 5 fix: lit as objects in the region's light, not silhouettes: open space was near black. A rock takes a
+        // stone of its own, aTone, over the region's colour.)
+        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 }, uSkFarKey: { value: new THREE.Color(0, 0, 0) }, uSkFarDir: { value: new THREE.Vector3(0, 0, 1) } })) : U;
+        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone; uniform vec3 uSkFarKey; uniform vec3 uSkFarDir;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        if (!rock) { // (Phase 6: a ship's hull takes the region's light but little of its colour: in a red region it read as a pink lump. Its lamps and ports are its colour)
+          // (Phase 2, resumed: and far off it fades to its running lights. Past some 100 units its hull's light, rims and
+          // neon go down, to a quarter past 320, where only haulers, drones and cruisers fly: its lamps and ports, drawn
+          // apart and never under a pixel or two, carry it, and the rims that sparkled on a hull a few pixels long go.
+          // The escort, the wings that overtake close by, and every ship near the fight are as they were.)
+          mat.onBeforeCompile = spaceShipFar(mat.onBeforeCompile);
+        }
+        // (Phase 2, resumed: far off, a rock read as a dark hole in a pale rim with the sky's colour mirrored in it, the
+        // art review's hollow far rocks. Past some 55 units, and wholly past 140, where every light copy flies, it is lit
+        // again from the side the picture's own light comes from (the region's key, uSkFarKey, from uSkFarDir), its far
+        // side kept a little off black, and it mirrors less of the sky: a lit stone with its rim.)
+        if (rock) mat.onBeforeCompile = spaceRockFar(mat.onBeforeCompile);
+        g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
+        this.genMats.push(mat);
+        model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
+        kit = { geo: made.geo, mat, fit };
+      }
+    }
+    return (kits[name] = kit);
+  }
+  // A rock's light copy (assets/models/prop-rock-lo, prop-rock2-lo: tools/gen/rock-lod.mjs), fitted as its rock was and
+  // drawn in its material and picture, n to a draw, each its own stone (aTone, as the near ones). Null if not in hand.
+  genLo(name, kit, n) {
+    const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
+    if (!model || !kit || !kit.fit) return null;
+    const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
+    model.scene.traverse((o) => { if (o.isMesh && o.geometry !== (made && made.geo)) o.geometry.dispose(); }); // (its packed form is not drawn)
+    if (!made) return null;
+    made.geo.translate(-kit.fit.c.x, -kit.fit.c.y, -kit.fit.c.z);
+    made.geo.scale(kit.fit.s, kit.fit.s, kit.fit.s);
+    made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
+    // (each its own stone, as the near ones, but from a hash and not Math.random: drawing from it here would change
+    // what the game draws after it, the questions in a capture among them)
+    const tone = new Float32Array(n * 3), T = [[1, 0.93, 0.86], [0.82, 0.9, 1.05], [0.62, 0.62, 0.68], [1.15, 1.1, 1.04], [0.95, 0.85, 0.95]];
+    const h = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233 + Math.min(n, 96)) * 43758.5453; return x - Math.floor(x); }; // (the first 96 their tones as on any computer)
+    for (let i = 0; i < n; i++) tone.set(T[Math.floor(h(i, 1) * T.length)].map((v) => v * (0.85 + 0.3 * h(i, 2))), i * 3);
+    made.geo.setAttribute("aTone", new THREE.InstancedBufferAttribute(tone, 3));
+    const m = new THREE.InstancedMesh(made.geo, kit.mat, n);
+    m.frustumCulled = false;
+    return m;
   }
 }

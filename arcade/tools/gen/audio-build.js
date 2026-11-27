@@ -1,0 +1,236 @@
+#!/usr/bin/env node
+/**
+ * Pack the generated sound into what the game loads.
+ *
+ *   GEN_OUT=<dir> node tools/gen/audio-build.js [--music name=take ...] [--voice harry]
+ *
+ * Effects and announcer lines: every take is trimmed of silence, faded at both ends and levelled, then the takes of
+ * a set are laid end to end in one file (a sprite) with a list of where each lies. Loops are laid with a little of
+ * themselves before and after, so the loop points sit inside continuous sound. Music is cut to a whole loop with
+ * its tail folded over its head. Each file starts with a click a quarter of a second in: the page finds it after
+ * decoding and so knows exactly where every cue starts, whatever the decoder does with the encoder's padding.
+ *
+ * Writes arcade/assets/audio/<set>.mp3 and arcade/assets/audio/audio.json (sprites, cues, music), which
+ * tools/manifest.js folds into the page.
+ */
+const fs = require("fs"), path = require("path"), os = require("os");
+const { execFileSync } = require("child_process");
+const ARCADE = path.join(__dirname, "..", ".."), OUT = process.env.GEN_OUT || path.join(__dirname, "out");
+const args = process.argv.slice(2);
+const opt = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
+const VOICE = opt("voice", "harry"), SR = 44100;
+// --only <set>: build that one set of effects and merge it into audio.json, every other sprite, the announcer and the
+// music left exactly as they are (2026-11-23: the raw takes behind the older sprites are not all on this machine, and a
+// full rebuild would drop what it cannot find)
+const ONLY = opt("only", null);
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "audio-"));
+const ff = (a) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", ...a], { stdio: ["ignore", "pipe", "pipe"] });
+// raw 32-bit float mono samples of a file, after a filter chain
+const pcm = (file, filters, ch = 1) => { const f = path.join(tmp, "x.f32"); ff(["-i", file, ...(filters ? ["-af", filters] : []), "-ac", String(ch), "-ar", String(SR), "-f", "f32le", f]); const b = fs.readFileSync(f); return new Float32Array(b.buffer, b.byteOffset, b.length / 4).slice(); };
+const peak = (a) => { let m = 0; for (let i = 0; i < a.length; i++) { const v = Math.abs(a[i]); if (v > m) m = v; } return m; };
+const rms = (a) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; return Math.sqrt(s / Math.max(1, a.length)); };
+const TRIM = "silenceremove=start_periods=1:start_threshold=-46dB:start_silence=0.004,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.01,areverse";
+function fade(a, inS = 0.003, outS = 0.03) { const ni = Math.min(a.length, Math.round(inS * SR)), no = Math.min(a.length, Math.round(outS * SR)); for (let i = 0; i < ni; i++) a[i] *= i / ni; for (let i = 0; i < no; i++) a[a.length - 1 - i] *= i / no; return a; }
+function level(a, to = 0.89) { const p = peak(a); if (p > 1e-4) { const k = to / p; for (let i = 0; i < a.length; i++) a[i] *= k; } return a; }
+
+// which set each effect belongs to, and how loud it sits in the mix (1 = full)
+const SETS = {
+  core: { impact_good: 0.9, impact_big: 1, impact_reject: 0.8, impact_hull: 0.9, impact_shield: 0.8, impact_metal: 0.7, explosion_small: 0.85, explosion_big: 1, explosion_huge: 1, debris: 0.6, charge_up: 0.6, charge_long: 0.65, warning: 0.6, lock_on: 0.5, slowmo_in: 0.7, player_hit: 0.9, heart_lost: 0.7, shield_down: 0.75, reward: 0.7, sting_correct: 0.6, sting_wrong: 0.6, ui_click: 0.4, ui_select: 0.5, ui_back: 0.45, coin_insert: 0.7, coin_soft: 0.6, powerup: 0.6, fanfare: 0.7, gameover: 0.7, crowd_cheer: 0.55 },
+  // weapons and bosses: Risk Blaster and Boss Rush both load this
+  combat: { laser_fire: 0.7, laser_heavy: 0.85, plasma_fire: 0.75, shell: 0.3, beam_fire: 0.8, missile_fire: 0.7, missile_hit: 0.8, volley_fire: 0.75, wave_fire: 0.85, slam: 1, boss_roar: 0.95, boss_hurt: 0.8, boss_stagger: 0.8, boss_break: 0.8, boss_death: 1, warp: 0.7 },
+  racer: { crash: 1, crash_glass: 0.8, skid: 0.7, near_miss: 0.6, boost: 0.85, gate_pass: 0.6 },
+  // Boss Rush: each boss's own roar, and what a giant machine sounds like landing, moving and powering up
+  bosses: { roar_1: 0.95, roar_2: 0.95, roar_3: 0.95, roar_4: 0.95, roar_5: 0.95, roar_6: 0.95, roar_7: 0.95, roar_8: 0.95, roar_9: 0.95, roar_10: 0.95, roar_11: 0.95, roar_all: 1, boss_land: 1, boss_servo: 0.45, boss_power: 0.7 },
+};
+// Boss Rush's wizard (2026-11-23): its spells, loaded with Boss Rush (assets/audio/sfx-wizard.mp3)
+SETS.wizard = { wiz_appear: 0.8, wiz_whoosh: 0.55, wiz_charge: 0.5, wiz_bolt: 0.7, wiz_nova: 0.85, wiz_impact: 0.85, wiz_ward: 0.8, wiz_fizzle: 0.6, wiz_finisher: 1, wiz_victory: 0.8, wiz_defeat: 0.7 };
+const LOOP_SET = { alarm: "core", charge_hum: "core", engine_ship: "combat", engine_car: "racer", boost_flame: "racer", hub_hum: "hub" };
+const LOOP_VOL = { alarm: 0.4, charge_hum: 0.4, engine_ship: 0.35, engine_car: 0.4, boost_flame: 0.6, hub_hum: 0.5 };
+// big sounds duck the music; the game's old names are heard as the new recordings
+const DUCK = { explosion_huge: 0.45, explosion_big: 0.6, boss_death: 0.5, boss_roar: 0.6, impact_big: 0.7, wiz_finisher: 0.55, wiz_victory: 0.6 };
+const ALSO = { boom: "explosion_small", bigboom: "explosion_big", laser: "laser_fire", shot: "plasma_fire", hit: "player_hit", correct: "sting_correct", wrong: "sting_wrong", coin: "coin_insert", blip: "ui_click", select: "ui_select", back: "ui_back", shield: "impact_shield", win: "fanfare", gameover: "gameover", demonroar: "boss_roar", demonhit: "boss_hurt", demonboom: "explosion_big", demonfinale: "explosion_huge", demonshed: "boss_break", demonbreak: "boss_break", demoncharge: "charge_up", bossroar: "boss_roar", bossblast: "explosion_huge", bosssmash: "slam", bosscharge: "charge_long", shatter: "heart_lost", powerup: "powerup", warp: "warp", clunk: "impact_metal" };
+const MAX_TAKES = 99; // (every usable take: the game plays them in turn; an earlier cap of four left paid-for takes unheard)
+// takes that came back as something other than what was asked, left out: the title's soft coin #1 and #2 are a
+// sustained 8.9 kHz and 12.6 kHz tone (71 and 84 % of their energy above 8 kHz), piercing where the prompt asked for
+// soft and warm; #0 is the soft clink and chime (its energy centred near 2.3 kHz)
+const SKIP_TAKES = { coin_soft: [1, 2] };
+// where a take starts, past the head of what the generator gave (seconds, "<cue>#<take in the sprite>"; Phase 6, measured
+// from the files the game plays): each announcer line here began with a faint blip and its echoes, then silence, up to
+// 0.42 s before its words; Starfall's takes rose, fell silent and then crashed, and the page plays it with its column
+// of light, so each starts at its crash (its third at its height). audio.json's windows were moved by these amounts;
+// a rebuild makes the same cut, so the lines still land with their banners and the crash with its light.
+const STARTS = {
+  "vo:boss rush#0": 0.284308, "vo:deck cleared#0": 0.089751, "vo:exam passed#0": 0.109705, "vo:final boss destroyed#0": 0.414014,
+  "vo:inflation titan#0": 0.079773, "vo:lightning#0": 0.089751, "vo:perilmonger#0": 0.049841, "vo:rank up#0": 0.099728,
+  "vo:wave 1#0": 0.229433, "vo:wave 3#0": 0.419002, "vo:wave 8#0": 0.074785, "vo:welcome#0": 0.174558,
+  "vo@brian:game over#0": 0.089751, "vo@charlie:game over#0": 0.414014,
+  "wiz_finisher#0": 0.354082, "wiz_finisher#1": 0.992698, "wiz_finisher#2": 0.663447,
+};
+const startCut = (a, key) => { const n = Math.round((STARTS[key] || 0) * SR); return n > 0 && n < a.length ? a.slice(n) : a; };
+
+const idx = JSON.parse(fs.readFileSync(path.join(OUT, "audio", "index.json"), "utf8"));
+const outDir = path.join(ARCADE, "assets", "audio");
+fs.mkdirSync(outDir, { recursive: true });
+const result = { sprites: {}, music: {}, built: {} };
+const GAP = Math.round(0.07 * SR), LEAD = Math.round(0.25 * SR);
+
+function writeSprite(name, parts, cues, stereo, kbps) {
+  // parts: Float32Arrays (mono, or interleaved stereo); a click a quarter of a second in, then the sounds
+  const chans = stereo ? 2 : 1;
+  let total = (LEAD * 2) * chans; for (const p of parts) total += p.length + GAP * chans;
+  const all = new Float32Array(total);
+  for (let c = 0; c < chans; c++) { all[LEAD * chans + c] = 0.9; all[(LEAD + 1) * chans + c] = -0.9; }
+  let o = LEAD * 2 * chans;
+  for (const p of parts) { all.set(p, o); o += p.length + GAP * chans; }
+  const raw = path.join(tmp, name + ".f32"), mp3 = path.join(outDir, name + ".mp3");
+  fs.writeFileSync(raw, Buffer.from(all.buffer));
+  ff(["-f", "f32le", "-ar", String(SR), "-ac", String(chans), "-i", raw, "-c:a", "libmp3lame", "-b:a", kbps + "k", "-ar", String(SR), mp3]);
+  result.built[name] = { file: "audio/" + name + ".mp3", bytes: fs.statSync(mp3).size, seconds: +(total / chans / SR).toFixed(2) };
+  return mp3;
+}
+
+// ---- effects and loops, set by set
+const allSets = [...new Set([...Object.keys(SETS), ...Object.values(LOOP_SET)])];
+for (const set of allSets) {
+  if (ONLY && set !== ONLY) continue;
+  const parts = [], cues = {};
+  let at = LEAD * 2; // samples
+  const put = (cue, a, vol, duck, pre = 0) => { parts.push(a); (cues[cue] = cues[cue] || []).push([+((at + pre) / SR).toFixed(6), +((a.length - pre * 2) / SR).toFixed(6), vol, duck || 0]); at += a.length + GAP; };
+  for (const [cue, vol] of Object.entries(SETS[set] || {})) {
+    const takes = Object.values(idx).filter((e) => e.kind === "sfx" && e.name === cue).sort((a, b) => a.take - b.take);
+    const good = [];
+    for (const t of takes) {
+      if (good.length >= MAX_TAKES) break;
+      if ((SKIP_TAKES[cue] || []).indexOf(t.take) >= 0) continue;
+      let a;
+      try { a = pcm(path.join(OUT, t.file), TRIM); } catch (e) { continue; }
+      if (a.length < 0.1 * SR || peak(a) < 0.05) continue; // a take that came back silent or cut short
+      good.push(level(fade(startCut(a, cue + "#" + good.length))));
+    }
+    // the takes of one sound are heard in turn: each is played at the volume that makes it as loud as the middle one
+    // (its loudest tenth of a second), so no take jumps out or drops away
+    const loud = good.map((a) => { const w = Math.round(0.1 * SR); let best = 0; for (let i = 0; i + w <= a.length; i += w >> 2) { let q = 0; for (let j = i; j < i + w; j++) q += a[j] * a[j]; best = Math.max(best, q / w); } return Math.sqrt(best) || 1e-4; });
+    const mid = [...loud].sort((x, y) => x - y)[loud.length >> 1];
+    good.forEach((a, i) => put(cue, a, +(vol * Math.min(1.6, Math.max(0.5, mid / loud[i]))).toFixed(3), DUCK[cue]));
+    if (!good.length) console.warn("no usable take of " + cue);
+  }
+  for (const [cue, s] of Object.entries(LOOP_SET)) {
+    if (s !== set) continue;
+    const takes = Object.values(idx).filter((e) => e.kind === "loop" && e.name === cue).sort((a, b) => a.take - b.take);
+    for (const t of takes) {
+      let a;
+      try { a = pcm(path.join(OUT, t.file), null); } catch (e) { continue; }
+      if (peak(a) < 0.03) continue;
+      level(a, 0.8);
+      // a little of its end before it and of its start after it, so both loop points lie inside continuous sound
+      const pre = Math.round(0.12 * SR), b = new Float32Array(a.length + pre * 2);
+      b.set(a.subarray(a.length - pre), 0); b.set(a, pre); b.set(a.subarray(0, pre), pre + a.length);
+      put(cue, b, LOOP_VOL[cue] || 0.5, 0, pre); // (every take: the game starts the next one each time the loop starts)
+    }
+  }
+  if (!parts.length) continue;
+  for (const [old, cue] of Object.entries(ALSO)) if (cues[cue] && !cues[old]) cues[old] = cues[cue];
+  writeSprite("sfx-" + set, parts, cues, false, 112);
+  result.sprites[set] = { file: "audio/sfx-" + set + ".mp3", cues };
+}
+
+// (one set only: merged into what is there, and nothing else touched)
+if (ONLY) {
+  const file = path.join(outDir, "audio.json"), prev = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!result.sprites[ONLY]) { console.error("nothing built for " + ONLY); process.exit(1); }
+  prev.sprites[ONLY] = result.sprites[ONLY];
+  prev.built = Object.assign(prev.built || {}, result.built);
+  fs.writeFileSync(file, JSON.stringify(prev, null, 1));
+  for (const [k, v] of Object.entries(result.built)) console.log(`${k}: ${(v.bytes / 1024).toFixed(0)} KB, ${v.seconds}s; cues: ${Object.keys(result.sprites[ONLY].cues).join(", ")}`);
+  process.exit(0);
+}
+// ---- the announcer: a little slap of echo and a firm compressor, like a voice over a hall's speakers
+{
+  const parts = [], cues = {};
+  let at = LEAD * 2;
+  for (const e of Object.values(idx).filter((x) => x.kind === "voice" && x.voice === VOICE).sort((a, b) => a.name.localeCompare(b.name))) {
+    let a;
+    try { a = pcm(path.join(OUT, e.file), TRIM + ",acompressor=threshold=-18dB:ratio=4:attack=4:release=120:makeup=4,aecho=0.8:0.5:55|110:0.22|0.1,highpass=f=90"); } catch (err) { console.warn("voice line unusable: " + e.name); continue; }
+    if (a.length < 0.15 * SR) continue;
+    a = startCut(a, "vo:" + e.name + "#" + (cues["vo:" + e.name] || []).length);
+    level(fade(a, 0.003, 0.06), 0.9);
+    parts.push(a);
+    (cues["vo:" + e.name] = cues["vo:" + e.name] || []).push([+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]); // (a line with more than one take: each is heard in turn)
+    at += a.length + GAP;
+  }
+  // the lines first recorded in other voices, to choose the announcer: kept as voices of their own ("vo@adam:game over"),
+  // for the bosses' last word and the hall's cabinets
+  for (const e of Object.values(idx).filter((x) => x.kind === "voice" && x.voice !== VOICE).sort((a, b) => (a.voice + a.name).localeCompare(b.voice + b.name))) {
+    let a;
+    try { a = pcm(path.join(OUT, e.file), TRIM + ",acompressor=threshold=-18dB:ratio=4:attack=4:release=120:makeup=4,aecho=0.8:0.5:55|110:0.22|0.1,highpass=f=90"); } catch (err) { console.warn("voice line unusable: " + e.voice + " " + e.name); continue; }
+    if (a.length < 0.15 * SR) continue;
+    a = startCut(a, "vo@" + e.voice + ":" + e.name + "#0");
+    level(fade(a, 0.003, 0.06), 0.9);
+    parts.push(a);
+    cues["vo@" + e.voice + ":" + e.name] = [[+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]];
+    at += a.length + GAP;
+  }
+  if (cues["vo:boss incoming"] && !cues["vo:stand by"]) cues["vo:stand by"] = cues["vo:boss incoming"]; // (Boss Rush's STAND BY banner is called as "Boss incoming!")
+  if (parts.length) { writeSprite("voice", parts, cues, false, 96); result.sprites.voice = { file: "audio/voice.mp3", cues }; }
+}
+
+// ---- music: --music name=take picks the take; cut to a whole loop, the last beats folded over the first
+for (const a of args.filter((x) => /^[a-z]+(-b)?=([a-z0-9]+:)?\d+$/.test(x))) {
+  // "blaster=0": take 0 of the prompt of that name; "blaster-b=1": its other take, as a track of its own;
+  // "blaster=blaster2:0": take 0 of another prompt (blaster2), built as the game's track "blaster"
+  const [name, rest] = a.split("="), [src, take] = rest.includes(":") ? rest.split(":") : [name.replace(/-b$/, ""), rest];
+  const e = idx[`music/${src}#${take}`];
+  if (!e) { console.warn("no such music take: " + a); continue; }
+  const s = pcm(path.join(OUT, e.file), "silenceremove=start_periods=1:start_threshold=-50dB", 2); // interleaved stereo
+  let n = s.length / 2;
+  // drop a fading tail: the loop ends where the level last stood near the track's own
+  const win = Math.round(0.4 * SR), whole = rms(s);
+  while (n > win * 4) { const seg = s.subarray((n - win) * 2, n * 2); if (rms(seg) > whole * 0.5) break; n -= Math.round(win / 2); }
+  // The loop must be a whole number of bars long, or the beat stumbles every time it comes round. The tempo is
+  // measured (the prompt's own figure is only where to look): the beat's period is the one at which the track's
+  // onsets repeat best over 1, 2, 4 ... 32 beats. Then the loop's start is moved bar by bar past a quiet opening
+  // until what follows it is as loud as what leads up to its end.
+  const hint = +((e.prompt.match(/(\d+)\s*BPM/) || [])[1] || 0);
+  let S = 0, X = Math.round(1.6 * SR), L = n - X, how = "whole track (no tempo given)";
+  if (hint) {
+    const hop = 512, nf = Math.floor(n / hop) - 1, env = new Float32Array(nf), fps = SR / hop;
+    let prev = 0;
+    for (let i = 0; i < nf; i++) { let q = 0; for (let j = 0; j < hop; j++) { const v = s[(i * hop + j) * 2] + s[(i * hop + j) * 2 + 1]; q += v * v; } q = Math.log(1e-7 + q); env[i] = i ? Math.max(0, q - prev) : 0; prev = q; }
+    const maxLag = Math.min(nf - 2, Math.ceil(33 * 60 / (hint * 0.94) * fps)), ac = new Float32Array(maxLag + 2);
+    for (let lag = 1; lag <= maxLag + 1; lag++) { let q = 0; for (let i = 0; i + lag < nf; i++) q += env[i] * env[i + lag]; ac[lag] = q / (nf - lag); }
+    const at = (x) => { const i = Math.floor(x), f = x - i; return i + 1 > maxLag + 1 ? 0 : ac[i] * (1 - f) + ac[i + 1] * f; };
+    let best = { q: -1, bpm: hint }, mean = 0, cnt = 0;
+    for (let bpm = hint * 0.94; bpm <= hint * 1.06; bpm += 0.01) { const per = 60 / bpm * fps; let q = 0; for (const k of [1, 2, 4, 8, 16, 32]) q += at(k * per); mean += q; cnt++; if (q > best.q) best = { q, bpm }; }
+    const sure = best.q / (mean / cnt), beat = 60 / best.bpm * SR, bar = beat * 4;
+    X = Math.round(beat * 2);
+    const lev = (from, len) => { const a0 = Math.max(0, Math.round(from)), b0 = Math.min(n, Math.round(from + len)); return 20 * Math.log10(rms(s.subarray(a0 * 2, b0 * 2)) || 1e-6); };
+    let pick = null;
+    for (let k = 0; k <= 8; k++) {
+      const st = Math.round(k * bar), bars = Math.floor((n - X - st) / bar / 4) * 4; // phrases of four bars
+      if (bars < 12) break;
+      const len = Math.round(bars * bar), step = lev(st, 2 * SR) - lev(st + len - 2 * SR, 2 * SR), cost = Math.abs(step) + k * 0.4;
+      if (!pick || cost < pick.cost) pick = { st, len, bars, step, cost, k };
+    }
+    if (pick && sure > 1.15) { S = pick.st; L = pick.len; how = `${best.bpm.toFixed(2)} BPM (asked ${hint}, sureness ${sure.toFixed(2)}), ${pick.bars} bars from bar ${pick.k + 1}, level step ${pick.step.toFixed(1)} dB`; }
+    else how = `whole track (tempo not found: sureness ${sure.toFixed(2)})`;
+  }
+  console.log(`music ${name}#${take}: ${how}`);
+  const out = new Float32Array(L * 2);
+  for (let i = 0; i < L; i++) for (let c = 0; c < 2; c++) {
+    let v = s[(S + i) * 2 + c];
+    if (i < X) { const t = i / X, a0 = Math.sin(t * Math.PI / 2), a1 = Math.cos(t * Math.PI / 2); v = v * a0 + s[(S + L + i) * 2 + c] * a1; } // what follows the loop's end fades out under its start fading in
+    out[i * 2 + c] = v;
+  }
+  level(out, 0.84);
+  const pre = Math.round(0.2 * SR), b = new Float32Array((L + pre * 2) * 2);
+  b.set(out.subarray((L - pre) * 2), 0); b.set(out, pre * 2); b.set(out.subarray(0, pre * 2), (pre + L) * 2);
+  writeSprite("music-" + name, [b], {}, true, 112); // (112 kbps stereo: soft synth music loses nothing audible, and a phone downloads less)
+  const at = (LEAD * 2 + pre) / SR;
+  result.music[name] = { file: "audio/music-" + name + ".mp3", loop: [+at.toFixed(6), +(at + L / SR).toFixed(6)], vol: 1, take: +take };
+}
+// music built on an earlier run stays listed
+const prevFile = path.join(outDir, "audio.json");
+if (fs.existsSync(prevFile)) { const prev = JSON.parse(fs.readFileSync(prevFile, "utf8")); for (const k in prev.music || {}) if (!result.music[k] && fs.existsSync(path.join(ARCADE, "assets", prev.music[k].file))) result.music[k] = prev.music[k]; for (const k in prev.built || {}) if (!result.built[k] && fs.existsSync(path.join(ARCADE, "assets", prev.built[k].file))) result.built[k] = prev.built[k]; }
+fs.writeFileSync(prevFile, JSON.stringify(result, null, 1));
+for (const [k, v] of Object.entries(result.built)) console.log(`${k}: ${(v.bytes / 1024).toFixed(0)} KB, ${v.seconds}s`);
+console.log("cues:", Object.values(result.sprites).reduce((n, s) => n + Object.keys(s.cues).length, 0), "music:", Object.keys(result.music).join(", ") || "none");

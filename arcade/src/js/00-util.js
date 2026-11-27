@@ -24,6 +24,15 @@ const fmtScore = (n) => String(Math.round(n)).padStart(6, "0");
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 // Mastery as a percent; one decimal below 10% so early progress is visible.
 const mpct = (x) => { const v = x * 100; return v > 0 && v < 9.95 ? v.toFixed(1) : String(Math.round(v)); };
+// fn run on a private stream of random numbers from seed (a mulberry32): three.js draws four for the id of every
+// shape, material and object it makes, and the game's own stream, which the capture tool and the regression seed,
+// must not move with how much a builder makes (what is drawn after it, the questions too, would change in their runs)
+function ownRandom(seed, fn) {
+  const R = Math.random;
+  let s = seed | 0;
+  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = R; }
+}
 const REDUCED_MOTION = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const Ease = {
@@ -111,6 +120,8 @@ const PIXELS = {
   t_reader: ["XXXX.XXXX", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "XXXXXXXXX", "...XXX...", "........."],
 };
 function icon(name, color = "currentColor") {
+  const gen = icon.gen && icon.gen(name, color); // (a coin, a star, a life or a shield drawn from its 3D model, when that strip has loaded: see 05c-genicons.js)
+  if (gen) return gen;
   const rows = PIXELS[name];
   if (!rows) return "";
   const w = rows[0].length, h = rows.length;
@@ -127,10 +138,10 @@ const starsHTML = (n, max = 3) =>
 const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BANKED": "t_cards50", ACCURACY: "t_boss6", ANSWERED: "t_exam60", "BEST STREAK": "t_streak5",
   "BOSS STARS": "star", STARS: "star", "BEST EXAM": "t_exam90", "BEST SCORE": "t_exam90", SCORE: "t_exam90", "EXAMS TAKEN": "t_exam60", "QUESTION BANK": "book", CORRECT: "check",
   TIME: "clock", "HIGH SCORE RANK": "t_boss12", "XP EARNED": "up", WAVE: "t_wave5", "RETIRED AT": "flag", PEAK: "t_million", "BOSS HP LEFT": "heart", REMEMBERED: "t_cards50", "STILL DUE": "clock" };
-const tileIcon = (k) => (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
+const tileIcon = (k) => (icon.tile && icon.tile(k)) || (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
 
 const COLORS = {
-  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",
+  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#4dffa6",
   orange: "#ff9b3d", red: "#ff4769", violet: "#a65fff", gold: "#ffc93d", ink: "#f4efff",
 };
 // Answer slots share a colour in 3D and in the HUD: A cyan, B magenta, C yellow, D orange. (D was lime: green is

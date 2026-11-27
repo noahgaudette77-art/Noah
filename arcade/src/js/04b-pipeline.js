@@ -1,4 +1,6 @@
-// The render pipeline. One mode: maximum. Frame rate is not a goal here.
+// The render pipeline. Its costliest layers follow the quality tier GFX picks (GFX.TIERS: the drawing size, the
+// multisampling, ambient shade, depth of field, motion blur, lens streaks, rays, how deep the bloom goes, the
+// reflections): a phone's frame rate decides, not a fixed "maximum".
 //
 //   scene  -> multisampled HDR target (colour + 24-bit depth), at the screen's own pixels
 //   depth  -> ambient occlusion and contact shadows (half size, depth-aware blur)
@@ -7,18 +9,20 @@
 //   bloom  -> soft-threshold bright pass, six-level downsample and tent upsample chain,
 //             god rays toward a light the scene names, anamorphic streaks, lens ghosts,
 //             and a dusty lens that catches the widest glow
-//   final  -> FXAA, sharpening, lens fringe, exposure, ACES filmic curve, split-toned
+//   final  -> sharpening, lens fringe, exposure, ACES filmic curve, split-toned
 //             neon grade, hit and streak overlays, and the CRT glass (curvature,
 //             scanlines, phosphor mask, vignette, grain, tube and bezel)
 //
 // A scene steers it with scene.userData.post:
 //   exposure, bloom, threshold, saturation, contrast, vignette, tint, split, sharpen, crisp
+//   vignetteCol: [r, g, b] (0..1, as shown): what the vignette darkens toward (black unless given; the title hall's
+//   deep violet, the art bible's void: Phase 2's polish, 2026-11-24)
 //   rays: { pos, strength, radius, flare }       god rays and flare toward a light
 //   ao: 0..1 (default 1), aoRadius (fraction of depth, default 0.055)
 //   sun: [x, y, z] world direction toward the key light, shadow: 0..1, shadowLen
 //   dof: { focus, near, far, max, sky }           distances in world units along the view
 //   mblur: 0..1                                   camera motion blur
-function makePipeline(renderer, hdr) {
+function makePipeline(renderer, hdr, wantSamples) {
   const gl = renderer.getContext(), gl2 = renderer.capabilities.isWebGL2;
   const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const opts = (depth, t) => ({ minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: t || type, depthBuffer: depth, stencilBuffer: false });
@@ -42,7 +46,8 @@ function makePipeline(renderer, hdr) {
   quadScene.updateMatrixWorld();
   const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
   const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
-  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "highp" });
+  const made = []; // (every pass's material: compileAll readies them all at once)
+  const mat = (uniforms, fs) => { const m = new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "highp" }); made.push(m); return m; };
   const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
 
   // ---- multisampling, checked once: a quad at a known depth must come back out of the resolve
@@ -72,9 +77,10 @@ function makePipeline(renderer, hdr) {
       return gl.getError() === 0 && px[0] > 20 && px[1] > 60 && Math.abs(px[2] - 128) < 12;
     } catch (e) { return false; }
   };
-  let samples = gl2 ? Math.min(gl.getParameter(gl.MAX_SAMPLES) || 0, (window.devicePixelRatio || 1) >= 2.5 ? 4 : 8) : 0;
+  const maxSamples = gl2 ? gl.getParameter(gl.MAX_SAMPLES) || 0 : 0;
+  let samples = Math.min(maxSamples, wantSamples === undefined ? 4 : wantSamples), msaaOK = true;
   let sceneRT = makeScene(samples);
-  if (samples > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = 0; sceneRT = makeScene(0); }
+  if (samples > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = 0; msaaOK = false; sceneRT = makeScene(0); }
   let depthOK = samples > 0 || resolves(sceneRT); // (no usable depth texture: the depth passes are skipped)
 
   const litRT = rt(); // the scene with shade, motion blur and depth of field
@@ -87,7 +93,7 @@ function makePipeline(renderer, hdr) {
   const glowRT = rt(); // half res: bloom, rays, streaks, ghosts and lens dirt in one texture
   const streakA = rt(), streakB = rt(); // eighth res
   const lightV = new THREE.Vector3(), sunV = new THREE.Vector3();
-  const MIRROR = 0.6; // reflections render at this fraction of the scene size
+  let MIRROR = 0.6; // reflections render at this fraction of the scene size (the tier's: see setMirror)
   const prevVP = new THREE.Matrix4(), curVP = new THREE.Matrix4(), tmpM = new THREE.Matrix4();
   let prevCam = null;
 
@@ -340,50 +346,32 @@ function makePipeline(renderer, hdr) {
     tScene: { value: null }, tGlow: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
     uAberr: { value: 0 }, uEdge: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 }, uSharp: { value: 0 },
-    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 },
+    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uVigCol: { value: new THREE.Vector3() }, uGlass: { value: 1 },
     uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 }, uPr: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
-    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
+    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() }, uDanger: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
-    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 },
+    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
     uniform float uAberr; uniform float uEdge; uniform float uFlash; uniform float uExposure; uniform float uFlicker; uniform float uSharp;
-    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uPr;
+    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform vec3 uVigCol; uniform float uGlass; uniform float uPr;
     uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
-    uniform vec3 uFeverCol; uniform HP vec2 uFever;
+    uniform vec3 uFeverCol; uniform HP vec2 uFever; uniform HP vec2 uDanger;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
-    uniform HP vec4 uKeep; uniform float uKeepA;
+    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ return texture2D(tScene, uv).rgb; }
-    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
-    vec3 fxaa(HP vec2 uv){
-      HP vec2 px = 1.0 / uSceneRes;
-      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
-      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
-      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
-      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
-      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
-      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
-      HP vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
-      HP float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
-      HP float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
-      dir = clamp(dir * rcp, -8.0, 8.0) * px;
-      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
-      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
-      float lB = luma(b);
-      return (lB < lMin || lB > lMax) ? a : b;
-    }
     vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
       HP vec2 uv = vUv;
-      if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
+      if (uGlass > 0.5 && uCurve > 0.0) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; } // (the glass's bend: Setup > Effects, SCREEN CURVE)
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
       // Where the picture is read from: an impact zooms it toward you for a moment,
       // and a shockwave bends it in a ring that spreads from the blast.
@@ -407,10 +395,10 @@ function makePipeline(renderer, hdr) {
         HP float hm = exp(-dot(hd, hd)) * uHeat.w;
         suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
-      vec3 col = fxaa(suv);
+      vec3 col = tex(suv); // (edges are smoothed by multisampling on every tier, the governor's last step too: no FXAA, which softened every edge: the owner, 2026-11-23)
       if (uSharp > 0.0) {
         // whatever a pixel has over its four neighbours is laid back on top of it
-        HP vec2 sp = 1.0 / uSceneRes;
+        HP vec2 sp = uSS / uSceneRes; // (a screen pixel, however much larger the scene was drawn)
         vec3 nb = (tex(suv + vec2(sp.x, 0.0)) + tex(suv - vec2(sp.x, 0.0)) + tex(suv + vec2(0.0, sp.y)) + tex(suv - vec2(0.0, sp.y))) * 0.25;
         col = max(col + clamp(col - nb, -0.4, 0.4) * uSharp, 0.0);
       }
@@ -455,6 +443,14 @@ function makePipeline(renderer, hdr) {
         float edge = smoothstep(0.4, 1.02, fr);
         col += uFeverCol * uFever.x * edge * (0.24 + 0.85 * rays * rays) * (0.82 + 0.18 * sin(uFever.y * 9.0));
       }
+      if (uDanger.x > 0.0) {
+        // low health: a red vignette that beats twice and rests, like a pulse; the middle of the picture stays clear
+        float dr = length((vUv - 0.5) * vec2(1.0, 1.25)) * 1.4142;
+        HP float ph = fract(uDanger.y * 0.85);
+        float beat = exp(-ph * 9.0) + 0.7 * exp(-abs(ph - 0.22) * 14.0);
+        float de = smoothstep(0.42, 1.05, dr);
+        col = mix(col, vec3(0.92, 0.03, 0.09) * (0.55 + 0.45 * dot(col, vec3(0.3333))), uDanger.x * de * (0.42 + 0.58 * beat));
+      }
       if (uGlass > 0.5) {
         // scanlines three CSS pixels tall and a phosphor triad, both at the screen's own pixels
         float s = abs(fract(uv.y * uRes.y / (3.0 * uPr)) * 2.0 - 1.0);
@@ -464,7 +460,7 @@ function makePipeline(renderer, hdr) {
         col *= mix(vec3(1.0), mask, uScan * 1.1) * uFlicker;
       }
       HP vec2 v = uv * (1.0 - uv.yx);
-      col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
+      col = mix(uVigCol, col, mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette)); // (toward black unless a scene asks for its own dark)
       // film grain: finer than a CSS pixel, strongest in the mid tones
       HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
       float gy = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -492,6 +488,18 @@ function makePipeline(renderer, hdr) {
     hdr,
     samples,
     mirrorSize: { w: 2, h: 2 },
+    // Every pass's shader compiled now (GFX.warm, once): a pass a screen turns on later (the road's contact shadows
+    // when a race starts, a tier's effects) never compiles mid-play.
+    compileAll() {
+      if (this.compiled) return;
+      this.compiled = true;
+      const keep = quad.material;
+      for (const m of made) { quad.material = m; try { renderer.compile(quadScene, cam); } catch (e) { /* best effort */ } }
+      quad.material = keep;
+      // (and the lens's dust: the glow pass draws it only when rays, the lens or a strong glow are on, and on a phone a
+      // hit's glow was the first, mid-play: a picture of a megabyte sent then. Phase 8's census, the exam)
+      try { if (renderer.initTexture) renderer.initTexture(dirt); } catch (e) { /* sent the first time it is drawn instead */ }
+    },
     resize(w, h) {
       sw = w; sh = h;
       sceneRT.setSize(w, h);
@@ -516,6 +524,18 @@ function makePipeline(renderer, hdr) {
       prevCam = null;
     },
     lastCalls: 0, lastTris: 0,
+    // the tier's multisampling: the scene's target is made again (rarely: only when the tier changes)
+    setSamples(n) {
+      n = msaaOK ? Math.min(maxSamples, Math.max(0, n | 0)) : 0;
+      if (n === samples) return;
+      sceneRT.dispose();
+      samples = n; this.samples = n;
+      sceneRT = makeScene(n);
+      if (n > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = this.samples = 0; msaaOK = false; sceneRT = makeScene(0); }
+      depthOK = samples > 0 || resolves(sceneRT);
+      sceneRT.setSize(sw, sh);
+    },
+    setMirror(k) { MIRROR = k; this.mirrorSize.w = Math.max(2, Math.round(sw * Math.max(0.1, k))); this.mirrorSize.h = Math.max(2, Math.round(sh * Math.max(0.1, k))); },
     render(scene, camera, o) {
       renderer.setRenderTarget(sceneRT);
       renderer.render(scene, camera);
@@ -523,6 +543,13 @@ function makePipeline(renderer, hdr) {
       this.lastTris = renderer.info.render.triangles; // (the scene's own, for the readout)
       if (GFX.probe) GFX.probe("scene");
       const p = o.post, opt = o.opt;
+      // (a scene drawn larger than the screen: ss times, st of the way to twice. What is measured in the scene's own
+      // pixels below is stretched to match, so the picture is the same picture, only smoother. Both are 1 and 0 for
+      // every scene that did not ask.)
+      const ss = Math.max(1, sw / Math.max(1, renderer.domElement.width)), st = ss > 1.01 ? Math.min(1, Math.log2(ss)) : 0;
+      const NL = Math.max(4, Math.min(LEVELS, o.levels || LEVELS)); // (how deep the bloom chain goes: the tier's)
+      let cut = 0; for (let i = NL; i < LEVELS; i++) cut += W[i]; // (the levels left out give their share to the deepest one kept)
+      const Wk = (i) => (st > 0 ? lerp(W[i], i > 0 ? W[i - 1] : 0, st) + (i === LEVELS - 1 ? W[i] * st : 0) : W[i]) + (i === NL - 1 ? cut : 0); // each bloom level's share, a level down
       const depth = depthOK ? sceneRT.depthTexture : null;
       const P = camera.projectionMatrix, PI = camera.projectionMatrixInverse;
 
@@ -542,8 +569,8 @@ function makePipeline(renderer, hdr) {
         pass(ao, aoA);
         const b = aoBlur.uniforms;
         b.tDepth.value = depth; b.uInvProj.value.copy(PI); b.uProj.value.copy(P);
-        b.tAO.value = aoA.texture; b.uDir.value.set(2 / sw, 0); pass(aoBlur, aoB);
-        b.tAO.value = aoB.texture; b.uDir.value.set(0, 2 / sh); pass(aoBlur, aoA);
+        b.tAO.value = aoA.texture; b.uDir.value.set((2 * ss) / sw, 0); pass(aoBlur, aoB);
+        b.tAO.value = aoB.texture; b.uDir.value.set(0, (2 * ss) / sh); pass(aoBlur, aoA);
         shade = aoA.texture;
         if (GFX.probe) GFX.probe("ao");
       }
@@ -566,6 +593,7 @@ function makePipeline(renderer, hdr) {
         if (GFX.probe) GFX.probe("dof");
       }
       // ---- the lit picture: shade, camera motion blur, depth of field
+      let litTex = null;
       {
         const u = lit.uniforms;
         u.tScene.value = sceneRT.texture; u.tDepth.value = depth; u.uDepthOn.value = depth ? 1 : 0;
@@ -575,13 +603,15 @@ function makePipeline(renderer, hdr) {
         // camera motion blur: a 1/40 s shutter, whatever the frame rate
         curVP.multiplyMatrices(P, camera.matrixWorldInverse);
         let mb = 0;
-        if (depth && opt.blur && !o.calm && prevCam === camera && o.dt > 0) {
+        if (depth && opt.blur && opt.mblur !== false && !o.calm && prevCam === camera && o.dt > 0) {
           mb = (p.mblur !== undefined ? p.mblur : 1) * Math.min(1, 0.025 / o.dt);
           u.uReproj.value.multiplyMatrices(prevVP, tmpM.copy(curVP).invert());
         }
         u.uMBlur.value = mb;
         prevVP.copy(curVP); prevCam = camera;
-        pass(lit, litRT);
+        // (nothing to add, no shade, no blur, no depth of field: the picture goes on as it was drawn, a full-size
+        // pass the fewer. At MEDIUM and below that is every frame.)
+        litTex = aoK > 0 || shK > 0 || mb > 0 || D ? (pass(lit, litRT), litRT.texture) : sceneRT.texture;
         if (GFX.probe) GFX.probe("lit");
       }
 
@@ -589,31 +619,31 @@ function makePipeline(renderer, hdr) {
       const noBloom = !opt.bloom, wantRays = !!(p.rays && p.rays.pos && opt.beams);
       if (!noBloom || wantRays) {
         const b = bright.uniforms;
-        b.tDiffuse.value = litRT.texture;
+        b.tDiffuse.value = litTex;
         b.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
         b.uKnee.value = p.knee !== undefined ? p.knee : 0.45;
         b.uPx.value.set(1 / sw, 1 / sh);
         pass(bright, down[0].t);
-        for (let i = 1; i < LEVELS; i++) {
+        for (let i = 1; i < NL; i++) {
           downs.uniforms.tDiffuse.value = down[i - 1].t.texture;
           downs.uniforms.uPx.value.set(1 / down[i - 1].w, 1 / down[i - 1].h);
           pass(downs, down[i].t);
         }
         if (!noBloom) {
-          let low = down[LEVELS - 1].t.texture, lw = down[LEVELS - 1].w, lh = down[LEVELS - 1].h;
-          for (let i = LEVELS - 2; i >= 0; i--) {
+          let low = down[NL - 1].t.texture, lw = down[NL - 1].w, lh = down[NL - 1].h;
+          for (let i = NL - 2; i >= 0; i--) {
             const u = ups.uniforms;
             u.tLow.value = low; u.tHere.value = down[i].t.texture;
             u.uPx.value.set(1 / lw, 1 / lh);
             const tk = p.bloomTight || 0; // (0: the full chain; 1: the wide levels almost off, so the glow is about half as wide)
-            u.uW.value = W[i] * (1 - tk * TIGHT[i]);
-            u.uLowK.value = i === LEVELS - 2 ? W[LEVELS - 1] * (1 - tk * TIGHT[LEVELS - 1]) : 1; // (the deepest level arrives unweighted)
+            u.uW.value = Wk(i) * (1 - tk * TIGHT[i]);
+            u.uLowK.value = i === NL - 2 ? Wk(NL - 1) * (1 - tk * TIGHT[NL - 1]) : 1; // (the deepest level arrives unweighted)
             pass(ups, up[i]);
             low = up[i].texture; lw = down[i].w; lh = down[i].h;
           }
           // anamorphic streaks: the eighth-res light, smeared sideways in two widening passes
           if (opt.lens) {
-            const m = down[2];
+            const m = down[st > 0.5 ? 3 : 2];
             blur.uniforms.tDiffuse.value = m.t.texture;
             blur.uniforms.uDir.value.set(2.2 / m.w, 0);
             pass(blur, streakB);
@@ -638,15 +668,22 @@ function makePipeline(renderer, hdr) {
           if (GFX.probe) GFX.probe("rays");
         }
       }
-      const bloomK = noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1;
+      const bloomK = (noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1) * (1 + (o.bloomKick || 0));
       const u = final.uniforms;
       if (noBloom && !raysOn) {
         u.tGlow.value = black;
         u.uGlowK.value = 0;
+      } else if (!raysOn && !opt.lens && (hdr || bloomK <= 1)) {
+        // the glow is the bloom alone (no rays, no lens: no dirt, streaks or flare): the final pass reads the bloom where
+        // it is, and a half-size pass that only copied it is saved. (On a phone, where the lens is off, every frame. On
+        // a screen without half-float targets the copy capped a strong bloom at 1, so there a strong one still goes
+        // through it.)
+        u.tGlow.value = up[0].texture;
+        u.uGlowK.value = bloomK;
       } else {
         const g = glow.uniforms;
         g.tBloom.value = noBloom ? black : up[0].texture;
-        g.tWide.value = noBloom ? black : up[3].texture;
+        g.tWide.value = noBloom ? black : up[Math.min(st > 0.5 ? 4 : 3, NL - 2)].texture;
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
@@ -661,7 +698,7 @@ function makePipeline(renderer, hdr) {
         u.tGlow.value = glowRT.texture;
         u.uGlowK.value = 1;
       }
-      u.tScene.value = litRT.texture;
+      u.tScene.value = litTex;
       u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       const cw = renderer.domElement.width, ch = renderer.domElement.height;
       u.uRes.value.set(cw, ch);
@@ -669,13 +706,15 @@ function makePipeline(renderer, hdr) {
       u.uFlicker.value = o.calm || !opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
       u.uGrain.value = opt.grain ? 1 : 0;
       u.uAberr.value = o.ab;
-      u.uEdge.value = opt.ca ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
-      u.uSharp.value = p.sharpen !== undefined ? p.sharpen : 0.3;
+      u.uEdge.value = opt.ca && opt.fringe !== false ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
+      u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
+      u.uSS.value = ss;
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
       u.uFever.value.set(o.fever, o.t % 628.3185);
+      u.uDanger.value.set(o.danger || 0, o.t % 628.3185);
       u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
       u.uZoom.value.set(o.punch, o.zoomBlur);
       if (o.keep) { u.uKeep.value.set(o.keep.x, o.keep.y, o.keep.rx, o.keep.ry); u.uKeepA.value = o.keep.a; } else u.uKeepA.value = 0;
@@ -686,10 +725,11 @@ function makePipeline(renderer, hdr) {
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
       u.uVignette.value = opt.vignette ? (p.vignette !== undefined ? p.vignette : 1) : 0;
+      if (p.vignetteCol) u.uVigCol.value.fromArray(p.vignetteCol); else u.uVigCol.value.set(0, 0, 0);
       if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
       u.uGlass.value = o.glass;
       u.uScan.value = opt.scan ? (p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)
-      u.uCurve.value = 0.06;
+      u.uCurve.value = opt.curve ? 0.06 : 0; // (the bend resamples every pixel, a soft picture: off unless switched on)
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
       u.uPr.value = pr;
       u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);

@@ -136,12 +136,73 @@ function spaceGlowMaterial(trail) {
     defines: trail ? { SPACE_TRAIL: 1 } : {},
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "varying vec3 vC; varying vec2 vUv; void main(){ vUv = uv; vC = vec3(1.0);\n#ifdef USE_INSTANCING_COLOR\nvC = instanceColor;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }",
-    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(1.0 - vUv.y, 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(abs(1.0 - vUv.y), 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
   });
 }
 
+// The generated ships, when they arrived (see BlasterSpace.genKit): the freighter with its cargo pods for the freighters,
+// the blade-shaped cruiser for the cruisers and, smaller, the fighters' wings of three, the round tug for the drones and
+// the shuttles. The tankers (three spheres on a truss), the hulks and the whale keep their built-in designs.
+const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
+const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2", "prop-rock-lo", "prop-rock2-lo", "prop-ship-a-md", "prop-ship-b-md", "prop-ship-c-md", "prop-rock-md", "prop-rock2-md"]; // (the -lo: the far rocks, light copies of the two: Phase 5) (the -md: a phone's lighter copies of the ships and the near rocks: the performance re-check, genKit)
+// Running lights for a generated ship (Phase 5 fix: the wings of fighters read as enemy fire): magenta to port, cyan to
+// starboard at its widest, white at its tail; they blink slowly (under once a second).
+// (Phase 6: at the distance they are seen at, the ships read as lumps. Each lamp is a point of light now, as big as it
+// is in the world near to, never under a pixel or two across far off, so it stays crisp; and a row of lit ports runs
+// along each flank, steady warm points, so a hull far off reads as a ship: points of light on a dark shape.)
+function spaceRunningLights(geo) {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], cor = [], col = [], ph = [], ix = [];
+  let wx = 0, wz = 0, wy = 0;
+  for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i]) > wx) { wx = Math.abs(P[i]); wy = P[i + 1]; wz = P[i + 2]; }
+  const L = bb.max.z - bb.min.z, H = bb.max.y - bb.min.y, r = Math.max(bb.max.x - bb.min.x, L) * 0.022;
+  // a lamp: a quad about its centre that the shader turns to the lens (k: its least radius, in pixels; p < 0: steady)
+  const lamp = (x, y, z, c, p, k, rr = r) => {
+    const b = pos.length / 3;
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([u, v]) => { pos.push(x, y, z); cor.push(u, v, k, rr); col.push(c[0], c[1], c[2]); ph.push(p); });
+    ix.push(b, b + 1, b + 2, b, b + 2, b + 3);
+  };
+  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0, 2.0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0, 2.0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5, 1.8);
+  // the ports: along each flank at its middle height, where the hull is widest at each of five stations
+  const yc = (bb.min.y + bb.max.y) / 2 + H * 0.08;
+  for (let n = 0; n < 5; n++) {
+    const zs = bb.min.z + L * (0.26 + n * 0.12);
+    let w = 0;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 2] - zs) < L * 0.035 && Math.abs(P[i + 1] - yc) < H * 0.14) w = Math.max(w, Math.abs(P[i]));
+    if (w > 0) [-1, 1].forEach((sd) => lamp(sd * (w + r * 0.3), yc, zs, [2.2, 1.9, 1.45], -1, 1.25, r * 0.5));
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aCor", new THREE.Float32BufferAttribute(cor, 4));
+  g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute("aPh", new THREE.Float32BufferAttribute(ph, 1));
+  g.setIndex(ix);
+  return g;
+}
+const SPACE_LAMP_U = { uTime: { value: 0 }, uPx: { value: 0.0024 } }; // (shared: the show's time, and one CSS pixel in the lens's height)
+function spaceRunningLightMat() {
+  return new THREE.ShaderMaterial({
+    uniforms: SPACE_LAMP_U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute vec4 aCor; attribute vec3 aCol; attribute float aPh; uniform float uTime; uniform float uPx; varying vec3 vC; varying vec2 vUv;
+      void main(){
+        vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0);
+        vec4 mv = viewMatrix * w, c0 = projectionMatrix * mv;
+        float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+        vC = aCol * (aPh < 0.0 ? 1.0 : 0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh)));
+        float ry = max(aCor.w * length(instanceMatrix[0].xyz) * projectionMatrix[1][1], aCor.z * uPx * c0.w);
+        mv.xyz -= normalize(mv.xyz) * (2.0 * ry / projectionMatrix[1][1]); // (toward the lens by its own size: its hull never swallows it)
+        vec4 c = projectionMatrix * mv;
+        c.xy += aCor.xy * vec2(ry * projectionMatrix[0][0] / projectionMatrix[1][1], ry) * (c.w / c0.w);
+        vUv = aCor.xy;
+        gl_Position = c;
+      }`,
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(abs(1.0 - (d - 0.45) / 0.55), 2.0)), 1.0); }",
+  });
+}
+
+
 const SPACE_TYPES = { // how many of each at most, where its engines are (behind its middle), its trail's colour and width, how big it is drawn
-  freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [2.4, 0.7, 1.2], 0.55, 1.8],
+  freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [1.25, 1.65, 2.2], 0.4, 1.8], // (Phase 5 fix: a short cyan-white engine glow, not the long magenta of the demon's fire)
   drone: [8, 1.0, [0.4, 1.3, 2.2], 0.4, 1.7], shuttle: [8, 4.4, [2.4, 1.4, 0.5], 1.5, 1.5], hulk: [2, 0, null, 0, 1],
 };
 class SpaceTraffic {
@@ -153,11 +214,29 @@ class SpaceTraffic {
     this.types = {};
     let total = 0;
     for (const name in SPACE_TYPES) {
-      const [cap, rear, col, tw, size] = SPACE_TYPES[name], mesh = spaceInstanced(geos[name], space.hull, cap);
+      // (a kind drawn with a generated model is drawn as long as its built-in design, nose to tail: gs)
+      const [cap, rear, col, tw, size] = SPACE_TYPES[name], kit = SPACE_GEN[name] ? space.genKit(SPACE_GEN[name]) : null;
+      let mesh, gs = 1;
+      if (kit) {
+        geos[name].computeBoundingBox();
+        gs = geos[name].boundingBox.max.z - geos[name].boundingBox.min.z;
+        mesh = new THREE.InstancedMesh(kit.geo, kit.mat, cap);
+        mesh.frustumCulled = false;
+        const lamps = new THREE.InstancedMesh(spaceRunningLights(kit.geo), spaceRunningLightMat(), cap); // (drawn with the hulls: the same places)
+        lamps.instanceMatrix = mesh.instanceMatrix;
+        Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
+        Object.defineProperty(lamps, "visible", { get: () => mesh.visible, set: () => {} });
+        lamps.frustumCulled = false;
+        lamps.renderOrder = 3; // (over the hull it sits on, and over the trail behind it)
+        g.scene.add(lamps);
+      } else mesh = spaceInstanced(geos[name], space.hull, cap);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < cap; i++) mesh.setMatrixAt(i, zero);
       g.scene.add(mesh);
-      this.types[name] = { mesh, cap, rear, col, tw, size, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
+      // (Phase 6: a generated hauler, tug or cruiser is drawn smaller than its built-in design: at their distance the
+      // big ones filled the picture's edges as lumps. The wings of fighters keep their size.)
+      // (the cruiser, far off in the haze, most of all: a long dark blade with its lamps, not a hazy blot)
+      this.types[name] = { mesh, cap, rear, col, tw, size: kit && name !== "fighter" ? size * (name === "cruiser" ? 0.55 : 0.78) : size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
       total += cap;
     }
     // one streak of engine light per ship
@@ -215,6 +294,7 @@ class SpaceTraffic {
   update(dt, sp, w) {
     const g = this.g, tr = this.space.cur.traffic, m = this._m, q = this._q, p = this._p;
     if (w < 0.02) this.sp0 = sp;
+    SPACE_LAMP_U.uTime.value = VFX.t; SPACE_LAMP_U.uPx.value = 2 / Math.max(1, GFX.h); // (the lens spans the screen's height: the band is a window into it)
     // keep the region's traffic up
     if ((this.cool -= dt) <= 0 && w < 0.05) {
       this.cool = rand(0.5, 1.3);
@@ -246,11 +326,11 @@ class SpaceTraffic {
         q.setFromUnitVectors(this._fwd, s.head).multiply(this._r.setFromAxisAngle(this._z, roll));
       }
       const k = s.s * smoothstep(0, 0.7, s.t) * (s.life - s.t < 0.5 ? Math.max(0, (s.life - s.t) / 0.5) : 1);
-      s.T.mesh.setMatrixAt(s.slot, m.compose(p, q, this._s.setScalar(k)));
+      s.T.mesh.setMatrixAt(s.slot, m.compose(p, q, this._s.setScalar(k * s.T.gs)));
       dirty[s.type] = 1;
       hi[s.type] = Math.max(hi[s.type] || 0, s.slot + 1);
       if (s.T.col) {
-        const speed = s.script ? 40 : s.v.length(), len = clamp(speed * 0.32, 3, 30) * (1 + w * 2) * (s.type === "cruiser" ? 2.2 : 1), tw = s.T.tw * k;
+        const speed = s.script ? 40 : s.v.length(), len = clamp(speed * 0.32, 3, 30) * (1 + w * 2) * (s.type === "cruiser" ? 2.2 : s.type === "fighter" ? 0.4 : 1), tw = s.T.tw * k;
         p.add(this._h.set(0, 0, s.T.rear * k).applyQuaternion(q));
         this.trails.setMatrixAt(s.T.base + s.slot, m.compose(p, q, this._s.set(tw, tw, len)));
         this.trails.setColorAt(s.T.base + s.slot, this._c.setRGB(s.T.col[0], s.T.col[1], s.T.col[2]).multiplyScalar(0.55));
@@ -273,7 +353,7 @@ function spaceDartMaterial() {
     fragmentShader: `varying vec3 vC; varying vec2 vUv;
       void main(){
         float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;                        // along it (0 its tail, 1 its head); across it (0 on its axis, 1 at its edge)
-        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
+        float w = t < 0.86 ? pow(max(t / 0.86, 0.0), 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
         float aa = fwidth(x) * 1.2 + 1e-4;
         float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.34 - aa, w * 0.34, x);
         if (body < 0.004) discard;
@@ -388,6 +468,10 @@ function spaceEvents(space) {
   const g = space.g, T = space.traffic, FX = (space.fx = new SpaceFX(space)), D = new EventDirector(g, { min: 3, max: 6 });
   const side = () => (Math.random() < 0.5 ? -1 : 1), quiet = () => g.state === "ask" || g.state === "explain", R = Math.PI / 180;
   const frame = (ax, ay, d, out) => (out || new THREE.Vector3()).set(d * Math.tan(ax * R), d * Math.tan(ay * R), -d); // a place in the window: degrees right, degrees up, how far
+  // (With the painted sky and the staged fight, the window's upper corners are where the answers' drones stand, and
+  // with four answers its sides as well: what was set in a corner is set at the window's edge instead, in the gap
+  // between the upper drones and the lower ones.)
+  const corner = (ax, ay, d, out) => (space.pano ? frame(ax * 1.3, lerp(1.4, 3.8, clamp((Math.abs(ay) - 7) / 3, 0, 1)), d, out) : frame(ax, ay, d, out));
   const inReg = (...ids) => () => ids.includes(space.cur.id), alive = (run) => run.ships.some((s) => s.alive);
   const v = new THREE.Vector3(), w = new THREE.Vector3();
 
@@ -433,7 +517,7 @@ function spaceEvents(space) {
   // 6. a dogfight in the distance: one chases the other round, firing (a shot every 0.45 s); they break off
   D.add({ id: "dogfight", dur: 8,
     start: (run) => {
-      const sd = side(), c = frame(sd * 10.5, 9, 175), ph = rand(6.283);
+      const sd = side(), c = corner(sd * 10.5, 9, 175), ph = rand(6.283);
       const path = (lag) => (s, t) => { const a = (t - lag) * 1.5 + ph; if (t < 5.4) s.p.set(c.x + Math.cos(a) * 14, c.y + Math.sin(a * 2) * 5, c.z + Math.sin(a) * 16); else { s.script = null; s.v.set(sd * (lag ? 46 : -38), lag ? 12 : -8, -T.sp0 - 30); } };
       run.ships = [T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0), s: 1.25 }), T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0.5), s: 1.25 })].filter(Boolean);
       run.shot = 0.8;
@@ -446,7 +530,7 @@ function spaceEvents(space) {
     } });
   // 7. far off, a ship blows up: one flash, a ring, debris
   D.add({ id: "explosion", dur: 3, flashy: true, can: () => space.cur.id !== "station",
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
     update: (dt, t, run) => {
       if (!run.done && t > 0.7) {
         run.done = true;
@@ -493,7 +577,7 @@ function spaceEvents(space) {
   hole.visible = false;
   g.scene.add(hole);
   D.add({ id: "wormhole", dur: 5,
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
     update: (dt, t, run) => {
       run.p.z += space.sp * 0.2 * dt;
       hole.position.copy(run.p);
@@ -516,7 +600,7 @@ function spaceEvents(space) {
     end: () => { whale.visible = false; } });
   // 13. an ion storm: three slow pulses of light in the clouds, a fork of lightning with each (1.5 a second at most)
   D.add({ id: "ionstorm", dur: 2.6, flashy: true, can: inReg("nebula", "orbit", "graveyard", "gate"),
-    start: (run) => { run.p = frame(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
+    start: (run) => { run.p = corner(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
     update: (dt, t, run) => {
       if (run.n < 3 && t > 0.2 + run.n * 0.66) {
         run.n++;

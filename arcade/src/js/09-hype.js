@@ -64,6 +64,7 @@ const Hype = {
         Sound.sfx("fever" + lv);
         Sound.say(L.name);
         this.confetti(L.col);
+        { const s = Scenes.cur; if (s && s.propTier) s.propTier(lv, L.col); } // (the game's own sign of it: a bolt spins up)
         Haptics.buzz([30, 40, 30, 40, 90]);
         GFX.pulse(9, 0.22);
         GFX.setFever(L.amt, L.rgb);

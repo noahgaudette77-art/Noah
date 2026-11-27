@@ -1,0 +1,41 @@
+{
+ "name": "prop-van",
+ "triangles": 8996,
+ "bytes": 200544,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.2482,
+    0
+   ],
+   "min": [
+    -0.2123,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.2123,
+    0.4964,
+    0.5
+   ],
+   "tris": 8996
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.4246416687965393,
+  0.49641087651252747,
+  1
+ ],
+ "source": "cand/props/prop-van-sd-0.tripo.glb",
+ "symmetry": {
+  "delivered": 0.628,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.628,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

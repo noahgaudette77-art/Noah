@@ -1,0 +1,13 @@
+{
+ "name": "wand",
+ "about": "Boss Rush: the wizard's wand (2026-11-23): an original slim tapered shaft of black lacquer with dark chrome rings, a grip wrapped with glowing cyan lines, a faceted chrome pommel and a clear faceted crystal tip. Tripo H3.1 (standard) from concept wand-a-sd-0 (Seedream; two other designs not used). Its own model, held in the wizard's right hand; the tip's light is the game's (a glow drawn at the anchor, charged before a cast).",
+ "src": "cand/wand/wand-a-sd-0.tripo.glb",
+ "forward": "-z",
+ "size": { "axis": "z", "value": 0.42 },
+ "origin": "center",
+ "tris": 3000,
+ "tex": 256,
+ "texBase": 512,
+ "emissive": { "hues": [[165, 205]], "sat": [0.35, 0.6], "val": [0.5, 0.85] },
+ "anchors": { "tip": { "at": ["c", "c", "max"] }, "grip": { "at": ["c", "c", "min"], "d": [0, 0, 0.07] } }
+}

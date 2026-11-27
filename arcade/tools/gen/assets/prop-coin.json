@@ -1,0 +1,21 @@
+{
+ "name": "prop-coin",
+ "about": "A gold token with an egg on its face: coins and score rewards. Tripo v3.1 at its standard (low-credit) settings from concept prop-coin-sd-0, one attempt.",
+ "src": "cand/props/prop-coin-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 2500,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "gain": 0
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "bar": "the game's one quality bar (2026-11-17): an effect prop that flies in numbers (up to 12 at once): a lower-detail version of a simple shape, 512 px maps"
+}

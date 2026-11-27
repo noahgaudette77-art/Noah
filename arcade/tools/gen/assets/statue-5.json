@@ -1,0 +1,35 @@
+{
+ "name": "statue-5",
+ "about": "Final Exam: a statue of Group Golem (Rodin's build); an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/boss05/boss05-golem-sd-1.rodin.glb",
+ "forward": "+z",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 7000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "sloppy": true,
+ "bar": "the game's one quality bar (2026-11-17): a figure or prop seen small, far off or in the background: about 7K to 10K triangles, 512 px maps"
+}

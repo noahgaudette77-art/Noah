@@ -11,6 +11,7 @@ function dueCount(ids) {
 
 function showSelect(gameId) {
   const cab = CAB(gameId);
+  Assets.prefetch(gameId); // (the chosen game's files start on their way while its stage is picked; nothing waits for them here)
   Sound.play("hub");
   const isMemory = gameId === "memory", isBoss = gameId === "boss";
   const weakN = isMemory ? weakIds(ALL_FIDS).length : weakIds(ALL_QIDS).length;
@@ -75,12 +76,19 @@ function showSelect(gameId) {
       if (a === "back") { Sound.sfx("back"); showHub(); }
       if (a === "pick") start(t.dataset.sel);
     },
-    key: (e) => { if (e.key === "Escape") { Sound.sfx("back"); showHub(); } },
+    // (the arrows over the stages, the first to the lit one; Enter plays the lit stage, as PLAY in the hall: on a
+    // stage the arrows or Tab moved to, Enter is that stage's, see UI.init)
+    key: (e) => {
+      if (e.key === "Escape") { Sound.sfx("back"); showHub(); }
+      else if (e.key === "Enter" && !e.repeat) { const f = $(".stage.focal:not([disabled])", el); if (f) { e.preventDefault(); start(f.dataset.sel); } }
+      else UI.arrowNav(e, el, ".stage", ".stage.focal");
+    },
   });
 }
 
 const ExamPrefs = { len: 50, timed: true };
 function showExamSetup() {
+  Assets.prefetch("exam"); // (as for a game's stage select: its files start on their way)
   Sound.play("calm");
   const best = Store.state.stats.bestExam || 0;
   const recent = (Store.state.scores.exam || []).slice(0, 5);
@@ -130,6 +138,10 @@ function showExamSetup() {
       }
       if (a === "go") { Sound.sfx("select"); UI.flash("crt-on"); startGame("exam", makeSelection("all")); }
     },
-    key: (e) => { if (e.key === "Escape") showHub(); },
+    key: (e) => {
+      if (e.key === "Escape") showHub();
+      else if (e.key === "Enter" && !e.repeat) { e.preventDefault(); $("[data-act=go]", el).click(); } // (START EXAM)
+      else UI.arrowNav(e, el, "button[data-act]", "[data-act=go]");
+    },
   });
 }

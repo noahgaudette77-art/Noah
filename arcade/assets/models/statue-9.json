@@ -1,0 +1,33 @@
+{
+ "name": "statue-9",
+ "triangles": 6539,
+ "bytes": 122060,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4436,
+    0,
+    -0.1313
+   ],
+   "max": [
+    0.4436,
+    1,
+    0.1313
+   ],
+   "tris": 6539
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.8871265053749084,
+  1,
+  0.2625170350074768
+ ],
+ "source": "cand/boss09/boss09-influencer-sd-0.rodin.glb"
+}
