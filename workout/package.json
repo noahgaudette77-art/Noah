@@ -1,0 +1,37 @@
+{
+  "name": "tempo-workout",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4318",
+    "test": "vitest run",
+    "contact-sheet": "node scripts/contact-sheet.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "a11y": "node scripts/a11y.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "framer-motion": "^14.14.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^3.11.2"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.1",
+    "@types/node": "^26.6.11",
+    "@types/react": "^18.3.32",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.7.0",
+    "postcss": "^8.5.34",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^2.1.9"
+  }
+}
