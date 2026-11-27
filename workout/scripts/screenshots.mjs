@@ -1,9 +1,9 @@
-// Captures every screen at phone (390x844) and desktop (1440x900) sizes into shots/.
+// Captures every screen at phone (390x844) and desktop (1280x800) sizes into $OUT (default shots/).
 // Usage: npm run build && npm run screenshots
 import { mkdirSync } from 'node:fs';
 import { chromium, preview } from './lib/serve.mjs';
 
-const OUT = 'shots';
+const OUT = process.env.OUT ?? 'shots';
 mkdirSync(OUT, { recursive: true });
 const TODAY = '2026-12-14'; // Monday of week 3
 
@@ -70,7 +70,7 @@ const nav = async (page, hash) => { await page.evaluate((h) => { location.hash =
 
 const VPS = [
   { tag: 'mobile', size: { width: 390, height: 844 } },
-  { tag: 'desktop', size: { width: 1440, height: 900 } },
+  { tag: 'desktop', size: { width: Number(process.env.DESKTOP_W ?? 1280), height: Number(process.env.DESKTOP_H ?? 800) } },
 ];
 
 for (const vp of VPS) {
