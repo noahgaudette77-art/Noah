@@ -1,0 +1,382 @@
+{
+  "generated": {
+    "sky-entrance": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Entrance of a long basement gym at the foot of worn concrete stairs, a row of black pendant lamps hanging low into the distance, heavy steel door, chalk-stained concrete pillars, deep shadow between warm pools of light, 1970s underground iron gym, shot on 35mm film, heavy grain, faded warm tones, halation around lamps, exposed brick, raw concrete, rusted steel, rubber floor, black pendant lamps with warm tungsten glow, dust in the air, no people, no text, no signage",
+      "negative": "people, person, figure, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, mirror selfie, cartoon, painting, oversaturated, blurry",
+      "status": "done",
+      "updated": "2026-11-27",
+      "source": "8192x4096",
+      "files": [
+        "assets/room/sky-entrance-2k.webp",
+        "assets/room/sky-entrance-4k.webp"
+      ],
+      "placeholder": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAAAQBACdASogABAAPtFUo0uoJKMhsAgBABoJZQCdBagBAYkT9bJ5RW/RAAD+7C4irYcn/1HnnoOR9GGE4tJvh57JtCwPt5cStDDfKZ10rbbfjn/T5OjCEsnkU/R4VdeZu9DVeNAHp8puSukhnvQhK/tzt8PBQr/KOTNpqOcRLUAgvAAA",
+      "blockadeId": 15955168
+    },
+    "sky-bench": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Bench and dumbbell area, two worn leather weight benches, a long steel rack of rusted cast-iron hex dumbbells along a brick wall, an old squat stand, a chalk bucket, scuffed black rubber floor tiles, 1970s underground iron gym, shot on 35mm film, heavy grain, faded warm tones, halation around lamps, exposed brick, raw concrete, rusted steel, rubber floor, black pendant lamps with warm tungsten glow, dust in the air, no people, no text, no signage",
+      "negative": "people, person, figure, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, mirror selfie, cartoon, painting, oversaturated, blurry",
+      "status": "done",
+      "updated": "2026-11-27",
+      "source": "8192x4096",
+      "files": [
+        "assets/room/sky-bench-2k.webp",
+        "assets/room/sky-bench-4k.webp"
+      ],
+      "placeholder": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAABQBACdASogABAAPtFWpUwoJKOiMAgBABoJQBOmUGMACSQQwlj9X/20u66AAP7uy8Z0m6ysfNUssqlcJjt4k7psEu2g+H96zp8cBdBr33pExWo5LKL+pYt/47qEV8zoXUuhZL+3nHkfbym+MqJRiUmXyvqsQYaSTvIjAn6hBxH7oLI0JAA=",
+      "blockadeId": 15955169
+    },
+    "prop-dumbbell": {
+      "takes": 1,
+      "tool": "Tripo3D text_to_model",
+      "prompt": "A rusted cast-iron hexagonal dumbbell from a 1970s gym, chipped black paint over orange-brown rust, worn knurled steel handle polished by hands, realistic proportions, single object, no text, no logo",
+      "status": "done",
+      "updated": "2026-11-27",
+      "file": "assets/props/prop-dumbbell.glb",
+      "bytes": 374524,
+      "credits": 20,
+      "taskId": "66534dc3-430e-4480-9912-97404027aba1"
+    },
+    "sky-mesh": {
+      "takes": 2,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "A whole wall covered by a large welded steel wire grid panel in a rusted frame, kettlebells hanging from S-hooks on the grid, old pipes along the ceiling, brick beside it, amber strip light at its base, 1970s underground iron gym, shot on 35mm film, heavy grain, faded warm tones, halation around lamps, exposed brick, raw concrete, rusted steel, rubber floor, black pendant lamps with warm tungsten glow, dust in the air, no people, no text, no signage",
+      "negative": "windows, daylight, sunlight, people, person, figure, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, mirror selfie, cartoon, painting, oversaturated, blurry",
+      "status": "done",
+      "updated": "2026-11-27",
+      "source": "8192x4096",
+      "files": [
+        "assets/room/sky-mesh-2k.webp",
+        "assets/room/sky-mesh-4k.webp"
+      ],
+      "placeholder": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAABQBACdASogABAAPtFWpEuoJKOhsAgBABoJQBOmUABgKvYET6FF6bh/xDdAAP5+q1CuA76cxxXXCr64GYS+fXxOUTYV4CbgjHWTuhhMAsxqIAFXVJNgq5/T1/5WoTMcQgna8JGSVLb411XU+xo0hntfTGoURlr4s+fWBJxcTMxUddGHUHqWUgAA",
+      "blockadeId": 15955183
+    },
+    "sky-lane": {
+      "takes": 2,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Windowless basement, a long red rubber sprint lane with white lines runs across the dark concrete floor into the distance, an old tractor tire on the lane, a climbing rope from a steel beam, concrete pillars, 1970s underground iron gym, shot on 35mm film, heavy grain, faded warm tones, halation around lamps, exposed brick, raw concrete, rusted steel, rubber floor, black pendant lamps with warm tungsten glow, dust in the air, no people, no text, no signage",
+      "negative": "windows, daylight, sunlight, people, person, figure, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, mirror selfie, cartoon, painting, oversaturated, blurry",
+      "status": "done",
+      "updated": "2026-11-27",
+      "source": "8192x4096",
+      "files": [
+        "assets/room/sky-lane-2k.webp",
+        "assets/room/sky-lane-4k.webp"
+      ],
+      "placeholder": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwBACdASogABAAPtE4sFMoIiWjmAEAGgllAAEZ0y56WluhTL9oQoRauaAA/vnsvfh/CVKS0p11vH3qbp0yJwUwumkp36uK3DaNi85+shRZlTuL5Nwzom4iLfuetJQ4SDmVPDH7fba2jAAA",
+      "blockadeId": 15955182
+    },
+    "sky-ceiling": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Looking up at a low concrete ceiling with a honeycomb of warm hexagonal light fixtures glowing amber, steel beams and old ducts between them, brick walls fading into shadow below, 1970s underground iron gym, shot on 35mm film, heavy grain, faded warm tones, halation around lamps, exposed brick, raw concrete, rusted steel, rubber floor, black pendant lamps with warm tungsten glow, dust in the air, no people, no text, no signage",
+      "negative": "people, person, figure, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, mirror selfie, cartoon, painting, oversaturated, blurry",
+      "status": "done",
+      "updated": "2026-11-27",
+      "source": "8192x4096",
+      "files": [
+        "assets/room/sky-ceiling-2k.webp",
+        "assets/room/sky-ceiling-4k.webp"
+      ],
+      "placeholder": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAABwBACdASogABAAPtFUo0uoJKMhsAgBABoJQBOmUBDPBIgXeyDt1aUKVSA+AAD+6+diROi7NeQJ17GvHbJxHrWTStiXwcKftOpozKl2ah9y2CYxEbokX6a24qyG7RP5Ek5UViXJ5y0WDDg/5+PZZfHC67zBpjblitUhfLXP28AAAA==",
+      "blockadeId": 15955174
+    },
+    "prop-plate": {
+      "takes": 1,
+      "tool": "Tripo3D text_to_model",
+      "prompt": "An old cast-iron weight plate, round with a raised outer rim and a centre hole, worn black enamel with rust showing through, smooth faces, no lettering, no numbers, single object",
+      "status": "done",
+      "updated": "2026-11-27",
+      "file": "assets/props/prop-plate.glb",
+      "bytes": 219592,
+      "credits": 20,
+      "taskId": "f56c6690-b515-4ebb-bfca-65bbe416c007"
+    },
+    "prop-kettlebell": {
+      "takes": 2,
+      "tool": "Tripo3D text_to_model",
+      "prompt": "A vintage cast-iron kettlebell with a completely smooth blank surface and no markings of any kind, rust patina with worn black paint, smooth handle polished by use, single object",
+      "status": "done",
+      "updated": "2026-11-27",
+      "file": "assets/props/prop-kettlebell.glb",
+      "bytes": 170964,
+      "credits": 20,
+      "taskId": "9397b509-04ac-4502-951d-cbfa62059bf1"
+    },
+    "tex-procedural": {
+      "tool": "procedural (tools/gen-textures.mjs)",
+      "files": [
+        "assets/tex/paper-cream.webp",
+        "assets/tex/paper-crease.webp",
+        "assets/tex/grain.webp",
+        "assets/tex/paint-mask.png"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-rusty_metal_02": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Rusty Metal 02",
+      "authors": [
+        "Rob Tuytel"
+      ],
+      "url": "https://polyhaven.com/a/rusty_metal_02",
+      "files": [
+        "assets/ph/rusty_metal_02_diffuse_1k.webp",
+        "assets/ph/rusty_metal_02_nor_gl_1k.webp",
+        "assets/ph/rusty_metal_02_rough_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-rust_coarse_01": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Rust Coarse 01",
+      "authors": [
+        "Dimitrios Savva",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/rust_coarse_01",
+      "files": [
+        "assets/ph/rust_coarse_01_diffuse_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-red_brick_03": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Red Brick 03",
+      "authors": [
+        "Rob Tuytel"
+      ],
+      "url": "https://polyhaven.com/a/red_brick_03",
+      "files": [
+        "assets/ph/red_brick_03_diffuse_1k.webp",
+        "assets/ph/red_brick_03_nor_gl_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-concrete_wall_003": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Concrete Wall 003",
+      "authors": [
+        "Dimitrios Savva",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/concrete_wall_003",
+      "files": [
+        "assets/ph/concrete_wall_003_diffuse_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-rubber_tiles": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Rubber Tiles",
+      "authors": [
+        "Amal Kumar"
+      ],
+      "url": "https://polyhaven.com/a/rubber_tiles",
+      "files": [
+        "assets/ph/rubber_tiles_diffuse_1k.webp",
+        "assets/ph/rubber_tiles_nor_gl_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-concrete_floor_worn_001": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Concrete Floor Worn 001",
+      "authors": [
+        "Dimitrios Savva",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/concrete_floor_worn_001",
+      "files": [
+        "assets/ph/concrete_floor_worn_001_diffuse_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-rusty_metal_grid": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Rusty Metal Grid",
+      "authors": [
+        "Amal Kumar"
+      ],
+      "url": "https://polyhaven.com/a/rusty_metal_grid",
+      "files": [
+        "assets/ph/rusty_metal_grid_diffuse_1k.webp",
+        "assets/ph/rusty_metal_grid_nor_gl_1k.webp",
+        "assets/ph/rusty_metal_grid_rough_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-weathered_brown_planks": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Weathered Brown Planks",
+      "authors": [
+        "Dimitrios Savva",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/weathered_brown_planks",
+      "files": [
+        "assets/ph/weathered_brown_planks_diffuse_1k.webp"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "ph-industrial_pipe_and_valve_01": {
+      "tool": "Poly Haven",
+      "license": "CC0",
+      "name": "Industrial Pipe & Valve 01",
+      "authors": [
+        "Philip Modin"
+      ],
+      "url": "https://polyhaven.com/a/industrial_pipe_and_valve_01",
+      "files": [
+        "assets/ph/industrial_pipe_and_valve_01_1k.hdr"
+      ],
+      "cost": "free",
+      "updated": "2026-11-27"
+    },
+    "lifter-ref": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "A 1970s gym poster illustration of an original fictional man in his early 30s, short 1970s-cut dark brown hair, light stubble, square jaw, athletic build, standing in a relaxed three-quarter pose, shown from head to mid-thigh, plain dark training shorts, no shirt. Halftone duotone print in rust orange and black ink on aged cream paper, coarse visible halftone dots, slight ink misregistration, paper fibres and soft creases, dramatic hard side light from the left with deep shadow on the right, plain paper background with wide margins. No text, no letters, no numbers, no logos, no border, no watermark. Not a real person, not a celebrity.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433c5/cwTuWdgBV0b-ZopNzlxe1_Zuvz5e4F.png",
+      "cost": 0.15,
+      "files": [],
+      "size": "848x1264"
+    },
+    "poster-24": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 24% body fat: solid and broad, soft midsection with no visible abs, thick waist, rounded chest and shoulders. Natural and believable. No text, no letters, no numbers, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433c8/kX-pphw3PAJFyRhdsOUCG_NkQLnnwE.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/poster-24.webp",
+        "assets/art/poster-24.avif"
+      ],
+      "size": "848x1264"
+    },
+    "poster-19": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 19% body fat: a visibly leaner waist, a faint outline of the upper abs, more shape in the shoulders and arms. Natural and believable. No text, no letters, no numbers, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433cc/_2rzjlXZsJDhhvwsyd3oj_gBZ8r9qq.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/poster-19.webp",
+        "assets/art/poster-19.avif"
+      ],
+      "size": "848x1264"
+    },
+    "poster-15": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 15% body fat: lean and athletic, upper abs and obliques visible, defined shoulders and arms, faint veins on the forearms. Natural and believable. No text, no letters, no numbers, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433ce/4ehlPepKXFP8mKH0pHGKF_VekS9I85.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/poster-15.webp",
+        "assets/art/poster-15.avif"
+      ],
+      "size": "848x1264"
+    },
+    "poster-12": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 12% body fat: lean and muscular, a clear six-pack, defined chest and shoulders, athletic and natural, not a bodybuilder, not extreme. Natural and believable. No text, no letters, no numbers, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433d1/18vwdfezD7KOCj94awebI_0XdBcBt5.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/poster-12.webp",
+        "assets/art/poster-12.avif"
+      ],
+      "size": "848x1264"
+    },
+    "still-hero": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He claps chalk from his hands and a cloud of chalk dust hangs in the light. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433d4/ep4o2cADkWZ-BW6XpauNh_0PNd6BNL.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/still-hero.webp",
+        "assets/art/still-hero.avif"
+      ],
+      "size": "768x1376"
+    },
+    "still-rest": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He sits on the end of a worn leather bench between sets, forearms on his knees, head slightly down, breathing, a towel over one shoulder, dust motes drifting in the lamp light behind him. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433d7/HKiw84bjMVN_usTIKygID_NIusczuo.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/still-rest.webp",
+        "assets/art/still-rest.avif"
+      ],
+      "size": "768x1376"
+    },
+    "still-complete": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He sets a rusted hex dumbbell back on a steel rack and exhales, chalk on his hands, a slight satisfied smile, warm lamp light from above. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab433da/8KbD4Voq7voBfXCuiHVeX_wMqXBFXa.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/still-complete.webp",
+        "assets/art/still-complete.avif"
+      ],
+      "size": "768x1376"
+    }
+  },
+  "note": "Written by tools/*.mjs. Paths are relative to public/."
+}

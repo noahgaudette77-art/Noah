@@ -3,7 +3,6 @@ import { Suspense, lazy, useEffect } from 'react';
 import { Skeleton } from './components/ui';
 import { Shell } from './components/Shell';
 import { match, useRoute } from './lib/router';
-import { TOGGLE_EVENT } from './rig/DemoPlayer';
 import DayScreen from './screens/DayScreen';
 import ExerciseDetail from './screens/ExerciseDetail';
 import History from './screens/History';
@@ -37,15 +36,6 @@ const FULLSCREEN = (p: string) => p === '/workout' || p.startsWith('/summary');
 
 export default function App() {
   const path = useRoute();
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (t.closest('input, textarea, select, [contenteditable]')) return;
-      if (e.key.toLowerCase() === 'k' && !e.metaKey && !e.ctrlKey && !e.altKey) window.dispatchEvent(new Event(TOGGLE_EVENT));
-    };
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, []);
   useEffect(() => {
     const titles: Record<string, string> = { '/': 'Today', '/week': 'Week', '/body': 'Progress', '/history': 'History', '/settings': 'Settings', '/workout': 'Session' };
     document.title = `${titles[path] ?? (path.startsWith('/summary') ? 'Session complete' : 'Tempo')} · Tempo`;

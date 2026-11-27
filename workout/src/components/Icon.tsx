@@ -4,7 +4,7 @@ import {
   ClockCounterClockwise, Crosshair, DeviceMobile, DownloadSimple, Export, Fire, FlagCheckered, GearSix, HandSwipeRight,
   Info, Lightning, Link, Minus, Moon, Path, Pause, PersonSimple, PersonSimpleWalk, Play, Plus, SkipForward,
   SpeakerHigh, SpeakerSlash, Stack, SunHorizon, ThermometerHot, Timer, Trophy, UploadSimple, Vibrate, Warning,
-  Waveform, X, type IconWeight,
+  Waveform, X, Eye, FilmStrip, Compass, Microphone, Wind, type IconWeight,
 } from '@phosphor-icons/react';
 import type { SVGProps } from 'react';
 
@@ -15,7 +15,7 @@ const MAP = {
   bike: Bicycle, heat: ThermometerHot, moon: Moon, bolt: Lightning, info: Info, alert: Warning, spine: PersonSimple,
   target: Crosshair, sound: SpeakerHigh, mute: SpeakerSlash, skip: SkipForward, up: ArrowUp, flag: FlagCheckered,
   install: DeviceMobile, link: Link, layers: Stack, flame: Fire, trophy: Trophy, share: Export, ticks: Waveform,
-  vibrate: Vibrate, swipe: HandSwipeRight,
+  vibrate: Vibrate, swipe: HandSwipeRight, eye: Eye, film: FilmStrip, gyro: Compass, voice: Microphone, room: Wind,
 } as const;
 
 export type IconName = keyof typeof MAP;

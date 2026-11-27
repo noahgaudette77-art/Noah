@@ -7,12 +7,15 @@ import { bestSet } from '../logic/motivation';
 import { STAGE_LABEL, exerciseHistory, tempoForStage } from '../logic/progression';
 import { recommendationFor } from '../logic/session';
 import { useStore } from '../logic/store';
-import { DemoPlayer } from '../rig/DemoPlayer';
+import { useState } from 'react';
+import { cuesFor } from '../data/musclewiki';
+import { VideoPrint } from '../demo/VideoPrint';
 import { tempoText } from '../workout/plan';
 
 export default function ExerciseDetail({ id }: { id: string }) {
   const ex = EXERCISES[id];
   const sessions = useStore((s) => s.sessions);
+  const [film, setFilm] = useState(false);
   if (!ex) return <PageHeader title="Not found" back="/" />;
   const slots = DAYS.flatMap((d) => d.slots.filter((s) => s.exerciseId === id).map((s) => ({ d, s })));
   const first = slots[0];
@@ -20,15 +23,17 @@ export default function ExerciseDetail({ id }: { id: string }) {
   const tempo = tempoForStage(first.s.tempo, rec.stage);
   const hist = exerciseHistory(sessions, id).slice(0, 8);
   const best = bestSet(sessions, id);
-  const priority = ex.cues.filter((c) => c.priority);
-  const rest = ex.cues.filter((c) => !c.priority);
+  // when the MuscleWiki film is showing, close variants use cues that describe that film
+  const shown = cuesFor(id, ex, film);
+  const priority = shown.cues.filter((c) => c.priority);
+  const rest = shown.cues.filter((c) => !c.priority);
   return (
     <div>
       <PageHeader back="/" eyebrow={`${slots.map(({ d }) => d.title).join(' · ')} · ${ex.view}`} title={ex.name} />
       <div className="gutter mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <div className="lg:sticky lg:top-8 lg:self-start">
-          <DemoPlayer id={id} name={ex.name} tempo={tempo} view={ex.view} primary aspect={4 / 3.4} className="-mx-4 h-[52vh] min-h-[320px] sm:mx-0 sm:rounded-[28px] lg:h-[540px]" />
-          <p className="mt-3 px-1 text-sm text-smoke">{tempoText(tempo)}. Press K to pause, 0.5x to slow it down.</p>
+          <VideoPrint id={id} tempo={tempo} onFilm={setFilm} />
+          <p className="mt-3 px-1 text-sm text-smoke">{tempoText(tempo)}.</p>
         </div>
         <div className="space-y-4">
           <Card className="p-6">
@@ -57,7 +62,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
           </Card>
           <div className="flex gap-3 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,138,76,0.12),rgba(255,138,76,0.04))] p-6 shadow-lit">
             <Icon name="alert" className="mt-0.5 shrink-0 text-ember-hi" />
-            <div><p className="font-semibold">Common mistake</p><p className="mt-1 text-ash">{ex.mistake}</p></div>
+            <div><p className="font-semibold">Common mistake</p><p className="mt-1 text-ash">{shown.mistake}</p></div>
           </div>
           <Card className="p-6">
             <Label>Programming</Label>

@@ -1,5 +1,5 @@
 // THE PROGRAM. One typed file: meta, exercise library, weekly schedule, cardio, habits.
-// Demo animations for each exercise live in src/rig/demos.ts, keyed by exercise id.
+// Exercise demo films come from MuscleWiki at runtime: see src/data/musclewiki.ts (our id -> their id).
 import type { CardioBlock, DayPlan, Exercise, Habit, ProgramMeta, Tempo } from './types';
 
 export const META: ProgramMeta = {

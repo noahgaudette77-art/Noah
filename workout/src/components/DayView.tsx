@@ -6,7 +6,6 @@ import { blocksFor, recommendationFor, startSession } from '../logic/session';
 import { useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 import { play } from '../lib/sfx';
-import { usePhysique } from '../rig/DemoPlayer';
 import { Icon } from './Icon';
 import { Thumb } from './Thumb';
 import { Button, Card, Label } from './ui';
@@ -48,8 +47,8 @@ export function StartButton({ plan, date }: { plan: DayPlan; date: string }) {
 }
 
 export function SessionList({ plan }: { plan: DayPlan }) {
-  const stage = usePhysique();
   const blocks = blocksFor(plan);
+  let station = 0;
   const est = estimateDay(plan);
   if (!plan.slots.length && !plan.cardio.length) return null;
   return (
@@ -65,7 +64,7 @@ export function SessionList({ plan }: { plan: DayPlan }) {
           if (b.kind === 'cardio') {
             return (
               <li key={bi} className="flex items-center gap-4 rounded-2xl p-2.5">
-                <Thumb id={b.cardio.demo} stage={stage} />
+                <Thumb cardio={b.cardio.demo} />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{b.cardio.name}</p>
                   <p className="text-sm text-smoke">{b.cardio.range ? `${b.cardio.range[0]}–${b.cardio.range[1]}` : b.cardio.minutes} min · {b.cardio.details[0]}</p>
@@ -83,7 +82,7 @@ export function SessionList({ plan }: { plan: DayPlan }) {
                 return (
                   <a key={s.exerciseId} href={`#/exercise/${s.exerciseId}`} onClick={(e) => { e.preventDefault(); navigate(`/exercise/${s.exerciseId}`); }}
                     className="group flex items-center gap-4 rounded-2xl p-2.5 transition-colors hover:bg-white/[0.03]">
-                    <Thumb id={s.exerciseId} stage={stage} />
+                    <Thumb n={++station} />
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{b.kind === 'superset' && <span className="mr-1.5 text-ash">{b.group}{si + 1}</span>}{ex.name}</p>
                       <p className="mt-0.5 text-sm text-smoke">

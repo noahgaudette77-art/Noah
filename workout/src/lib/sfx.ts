@@ -1,23 +1,23 @@
+// Legacy call sites (play/buzz) routed into the room's sound engine (lib/audio.ts).
 import { getState } from '../logic/store';
+import { cue, say } from './audio';
 
-const cache: Record<string, HTMLAudioElement> = {};
 export type Sfx = 'set-done' | 'rest-done' | 'start' | 'pr' | 'tick-low' | 'tick-high' | 'count' | 'go';
-const TICKS: Sfx[] = ['tick-low', 'tick-high', 'count', 'go'];
-const VOL: Partial<Record<Sfx, number>> = { 'set-done': 0.5, 'tick-low': 0.45, 'tick-high': 0.45, count: 0.6, go: 0.7, pr: 0.8 };
 
-/** Plays a UI sound. Tempo ticks and countdown beeps follow the Ticks setting (off by default); the rest follow Sounds. */
+/** Plays a UI sound in the Iron Room palette. Everything is silent unless Sound is on in Settings. */
 export function play(name: Sfx) {
-  const s = getState().settings;
-  if (TICKS.includes(name) ? !s.ticks : !s.sound) return;
-  try {
-    const a = (cache[name] ??= new Audio(`sfx/${name}.mp3`));
-    a.currentTime = 0;
-    a.volume = VOL[name] ?? 0.85;
-    void a.play().catch(() => undefined);
-  } catch { /* audio unavailable */ }
+  switch (name) {
+    case 'set-done': cue('stamp'); break;
+    case 'pr': cue('plate'); break;
+    case 'tick-low': case 'tick-high': cue('tick'); break;
+    case 'count': cue('flap'); break;
+    case 'rest-done': say('next-exercise'); break;
+    case 'start': cue('hum'); break;
+    case 'go': cue('chalk'); break;
+  }
 }
 
 export function buzz(pattern: number | number[]) {
   if (!getState().settings.haptics) return;
-  try { navigator.vibrate?.(pattern); } catch { /* unsupported */ }
+  try { navigator.vibrate?.(pattern); } catch { /* unsupported (iOS Safari has no vibration API) */ }
 }

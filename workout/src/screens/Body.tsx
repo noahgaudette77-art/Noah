@@ -8,15 +8,13 @@ import { META } from '../data/program';
 import type { BodyEntry } from '../data/types';
 import { avg7, chartSeries, leanAt, projectedWeight, ruleCheck } from '../logic/body';
 import { addDays, diffDays, fmtShort } from '../logic/dates';
-import { physiqueStage } from '../logic/motivation';
+
 import { setState, useStore } from '../logic/store';
 import { today } from '../lib/today';
-import { DEMOS } from '../rig/demos';
-import { SceneSVG, demoViewBox, primsFor } from '../rig/Scene';
+import { PosterWall } from '../components/PosterWall';
 
 const RANGES = [{ k: '4W', days: 28 }, { k: '12W', days: 84 }, { k: 'Year', days: 364 }] as const;
 const C = { avg: '#FF5B1F', proj: '#8C877F', dot: '#B8B3AA', grid: 'rgba(255,255,255,0.05)', axis: '#8C877F' };
-const STAGES = ['Start · 24%', 'Stage 2 · 22%', 'Stage 3 · 19%', 'Stage 4 · 15.5%'];
 
 function ChartTip({ active, payload }: { active?: boolean; payload?: { payload: { date: string; weight?: number; avg?: number; projected: number } }[] }) {
   if (!active || !payload?.length) return null;
@@ -31,27 +29,6 @@ function ChartTip({ active, payload }: { active?: boolean; payload?: { payload: 
   );
 }
 
-function Physique({ stage }: { stage: number }) {
-  const demo = DEMOS.lateralRaise;
-  const vb = demoViewBox(demo, 0.8, 0.7);
-  return (
-    <Card className="overflow-hidden">
-      <div className="grid grid-cols-2">
-        {[stage, Math.min(3, stage + 1)].map((st, i) => (
-          <figure key={i} className={`relative ${i === 1 && stage === 3 ? 'hidden' : ''}`}>
-            <SceneSVG prims={primsFor(demo, demo.poses.bottom, { stage: st })} viewBox={vb} className={`block w-full ${i === 1 ? 'opacity-55' : ''}`} title={i === 0 ? `Target physique now: ${STAGES[st]}` : `Next: ${STAGES[st]}`} />
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-void to-transparent p-4">
-              <p className="label">{i === 0 ? 'Target physique now' : 'Next stage'}</p>
-              <p className="display mt-1 text-[26px]">{STAGES[st]}</p>
-            </figcaption>
-          </figure>
-        ))}
-      </div>
-      <p className="border-t border-white/5 px-5 py-3 text-sm text-smoke">Stage {stage + 1} of 4. The figure in every demo changes build as your 7-day average reaches each checkpoint.</p>
-    </Card>
-  );
-}
-
 export default function Body() {
   const t = today();
   const body = useStore((s) => s.body);
@@ -63,7 +40,6 @@ export default function Body() {
   const [waist, setWaist] = useState(existing?.waist ?? lastWaist?.waist ?? 40);
   const [range, setRange] = useState<(typeof RANGES)[number]['k']>('12W');
   const [saved, setSaved] = useState(false);
-  const stage = useMemo(() => physiqueStage(body, t), [body, t]);
 
   const save = () => {
     setState((s) => ({ ...s, body: [...s.body.filter((b) => b.date !== date), { date, weight, waist }].sort((a, b) => (a.date < b.date ? -1 : 1)) }));
@@ -91,9 +67,10 @@ export default function Body() {
       <PageHeader eyebrow={`Start ${META.start.weightLb} lb · ${META.start.bodyFat}% · 5'11"`} title="Progress" />
       <div className="gutter mx-auto max-w-5xl space-y-5">
         <Journey date={t} />
+        <PosterWall date={t} />
         <div className="grid items-start gap-5 lg:grid-cols-2">
           <NextMilestone date={t} compact />
-          <Physique stage={stage} />
+          
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <Card className="p-5 sm:p-6">

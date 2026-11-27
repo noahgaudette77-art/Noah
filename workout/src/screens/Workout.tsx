@@ -13,7 +13,8 @@ import { getState, useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 import { buzz, play } from '../lib/sfx';
 import { today } from '../lib/today';
-import { DemoPlayer } from '../rig/DemoPlayer';
+import { cuesFor } from '../data/musclewiki';
+import { VideoPrint } from '../demo/VideoPrint';
 import { CardioPanel } from '../workout/CardioPanel';
 import { Countdown } from '../workout/Countdown';
 import { type StrengthBlock, beatLine, firstOpen, nextSet, tempoText } from '../workout/plan';
@@ -85,7 +86,8 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
   const ns = nextSet(block, logs);
   const [focus, setFocus] = useState(ns?.i ?? 0);
   useEffect(() => { if (ns) setFocus(ns.i); }, [ns?.i, ns?.s]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [replay, setReplay] = useState(0);
+  const [, setReplay] = useState(0);
+  const [film, setFilm] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'set'>('idle');
   const [edit, setEdit] = useState<{ log: ExerciseLog; idx: number } | null>(null);
   const slot = block.slots[focus];
@@ -127,9 +129,11 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
     <div className="lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10">
       {/* demo: huge, pinned on phones */}
       <div className="relative -mx-4 sm:mx-0 lg:sticky lg:top-24 lg:self-start">
-        <DemoPlayer id={slot.exerciseId} name={ex.name} tempo={tempo} replayToken={replay} view={ex.view} primary aspect={16 / 12} suspended={covered || phase !== 'idle'} className="h-[32vh] min-h-[250px] sm:rounded-[28px] lg:h-[580px]" />
+        <div className="mx-4 sm:mx-0">
+          <VideoPrint key={slot.exerciseId} id={slot.exerciseId} tempo={tempo} suspended={covered || phase !== 'idle'} onFilm={setFilm} compact />
+        </div>
         {block.kind === 'superset' && (
-          <div className="absolute bottom-3 left-3 flex gap-1 rounded-full p-1 glass" role="tablist" aria-label="Superset exercise">
+          <div className="mx-4 mt-3 flex w-fit gap-1 rounded-[6px] p-1 glass sm:mx-0" role="tablist" aria-label="Superset exercise">
             {block.slots.map((s, i) => (
               <button key={s.exerciseId} type="button" role="tab" aria-selected={focus === i} onClick={() => { setFocus(i); setReplay((r) => r + 1); }}
                 className={`h-11 rounded-full px-4 text-sm font-semibold transition ${focus === i ? 'bg-chalk text-void' : 'text-ash hover:text-chalk'}`}>
@@ -172,7 +176,7 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
               </div>
             </div>
             <p className="mt-4 hidden items-start gap-2.5 text-[17px] font-semibold lg:flex"><Icon name="target" size={22} className="mt-0.5 shrink-0 text-ember" />{beatLine(slot, prev, setIdx, cur, today())}</p>
-            {ex.cues.filter((c) => c.priority).map((c) => (
+            {cuesFor(ex.id, ex, film).cues.filter((c) => c.priority).map((c) => (
               <p key={c.text} className="mt-3 flex items-start gap-2.5 text-sm text-ash"><Icon name="spine" size={18} className="mt-0.5 shrink-0 text-rim" />{c.text}</p>
             ))}
             {/* the one action: pinned to the bottom on phones so it is always in reach */}
@@ -189,8 +193,8 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
             How to do it<Icon name="chevD" size={18} className="transition-transform group-open:rotate-180" />
           </summary>
           <ol className="space-y-2.5 px-5 pb-5 text-ash">
-            {ex.cues.filter((c) => !c.priority).map((c, i) => <li key={c.text} className="flex gap-3"><span className="display w-4 shrink-0 text-[20px] text-smoke">{i + 1}</span>{c.text}</li>)}
-            <li className="flex gap-3 text-[#FFC9B2]"><Icon name="alert" size={18} className="mt-0.5 shrink-0" />Avoid: {ex.mistake}</li>
+            {cuesFor(ex.id, ex, film).cues.filter((c) => !c.priority).map((c, i) => <li key={c.text} className="flex gap-3"><span className="display w-4 shrink-0 text-[20px] text-smoke">{i + 1}</span>{c.text}</li>)}
+            <li className="flex gap-3 text-amber-core"><Icon name="alert" size={18} className="mt-0.5 shrink-0" />Avoid: {cuesFor(ex.id, ex, film).mistake}</li>
           </ol>
         </details>
       </div>
@@ -205,8 +209,8 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
                 <p className="label">{ex.short} · {cur.drop ? 'drop set' : `set ${setIdx + 1} of ${working}`}</p>
                 <button type="button" onClick={() => setPhase('idle')} className="h-11 rounded-full px-4 text-sm font-semibold text-ash hover:text-chalk">Cancel</button>
               </div>
-              <DemoPlayer id={slot.exerciseId} name={ex.name} tempo={tempo} controls="none" aspect={16 / 9} className="mt-3 w-full rounded-[24px]" />
-              <div className="mt-6"><TempoRing tempo={tempo} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)} /></div>
+              <p className="display mt-6 text-center text-[34px]">{ex.name}</p>
+              <div className="mt-4"><TempoRing tempo={tempo} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)} /></div>
               <p className="mt-4 text-center text-ash">{bw ? '' : `${cur.weight} lb · `}target {cur.reps} reps{ex.perSide ? ' each side' : ''}. Stop 1 to 2 short of failure.</p>
               <div className="flex-1" />
               <button type="button" onClick={logSet} className="ember-btn mt-6 h-[72px] w-full rounded-[24px] text-lg font-semibold">Done · log {cur.reps} reps</button>

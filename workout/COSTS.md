@@ -28,4 +28,23 @@ fal.ai stops and asks before the running total would pass **$20** (balance at st
 
 | Date | Service | Asset | Model / endpoint | Take | Cost | Running fal total |
 |---|---|---|---|---|---|---|
-| — | — | — | — | — | — | $0.00 |
+
+| 2026-11-27 | Blockade | sky-entrance | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-27 | Blockade | sky-bench | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-27 | Blockade | sky-mesh | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-27 | Blockade | sky-lane | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-27 | Blockade | sky-ceiling | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-27 | Tripo3D | prop-dumbbell | text_to_model (texture, PBR) | 1 | 20 credits |  |
+| 2026-11-27 | Tripo3D | prop-plate | text_to_model (texture, PBR) | 1 | 20 credits |  |
+| 2026-11-27 | Tripo3D | prop-kettlebell | text_to_model (texture, PBR) | 1 | 20 credits |  |
+| 2026-11-27 | Blockade | sky-lane | skybox M3 Photoreal | 2 | 1 generation |  |
+| 2026-11-27 | Blockade | sky-mesh | skybox M3 Photoreal | 2 | 1 generation |  |
+| 2026-11-27 | fal.ai | lifter-ref | fal-ai/nano-banana-pro | 1 | $0.150 | $0.15 |
+| 2026-11-27 | fal.ai | poster-24 | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $0.30 |
+| 2026-11-27 | Tripo3D | prop-kettlebell | text_to_model (texture, PBR) | 2 | 20 credits |  |
+| 2026-11-27 | fal.ai | poster-19 | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $0.45 |
+| 2026-11-27 | fal.ai | poster-15 | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $0.60 |
+| 2026-11-27 | fal.ai | poster-12 | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $0.75 |
+| 2026-11-27 | fal.ai | still-hero | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $0.90 |
+| 2026-11-27 | fal.ai | still-rest | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $1.05 |
+| 2026-11-27 | fal.ai | still-complete | fal-ai/nano-banana-pro/edit | 1 | $0.150 | $1.20 |

@@ -142,11 +142,11 @@ describe('storage', () => {
 });
 
 describe('upgrade from the first release', () => {
-  it('keeps existing data and adds the new tempo-ticks setting switched off', () => {
+  it('keeps existing data; the Iron Room sound stays off until switched on', () => {
     const old = { version: 1, sessions: [{ id: 'a', date: '2026-11-30', dayKey: 'upperA', startedAt: 1, finishedAt: 2, exercises: [], cardioDone: [] }], active: null, body: [{ date: '2026-11-30', weight: 225 }], habits: {}, settings: { sound: true, haptics: false } };
     const s = parseState(old);
     expect(s.sessions).toHaveLength(1);
     expect(s.body[0].weight).toBe(225);
-    expect(s.settings).toEqual({ sound: true, haptics: false, ticks: false });
+    expect(s.settings).toMatchObject({ sound: true, haptics: false, audio: false, clean: false, gyro: false, battery: 'auto', dataSaver: false });
   });
 });

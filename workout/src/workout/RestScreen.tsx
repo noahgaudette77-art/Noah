@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Num, Ring } from '../components/ui';
 import { buzz, play } from '../lib/sfx';
-import { DemoPlayer } from '../rig/DemoPlayer';
 
 export interface RestState {
   endsAt: number;
@@ -65,14 +64,11 @@ export function RestScreen({ rest, onChange, onEnd, onRir }: { rest: RestState; 
           </div>
         </div>
         {rest.next && (
-          <div className="mt-8 overflow-hidden rounded-[24px] lit">
-            <DemoPlayer id={rest.next.id} name={rest.next.name} controls="none" aspect={16 / 8} pad={0.9} className="h-auto" />
-            <div className="p-5">
-              <p className="label">Up next</p>
-              <p className="display mt-2 text-[34px]">{rest.next.name}</p>
-              <p className="mt-1 text-sm text-ash">{rest.next.line}</p>
-              <p className="mt-3 flex items-start gap-2 font-semibold"><Icon name="target" size={20} className="mt-0.5 shrink-0 text-ember" />{rest.next.beat}</p>
-            </div>
+          <div className="print tape mt-8 px-5 pb-5 pt-6" style={{ rotate: '-0.8deg' }}>
+            <p className="label">Up next</p>
+            <p className="display mt-2 text-[34px] text-ink">{rest.next.name}</p>
+            <p className="typed mt-1 text-[15px] text-ink-faded">{rest.next.line}</p>
+            <p className="mt-3 flex items-start gap-2 font-semibold text-ink"><Icon name="target" size={20} className="mt-0.5 shrink-0 text-stamp" />{rest.next.beat}</p>
           </div>
         )}
         <div className="flex-1 lg:hidden" />
