@@ -66,7 +66,7 @@ const inclinePress = (): DemoSpec => {
 const csBench: Extract<Prop, { kind: 'bench' }> = { kind: 'bench', x: 0, back: 40, facing: 'toward' };
 const chestSupported = (): { P: ReturnType<typeof pad>; pelvis: V3; legs: Pose['legs'] } => {
   const P = pad(csBench);
-  return { P, pelvis: P.at(4, 12), legs: bothLegs((k) => ({ ...floorFoot(-36, k * 30, 18), pole: [0.6, -0.4, k * 0.8] })) };
+  return { P, pelvis: P.at(4, 12), legs: bothLegs((k) => ({ p: [-82, 16.5, k * 17], foot: -38, toeOut: 8, pole: [0.5, -1, k * 0.2] })) };
 };
 const chestSupportedRow = (): DemoSpec => {
   const { P, pelvis, legs } = chestSupported();
@@ -74,7 +74,7 @@ const chestSupportedRow = (): DemoSpec => {
   const bottom: Pose = { ...base, arms: both((k) => { const s = shoulderOf(pelvis, P.pitch, k); return { p: add(s, [0, -64.2, k * 2]), pole: [-0.3, 0.2, k] }; }) };
   const top: Pose = { ...base, arms: both((k) => { const s = shoulderOf(pelvis, P.pitch, k); return { p: add(s, [-30, -16, k * 5]), pole: [-0.6, 1, k * 0.3] }; }) };
   return {
-    id: 'chestSupportedRow', camera: { yaw: 24, pitch: 10 }, props: [csBench], hold: 'pair',
+    id: 'chestSupportedRow', camera: { yaw: 14, pitch: 10 }, props: [csBench], hold: 'pair',
     poses: { bottom, top }, start: 'bottom', phases: LIFT_FIRST('top', 'bottom', 'Row'), keyframes: ['bottom', 'top'],
     checks: [
       { pose: 'top', metric: 'trunk', min: 48, max: 52, note: 'Chest on a 40 degree pad' },
@@ -514,7 +514,7 @@ const treadmillWalk = (): DemoSpec => {
     id: 'treadmill', camera: { yaw: 18, pitch: 8 }, props: [{ kind: 'treadmill', grade }], hold: 'none',
     poses: {}, start: '', phases: [], keyframes: ['', ''], checks: [],
     procedural: {
-      period, label: '15% incline · 3.0 mph',
+      period, label: '15% · 3.0 mph',
       at: (u) => {
         const ph = 2 * Math.PI * u;
         const swing = (k: K) => 20 * Math.sin(ph + (k === 1 ? Math.PI : 0));
@@ -534,7 +534,7 @@ const bike = (): DemoSpec => ({
   id: 'bike', camera: { yaw: 18, pitch: 8 }, props: [{ kind: 'bike' }], hold: 'none',
   poses: {}, start: '', phases: [], keyframes: ['', ''], checks: [],
   procedural: {
-    period: 0.8, label: '30 s hard · 90 s easy',
+    period: 0.8, label: 'Pedal · 30/90 s',
     at: (u) => {
       const th = Math.PI / 2 - 2 * Math.PI * u;
       const foot = (a: number, k: K): LegEffector => {

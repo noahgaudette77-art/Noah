@@ -123,6 +123,8 @@ export interface SessionLog {
   exercises: ExerciseLog[];
   cardioDone: string[];
   notes?: string;
+  /** index of the block the athlete is on (workout mode) */
+  cursor?: number;
 }
 
 export type ProgressionStage = 'load' | 'tempo4' | 'pause2' | 'extraSet' | 'variation';

@@ -10,7 +10,9 @@
     "test": "vitest run",
     "contact-sheet": "node scripts/contact-sheet.mjs",
     "screenshots": "node scripts/screenshots.mjs",
-    "a11y": "node scripts/a11y.mjs"
+    "a11y": "node scripts/a11y.mjs",
+    "poses": "vite-node scripts/eval-poses.ts",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

@@ -108,7 +108,7 @@ export function recommend(ex: Exercise, slot: ExerciseSlot, history: History[]):
     return {
       stage: 'load', weight: w, sets: slot.sets, tempo: slot.tempo, kind: 'increase',
       headline: `+${inc} lb next time`,
-      detail: `Every set hit ${hi} reps with reps in reserve. Go to ${w} lb and build back up from ${lo}.`,
+      detail: `Every set hit ${hi} reps with reps in reserve. Go to ${w} lb${lo === hi ? ` and aim for ${hi} again.` : ` and build back up from ${lo}.`}`,
       prefill: buildPrefill(slot.sets, w, lo),
     };
   }

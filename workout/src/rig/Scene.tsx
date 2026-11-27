@@ -26,7 +26,7 @@ export function demoViewBox(demo: DemoSpec, aspect = 4 / 3): [number, number, nu
       a = Math.min(a, p.bbox[0]); b = Math.min(b, p.bbox[1]); c = Math.max(c, p.bbox[2]); d = Math.max(d, p.bbox[3]);
     }
   }
-  const padX = (c - a) * 0.07, padY = (d - b) * 0.09;
+  const padX = (c - a) * 0.05, padY = (d - b) * 0.07;
   a -= padX; c += padX; b -= padY; d += padY * 0.6;
   let w = c - a, h = d - b;
   if (w / h < aspect) { const nw = h * aspect; a -= (nw - w) / 2; w = nw; } else { const nh = w / aspect; b -= (nh - h) * 0.6; h = nh; }
@@ -39,7 +39,8 @@ export const SceneSVG = memo(function SceneSVG({ prims, viewBox, title, classNam
   const [x, y, w, h] = viewBox;
   const floorY = 0;
   return (
-    <svg viewBox={`${x} ${y} ${w} ${h}`} className={className} role="img" aria-label={title} preserveAspectRatio="xMidYMid meet">
+    <svg viewBox={`${x} ${y} ${w} ${h}`} className={className} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} preserveAspectRatio="xMidYMid meet">
+      {title && <title>{title}</title>}
       <defs>
         <linearGradient id="floorfade" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0.07" />

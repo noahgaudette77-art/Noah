@@ -77,19 +77,20 @@ export function DemoPlayer({ id, name, tempo, replayToken, aspect = 4 / 3, view,
   const lowering = frame.phase?.role === 'down';
 
   if (reduced) {
+    const half = demoViewBox(demo, 0.95);
     const labels = demo.procedural ? ['Stride', 'Stride'] : demo.keyframes.map((k) => k.replace(/\d/g, ''));
     return (
       <div className={`stage-bg relative overflow-hidden rounded-2xl ${className}`} ref={box}>
         <div className="grid grid-cols-2 gap-px">
           {[0, 1].map((i) => (
-            <figure key={i} className="relative">
-              <SceneSVG prims={staticPrims(demo, i as 0 | 1, tempo)} viewBox={vb} className="block w-full" title={`${name}: ${i ? 'end' : 'start'} position`} />
-              <figcaption className="eyebrow absolute left-3 top-3 text-bone-2">{i ? 'End' : 'Start'} · {labels[i]}</figcaption>
+            <figure key={i}>
+              <SceneSVG prims={staticPrims(demo, i as 0 | 1, tempo)} viewBox={half} className="block w-full" title={`${name}: ${i ? 'end' : 'start'} position`} />
+              <figcaption className="eyebrow px-3 pb-2 text-bone-2">{i ? 'End' : 'Start'} · {labels[i]}</figcaption>
             </figure>
           ))}
         </div>
         <p className="num border-t border-white/5 px-3 py-2 text-[11px] text-bone-3">
-          Motion reduced: showing start and end positions. Tempo: {tl.phases.map((p) => p.label).filter((l, i, a) => a.indexOf(l) === i).join(' · ') || demo.procedural?.label}
+          Motion reduced: showing start and end positions. Tempo: {tl.phases.map((p) => p.label).filter((l, i, a) => /\d/.test(l) && a.indexOf(l) === i).join(' · ') || demo.procedural?.label}
         </p>
       </div>
     );
@@ -98,11 +99,13 @@ export function DemoPlayer({ id, name, tempo, replayToken, aspect = 4 / 3, view,
   return (
     <div ref={box} className={`stage-bg group relative overflow-hidden rounded-2xl ${className}`}>
       <SceneSVG prims={prims} viewBox={vb} className="block w-full" title={`${name} demonstration, looping`} />
+      {view && <span className="eyebrow pointer-events-none absolute right-3 top-3 text-bone-3">{view}</span>}
+      <div className="flex items-center gap-3 border-t border-white/[0.05] bg-black/25 py-2 pl-3 pr-2">
       {/* phase label */}
-      <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5" aria-hidden="true">
+      <div className="pointer-events-none flex min-w-0 flex-1 flex-col gap-1.5" aria-hidden="true">
         <span
           key={frame.label + replayFlash}
-          className={`num inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-semibold tracking-wide transition-colors ${lowering ? 'bg-volt text-volt-ink' : 'bg-black/55 text-bone backdrop-blur'}`}
+          className={`num inline-flex w-fit max-w-full items-center gap-2 truncate whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-semibold tracking-wide transition-colors ${lowering ? 'bg-volt text-volt-ink' : 'bg-black/55 text-bone backdrop-blur'}`}
         >
           {frame.label}
         </span>
@@ -110,17 +113,16 @@ export function DemoPlayer({ id, name, tempo, replayToken, aspect = 4 / 3, view,
           <span className={`block h-full rounded-full ${lowering ? 'bg-volt' : 'bg-bone-2'}`} style={{ width: `${Math.round(frame.phaseProgress * 100)}%` }} />
         </span>
       </div>
-      {view && <span className="eyebrow pointer-events-none absolute right-3 top-3.5 text-bone-3">{view}</span>}
-      <div className="absolute bottom-2.5 right-2.5 flex gap-1.5">
+      <div className="flex shrink-0 gap-1.5">
         <button
-          type="button" onClick={() => setSlow((s) => !s)} aria-pressed={slow} aria-label="Half speed"
-          className={`num h-11 min-w-[3rem] rounded-full px-3 text-[13px] font-semibold backdrop-blur transition ${slow ? 'bg-volt text-volt-ink' : 'bg-black/55 text-bone hover:bg-black/70'}`}
+          type="button" onClick={() => setSlow((s) => !s)} aria-pressed={slow} aria-label="0.5x speed"
+          className={`num h-11 min-w-[3rem] rounded-full px-3 text-[13px] font-semibold backdrop-blur transition ${slow ? 'bg-volt text-volt-ink' : 'bg-ink-700 text-bone hover:bg-ink-600'}`}
         >
           0.5x
         </button>
         <button
           type="button" onClick={() => { setTime(0); setPlaying(true); }} aria-label="Replay from the start"
-          className="grid h-11 w-11 place-items-center rounded-full bg-black/55 text-bone backdrop-blur transition hover:bg-black/70"
+          className="grid h-11 w-11 place-items-center rounded-full bg-ink-700 text-bone transition hover:bg-ink-600"
         >
           <Icon name="replay" size={20} />
         </button>
@@ -130,6 +132,7 @@ export function DemoPlayer({ id, name, tempo, replayToken, aspect = 4 / 3, view,
         >
           <Icon name={playing ? 'pause' : 'play'} size={18} />
         </button>
+      </div>
       </div>
     </div>
   );
