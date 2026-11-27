@@ -45,7 +45,7 @@ export function PosterWall({ date }: { date: string }) {
         </div>
         <p className="typed text-sm text-ash">{count} of 4 up</p>
       </div>
-      <ol className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 pt-3">
+      <ol tabIndex={0} aria-label="Posters, scroll sideways" className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 pt-3">
         {POSTERS.map((p, i) => {
           const open = reached(p.at);
           const w = when(p.at);

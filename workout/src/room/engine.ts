@@ -7,7 +7,6 @@
 // Renders at 30 fps while drifting, once when still (set running, battery saver, reduced motion).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { type PropKind, type PropView, onRoom, propViews, roomState } from './state';
 import { ZONE_FILES, type ZoneId } from './zones.gen';
@@ -52,6 +51,8 @@ export class Room {
   private dust: THREE.Points;
   private last = 0; private raf = 0; private dirty = true;
   private env: THREE.Texture | null = null;
+  private envRequested = false;
+  private scrolledAt = 0;
   private props = new Map<PropKind, Promise<THREE.Object3D>>();
   private propScene = new THREE.Scene();
   private propCam = new THREE.PerspectiveCamera(32, 1, 0.01, 20);
@@ -73,7 +74,7 @@ export class Room {
 
   constructor(private o: EngineOpts) {
     this.r = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: false, alpha: false, powerPreference: 'low-power' });
-    this.r.setPixelRatio(Math.min(devicePixelRatio, o.phone ? 1.5 : 1.75));
+    this.r.setPixelRatio(Math.min(devicePixelRatio, o.phone ? 1.25 : 1.75));
     this.r.outputColorSpace = THREE.SRGBColorSpace;
     this.r.toneMapping = THREE.ACESFilmicToneMapping;
     this.r.autoClear = false;
@@ -102,12 +103,14 @@ export class Room {
     this.off.push(onRoom(() => { void this.sync(); this.poke(); }));
     this.off.push(onGyro((y, p) => { this.gyro = { y: Math.max(-6, Math.min(6, y * 0.25)), p: Math.max(-3, Math.min(3, p * 0.15)) }; this.poke(); }));
     this.bindDrag();
+    const sc = () => { this.scrolledAt = performance.now(); };
+    addEventListener('scroll', sc, { passive: true });
+    this.off.push(() => removeEventListener('scroll', sc));
     const vis = () => { if (!document.hidden) { this.last = 0; this.poke(); } };
     document.addEventListener('visibilitychange', vis);
     this.off.push(() => document.removeEventListener('visibilitychange', vis));
     this.sync();
     this.loop(performance.now());
-    void this.loadEnv();
   }
 
   private makeDust() {
@@ -197,10 +200,12 @@ export class Room {
 
   private async loadEnv() {
     try {
-      const hdr = await new HDRLoader().loadAsync('assets/ph/industrial_pipe_and_valve_01_1k.hdr');
+      // a 512x256 tone-mapped copy of the Poly Haven HDRI (tools/hdr-to-env.mjs): plenty for small props
+      const eq = await new THREE.TextureLoader().loadAsync('assets/ph/industrial_pipe_and_valve_01_env.webp');
+      eq.mapping = THREE.EquirectangularReflectionMapping; eq.colorSpace = THREE.SRGBColorSpace;
       const pm = new THREE.PMREMGenerator(this.r);
-      this.env = pm.fromEquirectangular(hdr).texture;
-      hdr.dispose(); pm.dispose();
+      this.env = pm.fromEquirectangular(eq).texture;
+      eq.dispose(); pm.dispose();
       this.propScene.environment = this.env;
       this.poke();
     } catch { /* props fall back to the lights */ }
@@ -235,6 +240,10 @@ export class Room {
     const views = [...propViews().values()];
     const animating = !still || this.fade < 1 || views.length > 0;
     // 30 fps cap: the room moves slowly, so this is smooth and saves half the battery
+    // while the page scrolls, the fixed room needs no redraw unless a 3D prop is moving with the page
+    const scrolling = now - this.scrolledAt < 160;
+    const propsOnScreen = views.some((v) => { const r = v.el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; });
+    if (scrolling && !propsOnScreen && !this.dirty && this.fade >= 1) { this.raf = requestAnimationFrame(this.loop); return; }
     if (now - this.last >= 33 || this.dirty) {
       const dt = this.last ? Math.min(0.1, (now - this.last) / 1000) : 0;
       this.last = now;
@@ -307,6 +316,7 @@ export class Room {
       if (v.kind === 'meshwall') continue;
       const rect = v.el.getBoundingClientRect();
       if (rect.bottom < 0 || rect.top > h || rect.width < 4) continue;
+      if (!this.envRequested) { this.envRequested = true; void this.loadEnv(); }
       let obj = this.loaded.get(v.kind);
       if (!obj) { void this.prop(v.kind).then((o) => { this.loaded.set(v.kind, o.clone()); this.poke(); }); continue; }
       const y = h - rect.bottom;

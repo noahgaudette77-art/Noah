@@ -72,3 +72,14 @@ fal.ai reconciliation: balance $15.319 at start, $12.919 after all generation = 
 | 2026-11-27 | Tripo3D | lifter-3d | image_to_model + rig + idle | 1 | 65 credits |  |
 | 2026-11-27 | ElevenLabs | vo-next-exercise | TTS multilingual v2 · Joseph Ortman - Deep & Raspy | 1 | 0 credits |  |
 | 2026-11-27 | fal.ai | loop-complete | fal-ai/kling-video/v2.5-turbo/pro/image-to-video | 1 | $0.350 | $2.40 |
+
+## Totals (2026-11-27, end of build)
+
+| Service | Spent | Left | Notes |
+|---|---|---|---|
+| fal.ai | **$2.40** of the $20 cap | $12.92 | 1 reference, 4 posters, 3 stills, 1 A-pose reference, 3 Kling loops. Every asset first take; no retakes needed |
+| Blockade Labs | **7 generations** | not exposed by the API | 5 zones + 2 retakes (lane had no red lane and daylight windows; mesh had no mesh) |
+| Tripo3D | **145 credits** | 3,065 | 3 props (20 each) + kettlebell retake (embossed number) 20 + athlete 65 (dropped) |
+| ElevenLabs | **450 credits** | 77,740 of 131,000 this cycle | 7 effects incl. 30 s loop, 10 voice lines, 1 library voice slot |
+| MuscleWiki | **≈ 70 calls** this month | of 1,000 (TESTING assumed) | 41 planning/mapping, ≈ 15 for viewing three variant films (QA, nothing kept), ≈ 12 for the end-to-end Worker test |
+| Poly Haven | free | — | 8 textures + 1 HDRI, CC0 |

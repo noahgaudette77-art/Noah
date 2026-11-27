@@ -15,5 +15,5 @@ Public domain (CC0 1.0), from [polyhaven.com](https://polyhaven.com). Credit is 
 | [Concrete Floor Worn 001](https://polyhaven.com/a/concrete_floor_worn_001) | Dimitrios Savva, Rico Cilliers | CC0 1.0 | `assets/ph/concrete_floor_worn_001_diffuse_1k.webp` |
 | [Rusty Metal Grid](https://polyhaven.com/a/rusty_metal_grid) | Amal Kumar | CC0 1.0 | `assets/ph/rusty_metal_grid_diffuse_1k.webp`, `assets/ph/rusty_metal_grid_nor_gl_1k.webp`, `assets/ph/rusty_metal_grid_rough_1k.webp` |
 | [Weathered Brown Planks](https://polyhaven.com/a/weathered_brown_planks) | Dimitrios Savva, Rico Cilliers | CC0 1.0 | `assets/ph/weathered_brown_planks_diffuse_1k.webp` |
-| [Industrial Pipe & Valve 01](https://polyhaven.com/a/industrial_pipe_and_valve_01) | Philip Modin | CC0 1.0 | `assets/ph/industrial_pipe_and_valve_01_1k.hdr` |
+| [Industrial Pipe & Valve 01](https://polyhaven.com/a/industrial_pipe_and_valve_01) | Philip Modin | CC0 1.0 | `assets/ph/industrial_pipe_and_valve_01_env.webp` (from the 1k HDR) |
 <!-- polyhaven:end -->

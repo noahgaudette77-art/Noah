@@ -1,7 +1,7 @@
 # Tempo "IRON ROOM, 1974" — asset plan
 
-Status: **for review. Nothing paid has been generated yet.** Spend so far: $0.00 (free test calls
-only, see `COSTS.md`). Approve, cut or change rows here and I will generate exactly what is approved.
+Status: **approved and generated** (see `COSTS.md` for every call; fal.ai total $2.40). Original plan text kept below. Spend at planning time was $0.00 (free test calls
+only).
 
 Rules applied to every row: build-time only (scripts in `workout/tools/`, outputs in
 `workout/public/assets/` with `manifest.json`, committed); keys read from the environment and never

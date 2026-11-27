@@ -40,9 +40,9 @@ for (const [id, maps] of Object.entries(TEX)) {
 {
   const files = await fetchJson(`https://api.polyhaven.com/files/${HDRI}`, { headers: UA });
   const info = await fetchJson(`https://api.polyhaven.com/info/${HDRI}`, { headers: UA });
-  const dst = join(out, `${HDRI}_1k.hdr`);
+  const dst = join(raw, `${HDRI}_1k.hdr`); // original kept out of the app; tools/hdr-to-env.mjs makes the shipped env
   if (!existsSync(dst)) await download(files.hdri['1k'].hdr.url, dst);
-  record(`ph-${HDRI}`, { tool: 'Poly Haven', license: 'CC0', name: info.name, authors: Object.keys(info.authors ?? {}), url: `https://polyhaven.com/a/${HDRI}`, files: [`assets/ph/${HDRI}_1k.hdr`], cost: 'free' });
+  record(`ph-${HDRI}`, { tool: 'Poly Haven', license: 'CC0', name: info.name, authors: Object.keys(info.authors ?? {}), url: `https://polyhaven.com/a/${HDRI}`, files: [`assets/ph/${HDRI}_env.webp`], note: '1k .hdr downloaded at build time, shipped as a 512x256 tone-mapped WebP (tools/hdr-to-env.mjs)', cost: 'free' });
   console.log(`ok ${HDRI}`);
 }
 

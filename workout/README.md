@@ -124,3 +124,17 @@ plus `flareR`.
 - `public/sfx/*.mp3`: UI sounds (set logged, rest over, tempo ticks, 3-2-1, PR) from the ElevenLabs
   sound-effects API. Tempo ticks and the countdown follow the "Tempo ticks" setting, off by default.
 - Icons: Phosphor (bold weight). The character, stage and equipment are hand-built SVG.
+
+## Iron Room, 1974 (v3)
+
+The app is an underground 1970s iron gym you walk through; see `DESIGN.md`, and the build report in
+`docs/design/iron-room/REPORT.md`.
+
+- **Assets** are made at build time only by `tools/*.mjs` (fal.ai, Blockade Labs, Tripo3D, ElevenLabs, Poly Haven)
+  into `public/assets/` with `public/assets/manifest.json`. Keys come from the environment and never reach the
+  app. Every paid call is in `COSTS.md`; licences in `CREDITS.md`. Generators are idempotent (max 3 takes).
+- **Exercise demos** stream from MuscleWiki at runtime through the token Worker in `server/mw-worker`
+  (deploy guide: `server/mw-worker/DEPLOY.md`, then set `WORKER_URL` in `src/config.ts`). Until then every
+  exercise shows its form-cue card.
+- **Checks:** `npm test` (incl. the Worker), `node tools/overflow-check.mjs`, `node tools/session-bar-check.mjs`,
+  `npm run a11y`, `node tools/perf-check.mjs` (Fast 4G), `MOBILE_ONLY=1 OUT=shots/after node scripts/screenshots.mjs`.

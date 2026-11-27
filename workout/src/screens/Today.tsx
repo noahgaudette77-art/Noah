@@ -35,7 +35,7 @@ export default function Today() {
           </a>
         </div>
         <div className="gutter mx-auto max-w-5xl">
-          <p className="label mt-6 text-ash">{eyebrow}</p>
+          <p className="label mt-4 text-ash">{eyebrow}</p>
           {/* the session name, stencilled on the wall of the entrance */}
           <motion.div initial={reduce ? false : { opacity: 0, clipPath: 'inset(0 100% 0 0)' }} animate={{ opacity: 1, clipPath: 'inset(0 0% 0 0)' }} transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}>
             <WallText className={`mt-2 ${big ? 'text-[min(19vw,128px)]' : 'text-[min(27vw,176px)]'}`}>{plan.title}</WallText>
@@ -44,7 +44,7 @@ export default function Today() {
           <p className="typed mt-2 text-[17px] text-ash">{plan.subtitle}</p>
         </div>
         <div className="gutter mx-auto mt-6 max-w-5xl">
-          <HeroLoop name="loop-hero" className="mx-auto aspect-[4/5] w-full max-w-[440px]" frame alt="" >
+          <HeroLoop name="loop-hero" className="mx-auto h-[min(40vh,400px)] w-full max-w-[440px] lg:h-auto lg:aspect-[4/5]" frame alt="" >
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-10">
               <div className="flex flex-wrap gap-1.5">
                 {fd.started && <span className="dymo amber"><StreakChip date={date} /></span>}

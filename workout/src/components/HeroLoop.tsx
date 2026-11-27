@@ -29,9 +29,9 @@ export function HeroLoop({ name, className = '', alt = '', frame = true, childre
     <div ref={box} className={`relative overflow-hidden ${frame ? 'print p-2' : ''} ${className}`}>
       <div className="relative h-full w-full overflow-hidden bg-[#120f0c]">
         {still ? (
-          <img src={poster} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={poster} alt={alt} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "60% 38%" }} />
         ) : (
-          <video ref={v} className="absolute inset-0 h-full w-full object-cover" muted loop playsInline preload="none" poster={poster} aria-label={alt || undefined} aria-hidden={alt ? undefined : true} tabIndex={-1}>
+          <video ref={v} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "60% 38%" }} muted loop playsInline preload="none" poster={poster} aria-label={alt || undefined} aria-hidden={alt ? undefined : true} tabIndex={-1}>
             <source src={`assets/art/${name}.webm`} type="video/webm" />
             <source src={`assets/art/${name}.mp4`} type="video/mp4" />
           </video>

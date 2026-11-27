@@ -1,6 +1,6 @@
 # Tempo — Design Direction v3: "IRON ROOM, 1974"
 
-Status: **plan, awaiting review.** Nothing below is built yet. The previous direction ("Night Session")
+Status: **built** (2026-11-27). Report, screenshots and costs: `docs/design/iron-room/REPORT.md`, `COSTS.md`. The previous direction ("Night Session")
 is archived at `docs/design/DESIGN-v2-night-session.md`. Every asset this direction needs, with its tool,
 exact prompt, size and cost, is in `ASSETS.md`.
 

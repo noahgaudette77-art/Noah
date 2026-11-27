@@ -40,7 +40,7 @@ export default function History() {
                       <span className="ledger-date w-[52px] shrink-0 text-[13px] text-ink-faded">{s.date.slice(5).replace('-', '/')}</span>
                       <span className="min-w-0 flex-1">
                         <span className="text-[17px] uppercase tracking-wide">{plan.title}</span>
-                        <span className="block text-[13px] text-ink-faded">{sets ? `${sets} sets · ${(vol / 1000).toFixed(1)}k lb` : 'cardio'}{mins ? ` · ${mins} min` : ''}</span>
+                        <span className="block text-[13px] text-ink-faded">{sets ? `${sets} sets · ${(vol / 1000).toFixed(1)}k lb` : 'cardio'}{mins ? <span className="whitespace-nowrap">{` · ${mins}′`}</span> : ''}</span>
                       </span>
                       {prs.length > 0 && <span className="stamp shrink-0 self-center text-[15px]" style={{ color: 'var(--stamp)', rotate: '-6deg', borderWidth: 2 }}>PR{prs.length > 1 ? ` ×${prs.length}` : ''}</span>}
                       <Icon name="chevD" size={18} className={`shrink-0 self-center text-ink-faded transition-transform ${isOpen ? 'rotate-180' : ''}`} />

@@ -255,10 +255,11 @@
       ],
       "url": "https://polyhaven.com/a/industrial_pipe_and_valve_01",
       "files": [
-        "assets/ph/industrial_pipe_and_valve_01_1k.hdr"
+        "assets/ph/industrial_pipe_and_valve_01_env.webp"
       ],
       "cost": "free",
-      "updated": "2026-11-27"
+      "updated": "2026-11-27",
+      "envLdr": "assets/ph/industrial_pipe_and_valve_01_env.webp"
     },
     "lifter-ref": {
       "takes": 1,

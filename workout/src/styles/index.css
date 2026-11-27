@@ -34,7 +34,7 @@ body {
 }
 /* film grain: above the room, below content plates (z-index 1; content is z-10) */
 .grain { position: fixed; inset: -60px; z-index: 1; pointer-events: none;
-  background-image: var(--grain-img); background-size: 256px; opacity: 0.075; mix-blend-mode: overlay;
+  background-image: var(--grain-img); background-size: 256px; opacity: 0.045;
   animation: grain 1s steps(8) infinite; }
 @keyframes grain {
   0% { transform: translate(0, 0); } 25% { transform: translate(-31px, 17px); } 50% { transform: translate(23px, -29px); }
