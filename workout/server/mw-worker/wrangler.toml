@@ -1,18 +1,19 @@
-# Cloudflare Worker for MuscleWiki media tokens. Deploy guide: DEPLOY.md
-name = "tempo-mw"
+# Cloudflare Worker for MuscleWiki media tokens. Deploy: ./deploy.sh (or DEPLOY.md for the dashboard route)
+name = "temp-mw"
 main = "src/worker.js"
 compatibility_date = "2025-06-01"
 workers_dev = true
 
-# Create the namespace once (DEPLOY.md step 3) and paste its id here.
-[[kv_namespaces]]
-binding = "MW_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+# KV is optional: without it the Worker keeps its counters in Cloudflare's edge cache.
+# To add it: npx wrangler kv namespace create MW_KV, then uncomment with the id it prints.
+# [[kv_namespaces]]
+# binding = "MW_KV"
+# id = ""
 
 [vars]
-ALLOWED_ORIGINS = "https://noah-2ci.pages.dev,https://*.noah-2ci.pages.dev,https://noahgaudette77-art.github.io,http://localhost:5173,http://localhost:4173"
+ALLOWED_ORIGINS = "https://noahgaudette77-art.github.io,https://noah-2ci.pages.dev,https://*.noah-2ci.pages.dev,http://localhost:5173,http://localhost:4173"
 LIMIT = "1000"
 CAP = "900"
 STREAM_ESTIMATE = "3"
 RATE_PER_MIN = "30"
-# The API key is NOT here. It is a secret: `npx wrangler secret put MUSCLEWIKI_API_KEY`
+# The MuscleWiki key is NOT here. deploy.sh stores it as a Worker secret from $MUSCLEWIKI_API_KEY.
