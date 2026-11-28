@@ -61,7 +61,7 @@ export function TempoRing({ tempo, size = 300, reps, lastSet }: { tempo: Tempo; 
   const lowering = ph.key === 'down' || ph.key === 'bottom';
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }} role="timer" aria-label={`Rep ${state.rep}, ${ph.word}`}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={{ filter: lowering ? 'drop-shadow(0 0 22px rgba(255,181,74,0.4))' : undefined }}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={{ filter: lowering ? 'drop-shadow(0 0 22px rgba(239,90,74,0.4))' : undefined }}>
         <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.07)" strokeWidth="14" fill="none" />
         <circle ref={arc} cx={size / 2} cy={size / 2} r={r} stroke={lowering ? 'var(--amber)' : 'var(--chalk)'} strokeWidth="14" fill="none" strokeLinecap="round" strokeDasharray={c} />
       </svg>

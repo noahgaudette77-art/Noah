@@ -2,7 +2,7 @@ import { EXERCISES } from '../data/program';
 import type { DayPlan } from '../data/types';
 import { estimateDay } from '../logic/estimate';
 import { STAGE_LABEL, tempoForStage } from '../logic/progression';
-import { blocksFor, recommendationFor, startSession } from '../logic/session';
+import { blocksFor, recommendationFor, sessionMinutes, startSession } from '../logic/session';
 import { useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 import { play } from '../lib/sfx';
@@ -24,7 +24,7 @@ export function StartButton({ plan, date }: { plan: DayPlan; date: string }) {
         <span className="grid h-12 w-12 place-items-center rounded-full bg-chalk text-void"><Icon name="check" /></span>
         <div className="flex-1">
           <p className="font-semibold">{plan.title} done</p>
-          <p className="text-sm text-smoke">{Math.round(((finished.finishedAt ?? finished.startedAt) - finished.startedAt) / 60000)} min · {finished.exercises.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0)} sets logged</p>
+          <p className="text-sm text-smoke">{sessionMinutes(finished) != null ? `${sessionMinutes(finished)} min · ` : ''}{finished.exercises.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0)} sets logged</p>
         </div>
         <Button variant="ghost" onClick={() => navigate(`/summary/${encodeURIComponent(finished.id)}`)}>Summary</Button>
       </Card>

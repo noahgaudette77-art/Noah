@@ -44,7 +44,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
             </div>
           </Card>
           {priority.map((c) => (
-            <div key={c.text} className="flex gap-3 rounded-[6px] bg-[linear-gradient(180deg,rgba(255,181,74,0.10),rgba(255,181,74,0.03))] p-6 shadow-lit">
+            <div key={c.text} className="flex gap-3 rounded-[6px] bg-[linear-gradient(180deg,rgba(239,90,74,0.10),rgba(239,90,74,0.03))] p-6 shadow-lit">
               <Icon name="spine" className="mt-0.5 shrink-0 text-rim" />
               <p><span className="font-semibold">{c.text.split(':')[0]}.</span><span className="text-ash">{' ' + c.text.split(':').slice(1).join(':').trim().replace(/^./, (m) => m.toUpperCase())}</span></p>
             </div>

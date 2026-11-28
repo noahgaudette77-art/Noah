@@ -6,6 +6,7 @@ import { Button, Empty } from '../components/ui';
 import { CARDIO, EXERCISES, dayByKey } from '../data/program';
 import { sessionPRs } from '../logic/motivation';
 import { volume } from '../logic/progression';
+import { sessionMinutes } from '../logic/session';
 import { useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 
@@ -31,7 +32,7 @@ export default function History() {
                 const plan = dayByKey(s.dayKey);
                 const sets = s.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
                 const vol = s.exercises.reduce((a, e) => a + volume(e), 0);
-                const mins = s.finishedAt ? Math.round((s.finishedAt - s.startedAt) / 60000) : 0;
+                const mins = s.finishedAt ? sessionMinutes(s) ?? 0 : 0;
                 const prs = sessionPRs(sessions, s);
                 const isOpen = open === s.id;
                 return (

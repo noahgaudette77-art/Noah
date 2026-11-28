@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Wordmark } from '../components/Brand';
 import { DayExtras, SessionList, StartButton } from '../components/DayView';
 import { HabitsCard } from '../components/Habits';
-import { HeroLoop } from '../components/HeroLoop';
+import { HeroPhoto } from '../components/HeroPhoto';
 import { WallText } from '../components/iron';
 import { Icon } from '../components/Icon';
 import { NextMilestone, ReviewCard, StreakChip, WeekCard } from '../components/Motivation';
@@ -44,7 +44,7 @@ export default function Today() {
           <p className="typed mt-2 text-[17px] text-ash">{plan.subtitle}</p>
         </div>
         <div className="gutter mx-auto mt-6 max-w-5xl">
-          <HeroLoop name="loop-hero" className="mx-auto h-[min(40vh,400px)] w-full max-w-[440px] lg:h-auto lg:aspect-[4/5]" frame alt="" >
+          <HeroPhoto name="photo80-hero" className="mx-auto h-[min(40vh,400px)] w-full max-w-[440px] lg:h-auto lg:aspect-[4/5]" alt="The gym: a long rack of hex dumbbells along a mirrored wood-panelled wall">
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-10">
               <div className="flex flex-wrap gap-1.5">
                 {fd.started && <span className="dymo amber"><StreakChip date={date} /></span>}
@@ -55,7 +55,7 @@ export default function Today() {
                 {plan.kind === 'rest' && <span className="dymo">Rest day</span>}
               </div>
             </div>
-          </HeroLoop>
+          </HeroPhoto>
         </div>
       </header>
 

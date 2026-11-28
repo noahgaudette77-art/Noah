@@ -39,7 +39,12 @@ export function Stamp({ children, color = 'var(--stamp)', angle = -8, size = 44,
   );
 }
 
-/** Stencilled wall lettering. Decorative: pair it with a real heading for screen readers. */
+/** Big 1980s gym lettering with the triple stripe under it. Decorative: pair it with a real heading. */
 export function WallText({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <p aria-hidden="true" className={`stencil wallpaint ${className}`}>{children}</p>;
+  return (
+    <div aria-hidden="true">
+      <p className={`wallpaint uppercase ${className}`}>{children}</p>
+      <div className="stripes mt-2 w-[min(70%,320px)]" />
+    </div>
+  );
 }

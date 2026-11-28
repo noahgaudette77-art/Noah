@@ -1,6 +1,5 @@
 @import '@fontsource-variable/big-shoulders-display';
 @import '@fontsource-variable/instrument-sans/wdth.css';
-@import '@fontsource/big-shoulders-stencil-display/latin-800';
 @import '@fontsource/special-elite/latin-400';
 @tailwind base;
 @tailwind components;
@@ -11,7 +10,8 @@
   color-scheme: dark;
   --soot: #0D0B09; --pit: #1A1714; --iron: #2A2622; --steelline: #3A342D;
   --concrete: #A39C90; --chalk: #F4EFE4; --ash: #C9C1B4;
-  --amber: #FFB54A; --amber-core: #FFD99A; --amber-ink: #1A0E02; --amber-deep: #C7802A;
+  /* gym red (racks and benches in a 1980s gym); the token names stay for continuity */
+  --amber: #EF5A4A; --amber-core: #FF8A7A; --amber-ink: #FFF4E6; --amber-deep: #A0211A;
   --rust: #9C4A22; --rust-hi: #D9622F; --brick: #7A3B2A;
   --cream: #EDE3CC; --ink: #1E1A15; --ink-faded: #5E554A; --stamp: #B5482A;
   /* legacy names used across screens */
@@ -43,18 +43,22 @@ body {
 /* the room's scrim: the panorama reads as space and light behind content, never as a busy picture */
 .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(120% 70% at 50% 0%, rgba(255,181,74,calc(0.10 * var(--lamp))), transparent 60%),
+    radial-gradient(120% 70% at 50% 0%, rgba(239,90,74,calc(0.10 * var(--lamp))), transparent 60%),
     linear-gradient(180deg, rgba(13,11,9,0.05) 0%, rgba(13,11,9,0.55) 38%, rgba(13,11,9,0.92) 75%, var(--soot) 100%);
 }
+.room-photo { filter: brightness(0.62) saturate(0.88) contrast(1.06) sepia(0.12); }
+html.clean .room-photo { filter: brightness(0.45) saturate(0.7); }
 .vignette { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(140% 90% at 50% 40%, transparent 55%, rgba(0,0,0,0.65) 100%); }
 
 @layer components {
   .display { font-family: 'Big Shoulders Display Variable', 'Arial Narrow', Impact, sans-serif; font-weight: 850; line-height: 0.86; letter-spacing: 0.005em; text-transform: uppercase; text-wrap: balance; }
   /* big headings print slightly off-register: a rust ghost down-right */
   .misprint { text-shadow: 1.5px 1.5px 0 rgba(156,74,34,0.85); }
-  .stencil { font-family: 'Big Shoulders Stencil Display', 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 800; text-transform: uppercase; line-height: 0.92; letter-spacing: 0.02em; }
+  /* 1980s athletic lettering: heavy, italic, upright enough to read (was a 1970s stencil) */
+  .stencil { font-family: 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; line-height: 0.9; letter-spacing: 0; }
   /* painted wall lettering: stencil with paint grain eaten out of it */
-  .wallpaint { color: rgba(237,227,204,0.88); -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 260px; mask-image: var(--paint-mask); mask-size: 260px; }
+  .wallpaint { color: #F4EFE4; font-family: 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 900; font-style: italic; letter-spacing: -0.01em; line-height: 0.85; }
+  .stripes { height: 14px; background: linear-gradient(180deg, #E5483B 0 4px, transparent 4px 5px, #F28C28 5px 9px, transparent 9px 10px, #F4C430 10px 14px); }
   .typed { font-family: 'Special Elite', 'Courier New', monospace; font-weight: 400; letter-spacing: 0.02em; }
   .label { font-family: 'Special Elite', 'Courier New', monospace; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--concrete); line-height: 1.3; }
 
@@ -70,11 +74,12 @@ body {
 
   /* the lamp: the one primary action. Lit glass with a hot core and a halo; text is dark ink (10.8:1) */
   .ember-btn, .lamp-btn {
-    background: radial-gradient(120% 160% at 50% 0%, var(--amber-core) 0%, var(--amber) 45%, #E8952E 100%);
-    color: var(--amber-ink); box-shadow: theme('boxShadow.ember'); opacity: calc(0.86 + 0.14 * var(--lamp));
+    /* red enamel paint on steel, like the racks: a little worn, cream lettering (6:1) */
+    background: linear-gradient(180deg, #C9302A 0%, #B3261E 55%, #9E211A 100%);
+    color: #FFF4E6; box-shadow: theme('boxShadow.ember'); text-shadow: 0 1px 0 rgba(0,0,0,0.35);
   }
-  .ember-btn:hover, .lamp-btn:hover { filter: brightness(1.05); }
-  .ember-btn:active, .lamp-btn:active { filter: brightness(0.9); transform: translateY(2px); box-shadow: 0 0 0 1px rgba(255,217,154,0.4) inset, 0 0 18px -6px rgba(255,181,74,0.5); }
+  .ember-btn:hover, .lamp-btn:hover { filter: brightness(1.06); }
+  .ember-btn:active, .lamp-btn:active { filter: brightness(0.9); transform: translateY(2px); }
 
   /* aged paper: prints, ledger, punch card, posters */
   .print { background-color: var(--cream); background-image: var(--paper); background-size: 512px; color: var(--ink); border-radius: 2px; box-shadow: theme('boxShadow.paper'); position: relative; }
@@ -94,7 +99,7 @@ body {
   .dymo.amber { background: linear-gradient(180deg, #3a2a12, #1d150a); color: var(--amber-core); }
   /* rubber stamp ink */
   .stamp { display: inline-block; border: 4px solid currentColor; border-radius: 6px; padding: 0.05em 0.35em;
-    font-family: 'Big Shoulders Stencil Display', Impact, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1;
+    font-family: 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1;
     -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 200px; mask-image: var(--paint-mask); mask-size: 200px; }
 
   .gutter { padding-left: max(16px, var(--safe-l)); padding-right: max(16px, var(--safe-r)); }
@@ -103,13 +108,15 @@ body {
 }
 
 /* ---- Clean mode: no grain, distress, flicker, misregistration (Settings) ---- */
-html.clean .grain, html.clean .vignette { display: none; }
+html.clean .grain, html.clean .room-photo { filter: brightness(0.62) saturate(0.88) contrast(1.06) sepia(0.12); }
+html.clean .room-photo { filter: brightness(0.45) saturate(0.7); }
+.vignette { display: none; }
 html.clean .misprint { text-shadow: none; }
 html.clean .wallpaint, html.clean .stamp { -webkit-mask-image: none; mask-image: none; }
 html.clean .print { background-image: none; }
 html.clean { --lamp: 1 !important; }
 
-:focus-visible { outline: 2.5px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 2.5px solid #F4C430; outline-offset: 3px; border-radius: 6px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
@@ -123,7 +130,7 @@ html.clean { --lamp: 1 !important; }
 /* ---- Progress wall ---- */
 .brickwall { background:
   linear-gradient(180deg, rgba(13,11,9,0.55), rgba(13,11,9,0.78)),
-  radial-gradient(80% 60% at 50% 0%, rgba(255,181,74,0.18), transparent 70%),
+  radial-gradient(80% 60% at 50% 0%, rgba(239,90,74,0.18), transparent 70%),
   url('/assets/ph/red_brick_03_diffuse_1k.webp');
   background-size: 100% 100%, 100% 100%, 300px; }
 /* brick-red paint over a locked poster: worn so the figure's ghost shows through */
@@ -171,5 +178,9 @@ html.clean .meshwall { background: linear-gradient(180deg, #24201c, #1a1714); }
 /* ---- tab bar: a strip of worn rubber floor; the active tab sits in a pool of lamp light ---- */
 .rubber { background: linear-gradient(180deg, rgba(20,18,16,0.94), rgba(14,12,10,0.97)), url('/assets/ph/rubber_tiles_diffuse_1k.webp'); background-size: 100% 100%, 180px;
   box-shadow: inset 0 1px 0 rgba(255,214,160,0.07), 0 -10px 30px -10px rgba(0,0,0,0.9); }
-.lamp-pool { background: radial-gradient(80% 90% at 50% 0%, rgba(255,181,74,0.26), rgba(255,181,74,0.06) 60%, transparent 80%); box-shadow: inset 0 1px 0 rgba(255,217,154,0.35); }
+.lamp-pool { background: linear-gradient(180deg, rgba(239,90,74,0.22), rgba(239,90,74,0.06)); box-shadow: inset 0 2px 0 #EF5A4A; }
 html.clean .rubber { background: #141210; }
+
+/* ---- 80s photocopied flyer (Progress) ---- */
+.flyer { background-color: #ECE4D2; background-image: radial-gradient(rgba(20,16,12,0.16) 0.8px, transparent 1px), var(--paper); background-size: 6px 6px, 512px; color: #141210; }
+html.clean .flyer { background-image: none; }

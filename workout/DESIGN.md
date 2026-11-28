@@ -1,6 +1,10 @@
 # Tempo — Design Direction v3: "IRON ROOM, 1974"
 
-Status: **built** (2026-11-27). Report, screenshots and costs: `docs/design/iron-room/REPORT.md`, `COSTS.md`. The previous direction ("Night Session")
+Status: **built** (2026-11-27), **re-directed 2026-11-28** after the owner's review: raw 1980s gym, no AI person,
+no animated loops. The room is now still 1980s gym photographs (no people) behind every screen; the accent is
+gym red (racks, benches) with cream text; lettering is bold italic athletic type with a red-orange-yellow
+stripe; Progress shows text-only photocopied flyers. Sections below describe the original 1974 plan.
+Original status: built (2026-11-27). Report, screenshots and costs: `docs/design/iron-room/REPORT.md`, `COSTS.md`. The previous direction ("Night Session")
 is archived at `docs/design/DESIGN-v2-night-session.md`. Every asset this direction needs, with its tool,
 exact prompt, size and cost, is in `ASSETS.md`.
 

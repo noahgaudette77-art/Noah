@@ -83,3 +83,16 @@ fal.ai reconciliation: balance $15.319 at start, $12.919 after all generation = 
 | ElevenLabs | **450 credits** | 77,740 of 131,000 this cycle | 7 effects incl. 30 s loop, 10 voice lines, 1 library voice slot |
 | MuscleWiki | **≈ 70 calls** this month | of 1,000 (TESTING assumed) | 41 planning/mapping, ≈ 15 for viewing three variant films (QA, nothing kept), ≈ 12 for the end-to-end Worker test |
 | Poly Haven | free | — | 8 textures + 1 HDRI, CC0 |
+| 2026-11-28 | fal.ai | photo80-hero | fal-ai/nano-banana-pro | 1 | $0.150 | $2.55 |
+| 2026-11-28 | fal.ai | photo80-rest | fal-ai/nano-banana-pro | 1 | $0.150 | $2.70 |
+| 2026-11-28 | fal.ai | photo80-complete | fal-ai/nano-banana-pro | 1 | $0.150 | $2.85 |
+| 2026-11-28 | Blockade | sky80-entrance | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-28 | Blockade | sky80-bench | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-28 | Blockade | sky80-mesh | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-28 | Blockade | sky80-lane | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-28 | Blockade | sky80-ceiling | skybox M3 Photoreal | 1 | 1 generation |  |
+| 2026-11-28 | fal.ai | bg80-entrance | fal-ai/nano-banana-pro | 1 | $0.150 | $3.00 |
+| 2026-11-28 | fal.ai | bg80-bench | fal-ai/nano-banana-pro | 1 | $0.150 | $3.15 |
+| 2026-11-28 | fal.ai | bg80-wall | fal-ai/nano-banana-pro | 1 | $0.150 | $3.30 |
+| 2026-11-28 | fal.ai | bg80-floor | fal-ai/nano-banana-pro | 1 | $0.150 | $3.45 |
+| 2026-11-28 | fal.ai | bg80-ceiling | fal-ai/nano-banana-pro | 1 | $0.150 | $3.60 |
