@@ -66,13 +66,21 @@ export function VideoPrint({ id, tempo, suspended, compact, onFilm }: { id: stri
   }, [map, seen, angle, online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // play only while visible, not covered, not paused by the user
+  // The src is only set once the print is on screen, so starting playback here is not preloading.
+  // iOS Safari needs muted set on the element itself before play(), and loads nothing until asked.
+  const current0 = src[angle];
   useEffect(() => {
     const v = vid.current;
-    if (!v || state !== 'ready') return;
+    if (!v || !current0) return;
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
     v.playbackRate = slow ? 0.5 : 1;
-    if (visible && !suspended && !paused) void v.play().catch(() => undefined);
+    if (visible && !suspended && !paused) void v.play().catch(() => { if (v.readyState === 0) v.load(); });
     else v.pause();
-  }, [visible, suspended, paused, slow, state, angle]);
+  }, [visible, suspended, paused, slow, current0, angle]);
 
   const current = src[angle];
   const film = !!map && mwLive() && !['fallback', 'offline', 'error'].includes(state);
@@ -101,10 +109,12 @@ export function VideoPrint({ id, tempo, suspended, compact, onFilm }: { id: stri
             key={angle}
             ref={vid}
             src={current}
-            muted loop playsInline preload="none"
+            muted autoPlay loop playsInline preload="auto"
             disablePictureInPicture controlsList="nodownload noplaybackrate noremoteplayback"
             onContextMenu={(e) => e.preventDefault()}
             onLoadedData={() => { setState('ready'); reportStreamUse(current); }}
+            onCanPlay={() => setState('ready')}
+            onPlaying={() => setState('ready')}
             onError={() => setState(navigator.onLine ? 'error' : 'offline')}
             className="h-full w-full object-contain"
             style={{ filter: grade && !clean ? 'sepia(0.08) contrast(1.04) saturate(0.92) brightness(0.98)' : undefined }}
