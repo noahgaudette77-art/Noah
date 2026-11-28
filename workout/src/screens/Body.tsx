@@ -16,7 +16,7 @@ import { ScaleDial } from '../components/ScaleDial';
 import { MilestonePlates } from '../components/MilestonePlates';
 
 const RANGES = [{ k: '4W', days: 28 }, { k: '12W', days: 84 }, { k: 'Year', days: 364 }] as const;
-const C = { avg: '#FFB54A', proj: '#A39C90', dot: '#C9C1B4', grid: 'rgba(255,255,255,0.06)', axis: '#A39C90' };
+const C = { avg: '#EF5A4A', proj: '#A39C90', dot: '#C9C1B4', grid: 'rgba(255,255,255,0.06)', axis: '#A39C90' };
 
 function ChartTip({ active, payload }: { active?: boolean; payload?: { payload: { date: string; weight?: number; avg?: number; projected: number } }[] }) {
   if (!active || !payload?.length) return null;
@@ -98,7 +98,7 @@ export default function Body() {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -14 }}>
                   <defs>
-                    <linearGradient id="avgline" x1="0" x2="1"><stop offset="0" stopColor="#FFD99A" /><stop offset="1" stopColor="#FFB54A" /></linearGradient>
+                    <linearGradient id="avgline" x1="0" x2="1"><stop offset="0" stopColor="#FF8A7A" /><stop offset="1" stopColor="#EF5A4A" /></linearGradient>
                   </defs>
                   <CartesianGrid stroke={C.grid} vertical={false} />
                   <XAxis dataKey="day" type="number" domain={['dataMin', 'dataMax']} tickFormatter={(d: number) => fmtShort(addDays(META.startDate, d))} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
@@ -108,7 +108,7 @@ export default function Body() {
                   <Line dataKey="weight" stroke="none" isAnimationActive={false} activeDot={false} legendType="none"
                     dot={(p: { cx?: number; cy?: number; value?: number; index?: number }) => (p.value == null ? <g key={p.index} /> : <circle key={p.index} cx={p.cx} cy={p.cy} r={3.5} fill={C.dot} stroke="#131316" strokeWidth={2} />)} />
                   <Line dataKey="avg" stroke="url(#avgline)" strokeWidth={3} dot={false} connectNulls activeDot={{ r: 6, fill: C.avg, stroke: '#1A1714', strokeWidth: 2 }} isAnimationActive animationDuration={1200}
-                    style={{ filter: 'drop-shadow(0 0 6px rgba(255,181,74,0.45))' }} />
+                    style={{ filter: 'drop-shadow(0 0 6px rgba(239,90,74,0.45))' }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

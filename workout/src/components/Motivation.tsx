@@ -12,7 +12,7 @@ import { Card, Label } from './ui';
 export function TripleRing({ lift, cond, habits, size = 132 }: { lift: number; cond: number; habits: number; size?: number }) {
   const reduce = useReducedMotion();
   const rings = [
-    { v: lift, r: size / 2 - 8, c: ['#FFD99A', '#FFB54A'] },
+    { v: lift, r: size / 2 - 8, c: ['#FF8A7A', '#EF5A4A'] },
     { v: cond, r: size / 2 - 24, c: ['#F3EFE8', '#B8B3AA'] },
     { v: habits, r: size / 2 - 40, c: ['#E8DFCF', '#A39C90'] },
   ];
@@ -135,14 +135,14 @@ export function Journey({ date }: { date: string }) {
       <div className="-mx-2 mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Checkpoints: ${m.list.map((x) => `${x.bf}% about ${x.weight.toFixed(0)} lb by ${fmtShort(x.date)}`).join('; ')}. You are at ${m.bf.toFixed(1)}%.`}>
           <defs>
-            <linearGradient id="jp" x1="0" x2="1"><stop offset="0" stopColor="#C7802A" /><stop offset="1" stopColor="#FFD99A" /></linearGradient>
+            <linearGradient id="jp" x1="0" x2="1"><stop offset="0" stopColor="#A0211A" /><stop offset="1" stopColor="#FF8A7A" /></linearGradient>
           </defs>
           <path d={d} stroke="rgba(255,255,255,0.10)" strokeWidth="10" fill="none" strokeLinecap="round" />
           <motion.path d={d} stroke="url(#jp)" strokeWidth="10" fill="none" strokeLinecap="round"
             initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: Math.max(0.02, ((seg - 1) + frac) / (pts.length - 1)) }} transition={{ duration: 1.4, ease: [0.2, 0.9, 0.25, 1] }} />
           {pts.map((p, i) => (
             <g key={i}>
-              <circle cx={xs[i]} cy={ys[i]} r={i === 0 ? 10 : 14} fill={p.reached ? '#FFB54A' : '#1A1714'} stroke={p.reached ? '#FFD99A' : 'rgba(255,255,255,0.22)'} strokeWidth="3" />
+              <circle cx={xs[i]} cy={ys[i]} r={i === 0 ? 10 : 14} fill={p.reached ? '#EF5A4A' : '#1A1714'} stroke={p.reached ? '#FF8A7A' : 'rgba(255,255,255,0.22)'} strokeWidth="3" />
               <text x={xs[i]} y={ys[i] + (i % 2 === 0 ? -36 : 66)} textAnchor="middle" fill="#F4EFE4" fontFamily="'Big Shoulders Display Variable', sans-serif" fontWeight="800" fontSize="52">{p.bf}%</text>
               <text x={xs[i]} y={ys[i] + (i % 2 === 0 ? -96 : 102)} textAnchor="middle" fill="#C9C1B4" fontSize="28" fontFamily="'Instrument Sans Variable', sans-serif">
                 {i === 0 ? 'Start · 225 lb' : `${fmtShort(p.date)} · ${p.weight.toFixed(0)} lb`}
@@ -150,7 +150,7 @@ export function Journey({ date }: { date: string }) {
             </g>
           ))}
           <g transform={`translate(${meX} ${meY})`}>
-            <circle r="22" fill="rgba(255,181,74,0.2)" />
+            <circle r="22" fill="rgba(239,90,74,0.2)" />
             <circle r="9" fill="#F4EFE4" />
           </g>
         </svg>

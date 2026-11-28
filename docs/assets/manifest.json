@@ -266,155 +266,136 @@
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro",
       "prompt": "A 1970s gym poster illustration of an original fictional man in his early 30s, short 1970s-cut dark brown hair, light stubble, square jaw, athletic build, standing in a relaxed three-quarter pose, shown from head to mid-thigh, plain dark training shorts, no shirt. Halftone duotone print in rust orange and black ink on aged cream paper, coarse visible halftone dots, slight ink misregistration, paper fibres and soft creases, dramatic hard side light from the left with deep shadow on the right, plain paper background with wide margins. No text, no letters, no numbers, no logos, no border, no watermark. Not a real person, not a celebrity.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433c5/cwTuWdgBV0b-ZopNzlxe1_Zuvz5e4F.png",
       "cost": 0.15,
       "files": [],
-      "size": "848x1264"
+      "size": "848x1264",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "poster-24": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 24% body fat: solid and broad, soft midsection with no visible abs, thick waist, rounded chest and shoulders. Natural and believable. No text, no letters, no numbers, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433c8/kX-pphw3PAJFyRhdsOUCG_NkQLnnwE.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/poster-24.webp",
-        "assets/art/poster-24.avif"
-      ],
-      "size": "848x1264"
+      "files": [],
+      "size": "848x1264",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "poster-19": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 19% body fat: a visibly leaner waist, a faint outline of the upper abs, more shape in the shoulders and arms. Natural and believable. No text, no letters, no numbers, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433cc/_2rzjlXZsJDhhvwsyd3oj_gBZ8r9qq.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/poster-19.webp",
-        "assets/art/poster-19.avif"
-      ],
-      "size": "848x1264"
+      "files": [],
+      "size": "848x1264",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "poster-15": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 15% body fat: lean and athletic, upper abs and obliques visible, defined shoulders and arms, faint veins on the forearms. Natural and believable. No text, no letters, no numbers, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433ce/4ehlPepKXFP8mKH0pHGKF_VekS9I85.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/poster-15.webp",
-        "assets/art/poster-15.avif"
-      ],
-      "size": "848x1264"
+      "files": [],
+      "size": "848x1264",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "poster-12": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "Same man as the reference image: keep his exact face, hair, skin tone, age and identity, same pose, framing, side light and the same halftone duotone print style in rust orange and black on aged cream paper. Change only his physique to about 12% body fat: lean and muscular, a clear six-pack, defined chest and shoulders, athletic and natural, not a bodybuilder, not extreme. Natural and believable. No text, no letters, no numbers, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433d1/18vwdfezD7KOCj94awebI_0XdBcBt5.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/poster-12.webp",
-        "assets/art/poster-12.avif"
-      ],
-      "size": "848x1264"
+      "files": [],
+      "size": "848x1264",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "still-hero": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He claps chalk from his hands and a cloud of chalk dust hangs in the light. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433d4/ep4o2cADkWZ-BW6XpauNh_0PNd6BNL.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/still-hero.webp",
-        "assets/art/still-hero.avif"
-      ],
-      "size": "768x1376"
+      "files": [],
+      "size": "768x1376",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "still-rest": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He sits on the end of a worn leather bench between sets, forearms on his knees, head slightly down, breathing, a towel over one shoulder, dust motes drifting in the lamp light behind him. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433d7/HKiw84bjMVN_usTIKygID_NIusczuo.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/still-rest.webp",
-        "assets/art/still-rest.avif"
-      ],
-      "size": "768x1376"
+      "files": [],
+      "size": "768x1376",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "still-complete": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "A cinematic 16mm film still of the same man as the reference image (same face, hair and build, about 20% body fat), photographed for real, in a dim 1970s underground gym with exposed brick and a black pendant lamp casting a warm tungsten light cone. He sets a rusted hex dumbbell back on a steel rack and exhales, chalk on his hands, a slight satisfied smile, warm lamp light from above. Medium shot from the side, shallow depth of field, heavy film grain, faded warm tones, halation around the lamp. Vertical 9:16. No text, no signage, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab433da/8KbD4Voq7voBfXCuiHVeX_wMqXBFXa.png",
       "cost": 0.15,
-      "files": [
-        "assets/art/still-complete.webp",
-        "assets/art/still-complete.avif"
-      ],
-      "size": "768x1376"
+      "files": [],
+      "size": "768x1376",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "loop-hero": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
       "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting in the light cone, slow push-in. The man claps chalk from his hands once and rubs them together, chalk dust swirling in the light. Subtle natural motion, steady camera, no cuts.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab4340f/2VeYnMjC9AtzJwzVXZdWO_GBRpTspt.mp4",
       "cost": 0.35,
-      "files": [
-        "assets/art/loop-hero.mp4",
-        "assets/art/loop-hero.webm",
-        "assets/art/loop-hero.webp"
-      ],
+      "files": [],
       "bytes": {
         "mp4": 259974,
         "webm": 138578
-      }
+      },
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "loop-rest": {
       "takes": 1,
       "tool": "fal.ai",
       "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
       "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting, slow push-in. The man breathes slowly, shoulders rising and falling, otherwise still. Steady camera, no cuts.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab4341b/9Vm2CIz47UVhN39FGkiTS_3ksYrmkI.mp4",
       "cost": 0.35,
-      "files": [
-        "assets/art/loop-rest.mp4",
-        "assets/art/loop-rest.webm",
-        "assets/art/loop-rest.webp"
-      ],
+      "files": [],
       "bytes": {
         "mp4": 157314,
         "webm": 58201
-      }
+      },
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "sfx-stamp": {
       "takes": 1,
@@ -476,16 +457,14 @@
       "tool": "fal.ai",
       "model": "fal-ai/nano-banana-pro/edit",
       "prompt": "The same man as the reference image (same face, hair, skin tone and build, about 20% body fat), photographed for real: full body from head to feet, standing straight and facing the camera, arms held slightly away from the body in an A-pose, plain dark training shorts, barefoot, plain light grey studio background, even soft lighting, sharp focus. No text, no logos.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab4341a/fkDoGhgFo-8Wg3Ui8oV9T_NRQb2p3Z.png",
       "cost": 0.35,
-      "files": [
-        "assets/art/athlete-apose.webp",
-        "assets/art/athlete-apose.avif"
-      ],
+      "files": [],
       "size": "848x1264",
-      "use": "input for the Tripo athlete only; not shipped"
+      "use": "input for the Tripo athlete only; not shipped",
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "sfx-lamp-hum": {
       "takes": 1,
@@ -526,19 +505,16 @@
       "tool": "fal.ai",
       "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
       "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting, slow push-in. The man lets go of the dumbbell on the rack and exhales, then looks up into the light. Steady camera, no cuts.",
-      "status": "done",
-      "updated": "2026-11-27",
+      "status": "retired",
+      "updated": "2026-11-28",
       "url": "https://v3b.fal.media/files/b/0ab43426/so9pUG6-FmDeri7lF-0nF_9cEQBQEK.mp4",
       "cost": 0.85,
-      "files": [
-        "assets/art/loop-complete.mp4",
-        "assets/art/loop-complete.webm",
-        "assets/art/loop-complete.webp"
-      ],
+      "files": [],
       "bytes": {
         "mp4": 205322,
         "webm": 99841
-      }
+      },
+      "reason": "Owner (2026-11-28): no AI athlete, no animated loops. Replaced by 1980s gym photos without people and text-only flyers."
     },
     "vo-two": {
       "takes": 1,
@@ -658,6 +634,194 @@
       "file": "assets/audio/vo-next-exercise.mp3",
       "status": "done",
       "updated": "2026-11-27"
+    },
+    "photo80-hero": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986: a long wooden rack loaded with worn black hex dumbbells running along a mirrored, dark wood-panelled wall, red-painted steel benches and racks, worn hardwood floor, warm fluorescent and tungsten light, faint haze, visible film grain, faded colours, slightly underexposed, documentary feel. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab44843/YINvdzdvc2bL2N4_HDauQ_PSU5G5Hf.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/photo80-hero.webp",
+        "assets/art/photo80-hero.avif"
+      ],
+      "size": "928x1152"
+    },
+    "photo80-rest": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph in an empty 1980s gym, shot on 35mm film in 1986: a worn red vinyl weight bench with cracked padding next to a rack of black hex dumbbells, a towel over the end of the bench, wood-panelled wall and mirror behind, fluorescent light, film grain, faded colours. No people, no text, no logos, no posters.",
+      "status": "unused",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab44846/zr6WRDVTNrA324-sokxKI_Ec1EhXjz.png",
+      "cost": 0.15,
+      "files": [],
+      "size": "928x1152",
+      "reason": "came back with white borders; the Rest screen does not need a photo"
+    },
+    "photo80-complete": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph at closing time in an empty 1980s gym, shot on 35mm film in 1986: two chalky black hex dumbbells resting on a worn hardwood floor in the foreground, the dumbbell rack and red benches soft in the background, half the fluorescent lights switched off, warm film grain, faded colours. No people, no text, no logos, no posters.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab44849/fXHCBMvKrczlfwPyiCELn_NCLDMyo8.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/photo80-complete.webp",
+        "assets/art/photo80-complete.avif"
+      ],
+      "size": "928x1152"
+    },
+    "sky80-entrance": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Long room of an old-school gym: a wooden dumbbell rack full of hex dumbbells runs along a mirrored wall, red flat benches in a row, 1980s bodybuilding gym photographed on 35mm film in 1986, film grain, faded warm colours, dark wood-panelled walls, big wall mirrors, worn black hex dumbbells, red-painted steel racks and benches, worn hardwood floor, fluorescent tube lights, no people, no text, no signage, no posters",
+      "negative": "people, person, figure, man, woman, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, concrete bunker, cartoon, painting, oversaturated, blurry",
+      "status": "rejected",
+      "updated": "2026-11-28",
+      "source": "8192x4096",
+      "files": [],
+      "placeholder": "data:image/webp;base64,UklGRqwAAABXRUJQVlA4IKAAAAAQBACdASogABAAPtFapkyoJSOiMAgBABoJYwC+SB0zzFQLW1EseljbwAD+qVfymOXV1xmuU3R3S94NzBSVbvTB9JHZ3ZBgnGdfzSGU1VaripwIC1wyAYTfoIh/YjlbXPcFpkqgoc68rAdP9Cu7OE39x5HH190yCBlbkZULr/Olah8uWDM/j+Gd01frdVbkkwrpN7IQaJApDlrsPF8aQvAA",
+      "blockadeId": 15955904,
+      "reason": "Glossy CGI look, neon red, daylight studio, garbled text: not the 1980s film look. Room uses bg80 photos instead."
+    },
+    "sky80-bench": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Bench area of an old-school gym: red vinyl flat and incline benches on steel frames, dumbbells on the floor beside them, a red squat rack, 1980s bodybuilding gym photographed on 35mm film in 1986, film grain, faded warm colours, dark wood-panelled walls, big wall mirrors, worn black hex dumbbells, red-painted steel racks and benches, worn hardwood floor, fluorescent tube lights, no people, no text, no signage, no posters",
+      "negative": "people, person, figure, man, woman, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, concrete bunker, cartoon, painting, oversaturated, blurry",
+      "status": "rejected",
+      "updated": "2026-11-28",
+      "source": "8192x4096",
+      "files": [],
+      "placeholder": "data:image/webp;base64,UklGRrIAAABXRUJQVlA4IKYAAABQBACdASogABAAPtFWo0uoJKMhsAgBABoJbACdABuSCcKc7tUECMvvmW6gAP7uryNCK5ahrTabzgOn8sjMJbVHYWPY2Y87mJUzTs+Urym2LrwhWbf4yAPI7Dk1bP9V3E7C9djcAfS45ShZdJuRp358qOfybW+Gl5FD2zqErtY/gEyovELQeMG7IYE3RK/SDUh1d4nxaQz9GS3yer/5ckbBhOdrwAAA",
+      "blockadeId": 15955905,
+      "reason": "Glossy CGI look, neon red, daylight studio, garbled text: not the 1980s film look. Room uses bg80 photos instead."
+    },
+    "sky80-mesh": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Back wall of an old-school gym with dark wood panelling, a red steel rack of iron weight plates and a row of kettlebells, a chalk bucket, 1980s bodybuilding gym photographed on 35mm film in 1986, film grain, faded warm colours, dark wood-panelled walls, big wall mirrors, worn black hex dumbbells, red-painted steel racks and benches, worn hardwood floor, fluorescent tube lights, no people, no text, no signage, no posters",
+      "negative": "people, person, figure, man, woman, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, concrete bunker, cartoon, painting, oversaturated, blurry",
+      "status": "rejected",
+      "updated": "2026-11-28",
+      "source": "8192x4096",
+      "files": [],
+      "placeholder": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAACwBACdASogABAAPtFUpEuoJKOhsAgBABoJaACdMoLT9zAAWkzoDYASliZJCLtAAP7QopsYxDqyDOwAu8qfxZoZXgjbiCnSW/m4l+mYrwAKzbBIZQqHjMjq0ZGLutYQOfmbJqmu1YJJvyLdvAPaXOxOkfC+RBOIC9ZNDgfy5PPkcVWvOCmYN0CENgDWvaTzUEz3CyAA",
+      "blockadeId": 15955906,
+      "reason": "Glossy CGI look, neon red, daylight studio, garbled text: not the 1980s film look. Room uses bg80 photos instead."
+    },
+    "sky80-lane": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Open floor of an old-school gym: worn hardwood planks with a long red stripe painted down the floor, a climbing rope and a tractor tire, 1980s bodybuilding gym photographed on 35mm film in 1986, film grain, faded warm colours, dark wood-panelled walls, big wall mirrors, worn black hex dumbbells, red-painted steel racks and benches, worn hardwood floor, fluorescent tube lights, no people, no text, no signage, no posters",
+      "negative": "people, person, figure, man, woman, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, concrete bunker, cartoon, painting, oversaturated, blurry",
+      "status": "rejected",
+      "updated": "2026-11-28",
+      "source": "8192x4096",
+      "files": [],
+      "placeholder": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAABwAwCdASogABAAPtFWpEuoJKOhsAgBABoJQBYdgslj8gOQe4AAy6FNxHpz4oZD1yFHHZdDwmAq4yz2SsGUDubhi496fsUjbPK7GQtBGjbSQVXFQr4of2x6r03oiVw7lhR5Bf6os0Fo0NAnjxJMsWi9Utd48WTu8b+i8c7AAAA=",
+      "blockadeId": 15955907,
+      "reason": "Glossy CGI look, neon red, daylight studio, garbled text: not the 1980s film look. Room uses bg80 photos instead."
+    },
+    "sky80-ceiling": {
+      "takes": 1,
+      "tool": "Blockade Labs",
+      "style": "M3 Photoreal (67)",
+      "prompt": "Looking up at the ceiling of an old-school gym: stained acoustic ceiling tiles and long rows of fluorescent tube lights, wood panelled walls below, 1980s bodybuilding gym photographed on 35mm film in 1986, film grain, faded warm colours, dark wood-panelled walls, big wall mirrors, worn black hex dumbbells, red-painted steel racks and benches, worn hardwood floor, fluorescent tube lights, no people, no text, no signage, no posters",
+      "negative": "people, person, figure, man, woman, text, letters, words, numbers, signage, logo, poster, watermark, modern machines, treadmill, screens, concrete bunker, cartoon, painting, oversaturated, blurry",
+      "status": "rejected",
+      "updated": "2026-11-28",
+      "source": "8192x4096",
+      "files": [],
+      "placeholder": "data:image/webp;base64,UklGRrwAAABXRUJQVlA4ILAAAABwBACdASogABAAPtFWpEuoJKOhsAgBABoJagCdMoMrcBAC43cpkBhJyo4OAAD+2V03jZnioxc3w1nsg2B+M0W/XlB9u6UaYBMaYHf0KoCoWhwd2DaaoBzuVuAsNObWb5W4HWqq3HAHAjES80/rJEx91zf7hLKytd2OX820AlZGjWtStzN9cK9GLBV1G54lQk60QmAtt9zAyH/Bo2KAnzwyLKLc6KlWIvNrAcQZ04UQAA==",
+      "blockadeId": 15955908,
+      "reason": "Glossy CGI look, neon red, daylight studio, garbled text: not the 1980s film look. Room uses bg80 photos instead."
+    },
+    "bg80-entrance": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986, slightly underexposed, faded warm colours, visible film grain, documentary feel, vertical frame: seen from the doorway, long wooden racks of worn black hex dumbbells run along a mirrored dark wood-panelled wall, red-painted steel benches, worn hardwood floor, fluorescent tubes, faint haze. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab4485d/yix-JDcl4eIcBm6t6nj0X_f69Cfzit.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/bg80-entrance.webp",
+        "assets/art/bg80-entrance.avif"
+      ],
+      "size": "768x1376"
+    },
+    "bg80-bench": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986, slightly underexposed, faded warm colours, visible film grain, documentary feel, vertical frame: a row of worn red vinyl benches on steel frames with dumbbells on the floor beside them, a red squat rack, wood panelling and mirrors behind, fluorescent light. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab4485f/KvUi-7AKUm7TgPZT-RY5C_7UfrUgd2.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/bg80-bench.webp",
+        "assets/art/bg80-bench.avif"
+      ],
+      "size": "768x1376"
+    },
+    "bg80-wall": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986, slightly underexposed, faded warm colours, visible film grain, documentary feel, vertical frame: the back wall of dark wood panelling with a red steel rack of old iron weight plates and a few kettlebells on the floor, a chalk bucket, warm tungsten light. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab44862/levkwMmMf95rvMb5ml5Pb_auu591px.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/bg80-wall.webp",
+        "assets/art/bg80-wall.avif"
+      ],
+      "size": "768x1376"
+    },
+    "bg80-floor": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986, slightly underexposed, faded warm colours, visible film grain, documentary feel, vertical frame: open worn hardwood floor with a faded red stripe painted along it, a thick climbing rope hanging from the ceiling, rubber mats stacked against the wood-panelled wall. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab44865/izVtOs-OBjuGRqn8RcSUP_DD75ZtDi.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/bg80-floor.webp",
+        "assets/art/bg80-floor.avif"
+      ],
+      "size": "768x1376"
+    },
+    "bg80-ceiling": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro",
+      "prompt": "Candid photograph of an empty 1980s bodybuilding gym, shot on 35mm Kodak film in 1986, slightly underexposed, faded warm colours, visible film grain, documentary feel, vertical frame: looking up at stained acoustic ceiling tiles and long rows of fluorescent tube lights, the top of the wood-panelled walls and mirrors at the edges. No people, no text, no logos, no posters, no signage.",
+      "status": "done",
+      "updated": "2026-11-28",
+      "url": "https://v3b.fal.media/files/b/0ab4486a/lt7KcPRLJ-bPE4EfTi8PO_XxpU5tnh.png",
+      "cost": 0.15,
+      "files": [
+        "assets/art/bg80-ceiling.webp",
+        "assets/art/bg80-ceiling.avif"
+      ],
+      "size": "768x1376"
     }
   },
   "note": "Written by tools/*.mjs. Paths are relative to public/."

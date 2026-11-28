@@ -3,14 +3,14 @@ import { useMemo, useState } from 'react';
 import { CountUp } from '../components/CountUp';
 import { Icon } from '../components/Icon';
 import { WeekCard } from '../components/Motivation';
-import { HeroLoop } from '../components/HeroLoop';
+import { HeroPhoto } from '../components/HeroPhoto';
 import { Stamp } from '../components/iron';
 import { Button, Card, Label } from '../components/ui';
 import { EXERCISES, dayByKey } from '../data/program';
 import { fmtLong } from '../logic/dates';
 import { dayNumber, sessionPRs, streak } from '../logic/motivation';
 import { volume } from '../logic/progression';
-import { recommendationFor } from '../logic/session';
+import { recommendationFor, sessionMinutes } from '../logic/session';
 import { useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 import { drawSummaryCard, shareOrDownload } from '../lib/summaryCard';
@@ -25,7 +25,7 @@ export default function Summary({ id }: { id: string }) {
     const plan = dayByKey(s.dayKey);
     const sets = s.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
     const vol = s.exercises.reduce((a, e) => a + volume(e), 0);
-    const mins = Math.max(1, Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000));
+    const mins = sessionMinutes(s);
     const prs = sessionPRs(sessions, s);
     const st = streak(sessions, s.date);
     const next = plan.slots.filter((sl) => s.exercises.find((e) => e.exerciseId === sl.exerciseId)?.sets.some((x) => x.done))
@@ -47,7 +47,7 @@ export default function Summary({ id }: { id: string }) {
       title: plan.title, date: fmtLong(s.date), dayLine: dayNumber(s.date) ? `Day ${dayNumber(s.date)} of 365` : 'Practice session',
       stats: [
         { label: 'Volume', value: vol >= 1000 ? (vol / 1000).toFixed(1) : String(vol), unit: vol >= 1000 ? 'k lb' : 'lb' },
-        { label: 'Time', value: String(mins), unit: 'min' },
+        { label: 'Time', value: mins == null ? '–' : String(mins), unit: mins == null ? '' : 'min' },
         { label: 'Sets', value: String(sets) },
         { label: 'New bests', value: String(prs.length) },
       ],
@@ -62,19 +62,19 @@ export default function Summary({ id }: { id: string }) {
         <Label>{dayNumber(s.date) ? `Day ${dayNumber(s.date)} of 365` : 'Practice session'} · {fmtLong(s.date)}</Label>
         <button type="button" onClick={() => navigate('/')} className="grid h-11 w-11 place-items-center rounded-full text-ash hover:bg-white/5" aria-label="Close"><Icon name="close" /></button>
       </div>
-      <HeroLoop name="loop-complete" className="mx-auto mt-5 aspect-[4/5] w-full max-w-[400px]" alt="">
+      <HeroPhoto name="photo80-complete" className="mx-auto mt-5 aspect-[4/5] w-full max-w-[400px]" alt="Closing time: two chalky dumbbells on the gym floor">
         <div className="pointer-events-none absolute right-3 top-3"><Stamp land size={46} angle={-8} color="var(--amber)">Complete</Stamp></div>
-      </HeroLoop>
+      </HeroPhoto>
       <motion.div className="mt-6 flex items-center gap-4" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div>
           <p className="label">Session complete</p>
-          <h1 className="display misprint mt-1 text-[64px] sm:text-[88px]">{plan.title}</h1>
+          <h1 className="display mt-1 text-[64px] sm:text-[88px]">{plan.title}</h1>
         </div>
       </motion.div>
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { l: 'Volume', v: <><CountUp to={vol >= 1000 ? vol / 1000 : vol} decimals={vol >= 1000 ? 1 : 0} />{vol >= 1000 ? 'k' : ''}</>, u: 'lb' },
-          { l: 'Time', v: <CountUp to={mins} />, u: 'min' },
+          { l: 'Time', v: mins == null ? '–' : <CountUp to={mins} />, u: mins == null ? undefined : 'min' },
           { l: 'Sets', v: <CountUp to={sets} /> },
           { l: 'New bests', v: <CountUp to={prs.length} /> },
         ].map((x) => (

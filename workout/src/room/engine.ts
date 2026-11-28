@@ -12,7 +12,7 @@ import { type PropKind, type PropView, onRoom, propViews, roomState } from './st
 import { ZONE_FILES, type ZoneId } from './zones.gen';
 import { onGyro } from './gyro';
 
-export interface EngineOpts { canvas: HTMLCanvasElement; phone: boolean; still: () => boolean; clean: () => boolean; onReady?: () => void }
+export interface EngineOpts { canvas: HTMLCanvasElement; phone: boolean; still: () => boolean; clean: () => boolean; onReady?: () => void; /** false: props only, transparent canvas over a photo backdrop */ panorama?: boolean }
 
 const VERT = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const FRAG = `
@@ -63,7 +63,7 @@ export class Room {
   /** A textured wall panel (the steel mesh) drawn behind a section's props. */
   private panelFor() {
     if (this.panel) return this.panel;
-    const t = new THREE.TextureLoader().load('assets/ph/rusty_metal_grid_diffuse_1k.webp', () => this.poke());
+    const t = new THREE.TextureLoader().load('assets/ph/weathered_brown_planks_diffuse_1k.webp', () => this.poke());
     t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
     const mat = new THREE.MeshBasicMaterial({ map: t, color: new THREE.Color(0.36, 0.3, 0.24), toneMapped: false });
     const scene = new THREE.Scene(); scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
@@ -73,12 +73,12 @@ export class Room {
   }
 
   constructor(private o: EngineOpts) {
-    this.r = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: false, alpha: false, powerPreference: 'low-power' });
+    this.r = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: o.panorama === false, alpha: o.panorama === false, premultipliedAlpha: true, powerPreference: 'low-power' });
     this.r.setPixelRatio(Math.min(devicePixelRatio, o.phone ? 1.25 : 1.75));
     this.r.outputColorSpace = THREE.SRGBColorSpace;
     this.r.toneMapping = THREE.ACESFilmicToneMapping;
     this.r.autoClear = false;
-    this.r.setClearColor(0x0d0b09, 1);
+    this.r.setClearColor(0x0d0b09, o.panorama === false ? 0 : 1);
     for (let i = 0; i < 2; i++) {
       const g = new THREE.SphereGeometry(10, 64, 32);
       g.scale(-1, 1, 1);
@@ -140,7 +140,7 @@ export class Room {
   }
 
   private loadTex(z: ZoneId): Promise<THREE.Texture> {
-    const url = this.o.phone ? ZONE_FILES[z].phone : ZONE_FILES[z].desktop;
+    const url = ZONE_FILES[z].photo; // panorama mode (unused since the 1980s photo backdrops)
     let p = this.tex.get(url);
     if (!p) {
       p = new THREE.TextureLoader().loadAsync(url).then((t) => {
@@ -155,6 +155,7 @@ export class Room {
   }
 
   private async sync() {
+    if (this.o.panorama === false) { this.o.canvas.style.opacity = '1'; return; }
     const st = roomState();
     const z = st.override?.zone ?? st.zone;
     this.targetYaw = (st.override?.yaw ?? st.yaw) || 0;
@@ -238,7 +239,7 @@ export class Room {
     const st = roomState();
     const still = this.o.still() || st.still;
     const views = [...propViews().values()];
-    const animating = !still || this.fade < 1 || views.length > 0;
+    const animating = this.o.panorama === false ? views.length > 0 : (!still || this.fade < 1 || views.length > 0);
     // 30 fps cap: the room moves slowly, so this is smooth and saves half the battery
     // while the page scrolls, the fixed room needs no redraw unless a 3D prop is moving with the page
     const scrolling = now - this.scrolledAt < 160;
@@ -296,7 +297,7 @@ export class Room {
     r.setScissorTest(false);
     r.setViewport(0, 0, w, h);
     r.clear();
-    r.render(this.scene, this.cam);
+    if (this.o.panorama !== false) r.render(this.scene, this.cam);
     // wall panels first, then the props hung on them
     views.sort((a, b) => (a.kind === 'meshwall' ? -1 : 0) - (b.kind === 'meshwall' ? -1 : 0));
     for (const v of views) {
@@ -304,10 +305,10 @@ export class Room {
         const rect = v.el.getBoundingClientRect();
         if (rect.bottom < 0 || rect.top > h) continue;
         const p = this.panelFor();
-        p.mat.map!.repeat.set(rect.width / 220, rect.height / 220);
+        p.mat.map!.repeat.set(rect.width / 260, rect.height / 260); p.mat.map!.rotation = Math.PI / 2;
         const y = h - rect.bottom;
         r.setViewport(rect.left, y, rect.width, rect.height); r.setScissor(rect.left, y, rect.width, rect.height); r.setScissorTest(true);
-        if (this.o.clean()) p.mat.color.setRGB(0.14, 0.13, 0.12); else p.mat.color.setRGB(0.36, 0.3, 0.24);
+        if (this.o.clean()) p.mat.color.setRGB(0.14, 0.13, 0.12); else p.mat.color.setRGB(0.42, 0.3, 0.22);
         r.render(p.scene, p.cam);
       }
     }

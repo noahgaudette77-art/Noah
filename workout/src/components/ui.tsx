@@ -49,10 +49,10 @@ export function Ring({ value, size = 56, stroke = 5, children, label, tone = 'em
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value));
-  const stops = { ember: ['#FFD99A', '#FFB54A'], chalk: ['#FFFFFF', '#CFC9C0'], rim: ['#E8DFCF', '#A39C90'] }[tone];
+  const stops = { ember: ['#FF8A7A', '#EF5A4A'], chalk: ['#FFFFFF', '#CFC9C0'], rim: ['#E8DFCF', '#A39C90'] }[tone];
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={glow && v > 0 ? { filter: `drop-shadow(0 0 ${stroke * 1.6}px ${tone === 'ember' ? 'rgba(255,181,74,0.45)' : 'rgba(255,255,255,0.18)'})` } : undefined}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={glow && v > 0 ? { filter: `drop-shadow(0 0 ${stroke * 1.6}px ${tone === 'ember' ? 'rgba(239,90,74,0.45)' : 'rgba(255,255,255,0.18)'})` } : undefined}>
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={stops[0]} /><stop offset="1" stopColor={stops[1]} /></linearGradient>
         </defs>

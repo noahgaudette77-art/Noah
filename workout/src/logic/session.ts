@@ -111,3 +111,9 @@ export function logStandalone(dayKey: DayKey, date: string, cardioId: string) {
 
 export const setsDone = (a: SessionLog) => a.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
 export const setsTotal = (a: SessionLog) => a.exercises.reduce((n, e) => n + e.sets.length, 0);
+
+/** Minutes a session took, or null when it was clearly left open (over 3 hours: the app was closed mid-session). */
+export function sessionMinutes(s: { startedAt: number; finishedAt?: number | null }): number | null {
+  const m = Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000);
+  return m > 180 ? null : Math.max(1, m);
+}

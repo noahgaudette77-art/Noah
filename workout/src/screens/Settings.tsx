@@ -9,7 +9,6 @@ import { getState, replaceState, setState, useStore } from '../logic/store';
 import { canInstall, install, isStandalone, onInstallChange } from '../lib/install';
 import { setVolume, unlockAudio, cue } from '../lib/audio';
 import { mwLive, useQuota } from '../lib/mw';
-import { requestGyro } from '../room/gyro';
 
 export default function Settings() {
   const settings = useStore((s) => s.settings);
@@ -24,7 +23,6 @@ export default function Settings() {
 
   const set = (k: keyof AppState['settings']) => (v: boolean | number | string) => setState((s) => ({ ...s, settings: { ...s.settings, [k]: v } }));
   const quota = useQuota();
-  const [gyroMsg, setGyroMsg] = useState('');
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(getState(), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -46,13 +44,11 @@ export default function Settings() {
       <div className="mx-auto max-w-3xl space-y-5 px-4 sm:px-8">
         <Card className="divide-y divide-white/5 px-5 py-2">
           <p className="label pb-1 pt-3">Look</p>
-          <Toggle icon="eye" checked={settings.clean} onChange={set('clean')} label="Clean mode" detail="No grain, worn paper, flicker or drifting room. Same layout, plain surfaces." />
+          <Toggle icon="eye" checked={settings.clean} onChange={set('clean')} label="Clean mode" detail="No grain, worn paper or texture. Same layout, plain surfaces, a darker backdrop." />
           <Toggle icon="film" checked={settings.rawVideo} onChange={set('rawVideo')} label="Raw demo footage" detail="Turn off the light vintage grade on exercise videos" />
-          <Toggle icon="gyro" checked={settings.gyro} onChange={async (v) => { if (v) { const ok = await requestGyro(); setGyroMsg(ok ? '' : 'Motion access was not allowed, so you can drag to look around instead.'); set('gyro')(ok); } else set('gyro')(false); }} label="Look around with your phone" detail="Tilt to look around the room. Drag works either way." />
-          {gyroMsg && <p className="py-2 text-sm text-ash" role="status">{gyroMsg}</p>}
           <div className="py-3">
             <p className="font-semibold">Battery saver</p>
-            <p className="text-sm text-smoke">Still room: no drifting, no dust. Auto turns on when the phone looks power-limited.</p>
+            <p className="text-sm text-smoke">Stops the 3D plates and dumbbell from turning. Auto follows Low Power Mode.</p>
             <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Battery saver">
               {(['auto', 'on', 'off'] as const).map((v) => (
                 <button key={v} type="button" role="radio" aria-checked={settings.battery === v} onClick={() => set('battery')(v)}
@@ -60,7 +56,7 @@ export default function Settings() {
               ))}
             </div>
           </div>
-          <Toggle icon="download" checked={settings.dataSaver} onChange={set('dataSaver')} label="Data saver" detail="Film loops show a still instead of playing" />
+          <Toggle icon="download" checked={settings.dataSaver} onChange={set('dataSaver')} label="Data saver" detail="Smaller images on a slow connection" />
         </Card>
         <Card className="divide-y divide-white/5 px-5 py-2">
           <p className="label pb-1 pt-3">Sound</p>
