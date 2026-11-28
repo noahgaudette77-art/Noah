@@ -23,9 +23,22 @@ let quota: Quota | null = null;
 const quotaListeners = new Set<(q: Quota | null) => void>();
 const setQuota = (q: Quota | null) => { quota = q; quotaListeners.forEach((l) => l(q)); };
 
+/** Why the last demo request fell back: 'setup' (Worker not set up yet), 'cap' (month's allowance), or another reason. */
+export let lastReason = '';
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(`${MW_ENDPOINT}${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
-  const body = await r.json().catch(() => ({}));
+  let r: Response;
+  try {
+    r = await fetch(`${MW_ENDPOINT}${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
+  } catch (e) {
+    // online but blocked (no CORS headers): the Worker is not running Tempo's code yet
+    if (typeof navigator !== 'undefined' && navigator.onLine) { lastReason = 'setup'; return { fallback: true, reason: 'setup' } as T; }
+    throw e;
+  }
+  const body = await r.json().catch(() => null);
+  // not JSON (e.g. the Worker still runs Cloudflare's sample) or not configured yet: the service is not set up
+  if (body === null) { lastReason = 'setup'; return { fallback: true, reason: 'setup' } as T; }
+  if (body.fallback) lastReason = body.reason === 'monthly cap' ? 'cap' : body.reason === 'not configured' ? 'setup' : body.reason ?? '';
   if (!r.ok && !body.fallback) throw new Error(`demo service ${r.status}`);
   return body as T;
 }

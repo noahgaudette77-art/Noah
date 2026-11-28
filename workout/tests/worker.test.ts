@@ -83,6 +83,15 @@ describe('mw worker', () => {
     expect((await call('/mw/status')).status).toBe(429);
     expect((await call('/mw/status', {}, ORIGIN, '5.6.7.8')).status).toBe(200);
   });
+  it('works with only the key set: no KV (edge cache instead) and default origins', async () => {
+    delete env.MW_KV; delete env.ALLOWED_ORIGINS;
+    expect((await call('/mw/status', {}, 'https://evil.example')).status).toBe(403);
+    const a = await (await call('/mw/play/398', {}, 'https://noahgaudette77-art.github.io')).json();
+    const b = await (await call('/mw/play/398', {}, 'https://noahgaudette77-art.github.io')).json();
+    expect(a.token).toBe('tok123');
+    expect(upstream.filter((u) => u.path === '/media/token')).toHaveLength(1);
+    expect(b.used).toBe(1 + 3 + 3);
+  });
   it('falls back cleanly when not configured', async () => {
     delete env.MUSCLEWIKI_API_KEY;
     const j = await (await call('/mw/play/398')).json();
