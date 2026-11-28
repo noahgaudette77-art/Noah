@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MW } from '../data/musclewiki';
 import type { Tempo } from '../data/types';
 import { useStore } from '../logic/store';
-import { type MwMeta, getMeta, mwLive, playSrc, reportStreamUse, useOnline } from '../lib/mw';
+import { type MwMeta, getMeta, lastReason, mwLive, playSrc, reportStreamUse, useOnline } from '../lib/mw';
 import { CueCard } from './CueCard';
 
 type State = 'idle' | 'loading' | 'ready' | 'error' | 'offline' | 'fallback';
@@ -81,7 +81,9 @@ export function VideoPrint({ id, tempo, suspended, compact, onFilm }: { id: stri
     const note = !map ? undefined
       : !mwLive() ? 'Demo film arrives when the demo service is switched on.'
       : state === 'offline' ? 'Offline. The demo needs a connection; the cues work anywhere.'
-      : state === 'fallback' ? "This month's demo allowance is used up. Back on the 1st."
+      : state === 'fallback' && lastReason === 'setup' ? 'Demo film arrives when the demo service is switched on.'
+      : state === 'fallback' && lastReason === 'cap' ? "This month's demo allowance is used up. Back on the 1st."
+      : state === 'fallback' ? 'The demo is not available right now. Cues below.'
       : 'The demo would not load. Cues below.';
     return (
       <div ref={box}>

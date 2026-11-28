@@ -7,7 +7,25 @@ the form-cue card instead of the video, so you never hit MuscleWiki's 1,000-call
 
 Until it is deployed, the app simply shows form-cue cards. Nothing breaks.
 
-Pick **one** of the two routes.
+## Shortest route (2 steps, works from a phone)
+
+The app already points at `https://temp-mw.noahgaudette77.workers.dev` (`src/config.ts`). The Worker exists;
+it only needs Tempo's code and the key. KV storage and `ALLOWED_ORIGINS` are optional: without them the Worker
+keeps its counters in Cloudflare's edge cache and answers Tempo's own addresses.
+
+1. Worker `temp-mw` → **Edit code** → open `worker.js` → select all, delete, paste the whole of
+   [`src/worker.js`](src/worker.js) (raw link:
+   https://raw.githubusercontent.com/noahgaudette77-art/Noah/claude/workout-app-exercise-demos-35cf5n/workout/server/mw-worker/src/worker.js)
+   → **Deploy**.
+2. Worker `temp-mw` → **Settings → Variables and Secrets → Add** → type **Secret**, name `MUSCLEWIKI_API_KEY`,
+   value = your MuscleWiki key → **Deploy**.
+
+Videos start working in the app straight away; nothing else to publish.
+
+---
+
+The fuller routes below also add KV storage (a precise monthly count across all of Cloudflare's data centres).
+Pick **one** of the two.
 
 ---
 

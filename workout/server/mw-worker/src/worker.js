@@ -19,11 +19,32 @@
 //
 // Secrets / bindings (see DEPLOY.md):
 //   MUSCLEWIKI_API_KEY  secret   the key (never returned, never logged)
-//   MW_KV               KV       counters + the shared media token
-//   ALLOWED_ORIGINS     var      comma-separated origins, e.g. https://noah-2ci.pages.dev
+//   MW_KV               KV       counters + the shared media token (optional: without it the
+//                                Worker keeps them in Cloudflare's edge cache, per data centre)
+//   ALLOWED_ORIGINS     var      comma-separated origins (optional: defaults to DEFAULT_ORIGINS)
 //   CAP, LIMIT, STREAM_ESTIMATE, RATE_PER_MIN  vars (optional)
 
 const MW = 'https://api.musclewiki.com';
+// Tempo's own addresses: used when ALLOWED_ORIGINS is not set, so the only required setting is the key.
+const DEFAULT_ORIGINS = 'https://noahgaudette77-art.github.io,https://noah-2ci.pages.dev,https://*.noah-2ci.pages.dev';
+
+/** Small key-value store: KV when bound, otherwise the Cache API (good enough for one person's app). */
+function store(env) {
+  if (env.MW_KV) return env.MW_KV;
+  const k = (key) => new Request(`https://tempo-mw.store/${encodeURIComponent(key)}`);
+  return {
+    async get(key, type) {
+      const r = await caches.default.match(k(key));
+      if (!r) return null;
+      const t = await r.text();
+      return type === 'json' ? JSON.parse(t) : t;
+    },
+    async put(key, value, opts = {}) {
+      const ttl = opts.expirationTtl ?? 60 * 60 * 24 * 62;
+      await caches.default.put(k(key), new Response(value, { headers: { 'cache-control': `public, max-age=${ttl}` } }));
+    },
+  };
+}
 
 export default {
   async fetch(req, env, ctx) {
@@ -36,16 +57,17 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: allowed ? 204 : 403, headers: cors });
     if (!allowed) return json({ error: 'origin not allowed' }, 403);
     if (!url.pathname.startsWith('/mw/')) return json({ error: 'not found' }, 404);
-    if (!env.MUSCLEWIKI_API_KEY || !env.MW_KV) return json({ fallback: true, reason: 'not configured' }, 503);
+    if (!env.MUSCLEWIKI_API_KEY) return json({ fallback: true, reason: 'not configured' }, 503);
+    const kv = store(env);
 
     const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
-    if (!(await rateOk(env, ip))) return json({ error: 'rate limited', fallback: true, reason: 'rate' }, 429, { 'Retry-After': '60' });
+    if (!(await rateOk(kv, env, ip))) return json({ error: 'rate limited', fallback: true, reason: 'rate' }, 429, { 'Retry-After': '60' });
 
     const cap = num(env.CAP, 900), limit = num(env.LIMIT, 1000);
     const month = new Date().toISOString().slice(0, 7);
     const counterKey = `calls:${month}`;
-    const used = async () => num(await env.MW_KV.get(counterKey), 0);
-    const add = async (n) => { if (n <= 0) return used(); const v = (await used()) + n; await env.MW_KV.put(counterKey, String(v), { expirationTtl: 60 * 60 * 24 * 62 }); return v; };
+    const used = async () => num(await kv.get(counterKey), 0);
+    const add = async (n) => { if (n <= 0) return used(); const v = (await used()) + n; await kv.put(counterKey, String(v), { expirationTtl: 60 * 60 * 24 * 62 }); return v; };
 
     try {
       if (url.pathname === '/mw/status') {
@@ -80,7 +102,7 @@ export default {
         const estimate = num(env.STREAM_ESTIMATE, 3);
         const u0 = await used();
         if (u0 + estimate > cap) return json({ fallback: true, reason: 'monthly cap', used: u0, cap });
-        const tok = await mediaToken(env, add);
+        const tok = await mediaToken(kv, env, add);
         if (!tok) return json({ fallback: true, reason: 'token' }, 502);
         const u = await add(estimate);
         return json({ token: tok.token, expires_in: tok.expires_in, used: u, cap, limit });
@@ -100,30 +122,30 @@ export default {
 };
 
 /** One media token shared by all plays until 60 s before it expires. Minting counts as one call. */
-async function mediaToken(env, add) {
-  const cached = await env.MW_KV.get('media-token', 'json');
+async function mediaToken(kv, env, add) {
+  const cached = await kv.get('media-token', 'json');
   if (cached && cached.exp - Date.now() > 60_000) return { token: cached.token, expires_in: Math.floor((cached.exp - Date.now()) / 1000) };
   const r = await fetch(`${MW}/media/token`, { method: 'POST', headers: { 'X-API-Key': env.MUSCLEWIKI_API_KEY } });
   await add(1);
   if (!r.ok) return null;
   const d = await r.json();
   const exp = Date.now() + d.expires_in * 1000;
-  await env.MW_KV.put('media-token', JSON.stringify({ token: d.token, exp }), { expirationTtl: Math.max(60, d.expires_in - 30) });
+  await kv.put('media-token', JSON.stringify({ token: d.token, exp }), { expirationTtl: Math.max(60, d.expires_in - 30) });
   return { token: d.token, expires_in: d.expires_in };
 }
 
-async function rateOk(env, ip) {
+async function rateOk(kv, env, ip) {
   const per = num(env.RATE_PER_MIN, 30);
   const k = `rl:${ip}:${Math.floor(Date.now() / 60000)}`;
-  const n = num(await env.MW_KV.get(k), 0);
+  const n = num(await kv.get(k), 0);
   if (n >= per) return false;
-  await env.MW_KV.put(k, String(n + 1), { expirationTtl: 120 });
+  await kv.put(k, String(n + 1), { expirationTtl: 120 });
   return true;
 }
 
 function allowedOrigin(origin, env) {
   if (!origin) return false;
-  const list = String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const list = String(env.ALLOWED_ORIGINS || DEFAULT_ORIGINS).split(',').map((s) => s.trim()).filter(Boolean);
   return list.some((o) => {
     if (o === origin) return true;
     // "https://*.example.pages.dev" allows branch previews
