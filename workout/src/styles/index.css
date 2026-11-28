@@ -1,0 +1,175 @@
+@import '@fontsource-variable/big-shoulders-display';
+@import '@fontsource-variable/instrument-sans/wdth.css';
+@import '@fontsource/big-shoulders-stencil-display/latin-800';
+@import '@fontsource/special-elite/latin-400';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- IRON ROOM, 1974 tokens (DESIGN.md §2) ---- */
+:root {
+  color-scheme: dark;
+  --soot: #0D0B09; --pit: #1A1714; --iron: #2A2622; --steelline: #3A342D;
+  --concrete: #A39C90; --chalk: #F4EFE4; --ash: #C9C1B4;
+  --amber: #FFB54A; --amber-core: #FFD99A; --amber-ink: #1A0E02; --amber-deep: #C7802A;
+  --rust: #9C4A22; --rust-hi: #D9622F; --brick: #7A3B2A;
+  --cream: #EDE3CC; --ink: #1E1A15; --ink-faded: #5E554A; --stamp: #B5482A;
+  /* legacy names used across screens */
+  --void: var(--soot); --smoke: var(--concrete); --ember: var(--amber); --ember-ink: var(--amber-ink);
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
+  --paper: url('/assets/tex/paper-cream.webp');
+  --grain-img: url('/assets/tex/grain.webp');
+  --paint-mask: url('/assets/tex/paint-mask.png');
+  /* lamp flicker: 1 = steady; the cold open and an idle timer dip it briefly */
+  --lamp: 1;
+}
+html, body, #root { min-height: 100%; }
+body {
+  @apply font-sans text-chalk antialiased;
+  background: var(--soot);
+  font-size: 16px; line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+/* film grain: above the room, below content plates (z-index 1; content is z-10) */
+.grain { position: fixed; inset: -60px; z-index: 1; pointer-events: none;
+  background-image: var(--grain-img); background-size: 256px; opacity: 0.045;
+  animation: grain 1s steps(8) infinite; }
+@keyframes grain {
+  0% { transform: translate(0, 0); } 25% { transform: translate(-31px, 17px); } 50% { transform: translate(23px, -29px); }
+  75% { transform: translate(-13px, -9px); } 100% { transform: translate(9px, 27px); }
+}
+/* the room's scrim: the panorama reads as space and light behind content, never as a busy picture */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255,181,74,calc(0.10 * var(--lamp))), transparent 60%),
+    linear-gradient(180deg, rgba(13,11,9,0.05) 0%, rgba(13,11,9,0.55) 38%, rgba(13,11,9,0.92) 75%, var(--soot) 100%);
+}
+.vignette { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(140% 90% at 50% 40%, transparent 55%, rgba(0,0,0,0.65) 100%); }
+
+@layer components {
+  .display { font-family: 'Big Shoulders Display Variable', 'Arial Narrow', Impact, sans-serif; font-weight: 850; line-height: 0.86; letter-spacing: 0.005em; text-transform: uppercase; text-wrap: balance; }
+  /* big headings print slightly off-register: a rust ghost down-right */
+  .misprint { text-shadow: 1.5px 1.5px 0 rgba(156,74,34,0.85); }
+  .stencil { font-family: 'Big Shoulders Stencil Display', 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 800; text-transform: uppercase; line-height: 0.92; letter-spacing: 0.02em; }
+  /* painted wall lettering: stencil with paint grain eaten out of it */
+  .wallpaint { color: rgba(237,227,204,0.88); -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 260px; mask-image: var(--paint-mask); mask-size: 260px; }
+  .typed { font-family: 'Special Elite', 'Courier New', monospace; font-weight: 400; letter-spacing: 0.02em; }
+  .label { font-family: 'Special Elite', 'Courier New', monospace; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--concrete); line-height: 1.3; }
+
+  /* a machined steel plate: everything functional sits on one */
+  .lit { background: linear-gradient(180deg, #221E1A 0%, #1A1714 100%); box-shadow: theme('boxShadow.lit'); border-radius: 6px; }
+  .lit-raised { background: linear-gradient(180deg, #2E2924 0%, #221E1A 100%); box-shadow: theme('boxShadow.lit'); border-radius: 6px; }
+  .plate { @apply lit; position: relative; }
+  .plate.rivets::before, .plate.rivets::after { content: ''; position: absolute; top: 9px; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6b625a, #2a2521 70%); box-shadow: 0 1px 0 rgba(0,0,0,0.6); }
+  .plate.rivets::before { left: 9px; } .plate.rivets::after { right: 9px; }
+  /* smoked plate for bars floating over the room (no backdrop blur: it is costly over WebGL on phones) */
+  .glass { background: rgba(22,19,16,0.9); box-shadow: inset 0 1px 0 rgba(255,214,160,0.09), 0 20px 50px -20px rgba(0,0,0,0.95); }
+
+  /* the lamp: the one primary action. Lit glass with a hot core and a halo; text is dark ink (10.8:1) */
+  .ember-btn, .lamp-btn {
+    background: radial-gradient(120% 160% at 50% 0%, var(--amber-core) 0%, var(--amber) 45%, #E8952E 100%);
+    color: var(--amber-ink); box-shadow: theme('boxShadow.ember'); opacity: calc(0.86 + 0.14 * var(--lamp));
+  }
+  .ember-btn:hover, .lamp-btn:hover { filter: brightness(1.05); }
+  .ember-btn:active, .lamp-btn:active { filter: brightness(0.9); transform: translateY(2px); box-shadow: 0 0 0 1px rgba(255,217,154,0.4) inset, 0 0 18px -6px rgba(255,181,74,0.5); }
+
+  /* aged paper: prints, ledger, punch card, posters */
+  .print { background-color: var(--cream); background-image: var(--paper); background-size: 512px; color: var(--ink); border-radius: 2px; box-shadow: theme('boxShadow.paper'); position: relative; }
+  .print .label, .print.label { color: var(--ink-faded); }
+  /* masking tape on two corners */
+  .tape::before, .tape::after { content: ''; position: absolute; top: -9px; width: 74px; height: 22px; z-index: 2;
+    background: linear-gradient(180deg, rgba(232,221,190,0.88), rgba(214,201,166,0.86));
+    box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    clip-path: polygon(3% 0, 97% 4%, 100% 30%, 97% 55%, 100% 80%, 96% 100%, 4% 96%, 0 70%, 3% 45%, 0 20%); }
+  .tape::before { left: -14px; transform: rotate(-38deg); }
+  .tape::after { right: -14px; transform: rotate(36deg); }
+  /* Dymo label: black embossed tape, raised cream letters */
+  .dymo { display: inline-flex; align-items: center; gap: 0.4em; height: 28px; padding: 0 10px; border-radius: 3px;
+    background: linear-gradient(180deg, #1d1b1a, #0c0b0a); color: #F1EBDD;
+    font-family: 'Instrument Sans Variable', sans-serif; font-weight: 700; font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.18); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 3px rgba(0,0,0,0.6); }
+  .dymo.amber { background: linear-gradient(180deg, #3a2a12, #1d150a); color: var(--amber-core); }
+  /* rubber stamp ink */
+  .stamp { display: inline-block; border: 4px solid currentColor; border-radius: 6px; padding: 0.05em 0.35em;
+    font-family: 'Big Shoulders Stencil Display', Impact, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1;
+    -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 200px; mask-image: var(--paint-mask); mask-size: 200px; }
+
+  .gutter { padding-left: max(16px, var(--safe-l)); padding-right: max(16px, var(--safe-r)); }
+  @media (min-width: 640px) { .gutter { padding-left: max(32px, var(--safe-l)); padding-right: max(32px, var(--safe-r)); } }
+  .stage-bg { background: radial-gradient(70% 60% at 50% 30%, #2a221b 0%, #15120f 55%, #0B0A08 100%); }
+}
+
+/* ---- Clean mode: no grain, distress, flicker, misregistration (Settings) ---- */
+html.clean .grain, html.clean .vignette { display: none; }
+html.clean .misprint { text-shadow: none; }
+html.clean .wallpaint, html.clean .stamp { -webkit-mask-image: none; mask-image: none; }
+html.clean .print { background-image: none; }
+html.clean { --lamp: 1 !important; }
+
+:focus-visible { outline: 2.5px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grain { animation: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---- Progress wall ---- */
+.brickwall { background:
+  linear-gradient(180deg, rgba(13,11,9,0.55), rgba(13,11,9,0.78)),
+  radial-gradient(80% 60% at 50% 0%, rgba(255,181,74,0.18), transparent 70%),
+  url('/assets/ph/red_brick_03_diffuse_1k.webp');
+  background-size: 100% 100%, 100% 100%, 300px; }
+/* brick-red paint over a locked poster: worn so the figure's ghost shows through */
+.paintover { background: linear-gradient(172deg, rgba(122,59,42,0.88), rgba(104,48,34,0.9) 45%, rgba(92,42,30,0.93));
+  -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 900px; mask-image: var(--paint-mask); mask-size: 900px; }
+html.clean .brickwall { background: linear-gradient(180deg, #221a15, #1a1411); }
+html.clean .paintover { -webkit-mask-image: none; mask-image: none; }
+
+/* ---- split-flap digits ---- */
+.flap { perspective: 400px; }
+.flap-half { position: absolute; left: 0; right: 0; overflow: hidden; background: linear-gradient(180deg, #24201c, #191613); border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255,214,160,0.08), 0 6px 14px -6px rgba(0,0,0,0.9); backface-visibility: hidden; }
+.flap-half.top { top: 0; border-bottom-left-radius: 1px; border-bottom-right-radius: 1px; transform-origin: 50% 100%; }
+.flap-half.bottom { bottom: 0; border-top-left-radius: 1px; border-top-right-radius: 1px; transform-origin: 50% 0%;
+  background: linear-gradient(180deg, #1c1916, #14110e); }
+.flap-half span { position: absolute; left: 0; right: 0; text-align: center; color: var(--chalk);
+  font-family: 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 850; font-variant-numeric: tabular-nums; }
+.flap-axle { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: rgba(0,0,0,0.75); box-shadow: 0 1px 0 rgba(255,255,255,0.05); }
+.fold-top { animation: fold-top 0.22s cubic-bezier(.5,0,.9,.6) forwards; z-index: 2; }
+.fold-bottom { transform: rotateX(90deg); animation: fold-bottom 0.2s 0.2s cubic-bezier(.2,.6,.4,1.25) forwards; z-index: 2; }
+.settle { animation: settle-in 0.01s 0.4s forwards; opacity: 0; }
+@keyframes fold-top { to { transform: rotateX(-90deg); } }
+@keyframes fold-bottom { to { transform: rotateX(0deg); } }
+@keyframes settle-in { to { opacity: 1; } }
+
+/* ---- punch card, chalk slate ---- */
+.punch-hole { position: absolute; width: 18px; height: 22px; border-radius: 4px; background: var(--soot);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.9), 0 0 0 1px rgba(30,26,21,0.4); }
+.punch-chad { position: absolute; width: 18px; height: 22px; border-radius: 4px; background: var(--cream); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+.slate { background: radial-gradient(120% 100% at 30% 0%, #2f2b27, #1b1916 70%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 40px rgba(0,0,0,0.6), theme('boxShadow.lit'); }
+.chalk-stroke { filter: url(#chalk-rough); }
+@keyframes chalk-draw { to { stroke-dashoffset: 0; } }
+html.clean .chalk-stroke { filter: none; }
+
+/* ---- ledger: ruled paper with a red margin rule ---- */
+.ledger { background-image: linear-gradient(90deg, transparent 38px, rgba(181,72,42,0.55) 38px, rgba(181,72,42,0.55) 40px, transparent 40px), var(--paper); background-size: 100% 100%, 512px; }
+.ledger-row { border-bottom: 1px solid rgba(60,90,140,0.28); }
+html.clean .ledger { background-image: linear-gradient(90deg, transparent 38px, rgba(181,72,42,0.55) 38px, rgba(181,72,42,0.55) 40px, transparent 40px); }
+
+/* ---- steel mesh wall (Poly Haven rusty_metal_grid) ---- */
+.meshwall { background: linear-gradient(180deg, rgba(13,11,9,0.35), rgba(13,11,9,0.7)), url('/assets/ph/rusty_metal_grid_diffuse_1k.webp'); background-size: 100% 100%, 220px; box-shadow: theme('boxShadow.lit'); }
+.hook { width: 3px; height: 14px; border-radius: 2px; background: linear-gradient(#8a7f74, #3a332d); margin-bottom: -6px; position: relative; z-index: 1; }
+html.clean .meshwall { background: linear-gradient(180deg, #24201c, #1a1714); }
+
+/* ---- tab bar: a strip of worn rubber floor; the active tab sits in a pool of lamp light ---- */
+.rubber { background: linear-gradient(180deg, rgba(20,18,16,0.94), rgba(14,12,10,0.97)), url('/assets/ph/rubber_tiles_diffuse_1k.webp'); background-size: 100% 100%, 180px;
+  box-shadow: inset 0 1px 0 rgba(255,214,160,0.07), 0 -10px 30px -10px rgba(0,0,0,0.9); }
+.lamp-pool { background: radial-gradient(80% 90% at 50% 0%, rgba(255,181,74,0.26), rgba(255,181,74,0.06) 60%, transparent 80%); box-shadow: inset 0 1px 0 rgba(255,217,154,0.35); }
+html.clean .rubber { background: #141210; }
